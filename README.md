@@ -83,3 +83,12 @@ You can verify that the application is running and successfully connected to the
 - Razorpay payment processing
 - External API integrations (Shiprocket, Cloudinary, Resend)
 - Any actual frontend/UI development (Customer facing and Admin Dashboard)
+
+## Version 2 Scope
+- Created User model with `UUID` id, `role`, `status`, and verification timestamps.
+- Created Address model supporting Indian formats (6-digit PIN validation).
+- Implemented `AddressType` enum (HOME, WORK, OTHER).
+- Created safe backend service logic (`UserService`, `AddressService`) with proper user isolation.
+- Built development REST APIs for managing addresses (`/api/users/:userId/addresses`).
+- Added Prisma transactions to handle switching `isDefaultShipping` and `isDefaultBilling`.
+- **Note:** Authentication is NOT implemented yet. These APIs currently use the URL parameter as identity solely for Version 2 domain testing.
