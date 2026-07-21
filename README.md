@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ahankara Boutique E-Commerce Platform — Backend Version 1
 
-## Getting Started
+## Project Overview
+This repository contains the V1 backend foundation for the Ahankara Boutique E-Commerce Platform. This version establishes the core infrastructure, Next.js architecture, and PostgreSQL + Prisma database integration, preparing for full domain implementation in subsequent versions.
 
-First, run the development server:
+## Technology Stack
+- **Framework**: Next.js (App Router)
+- **Language**: TypeScript
+- **Runtime**: Node.js
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Validation**: Zod
+- **Styling**: Tailwind CSS (Foundation only)
 
+## Prerequisites
+- Node.js (v18.17.0 or higher)
+- PostgreSQL (v14 or higher) running locally or accessible remotely
+- npm (v9 or higher)
+
+## Environment Setup
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Update the `DATABASE_URL` in `.env` with your actual PostgreSQL connection string. Ensure the database is accessible.
+
+## Installation
+Run the following command to install all project dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Database Configuration & Prisma Setup
+This project uses Prisma ORM to interact with PostgreSQL.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Generate Prisma Client:**
+   ```bash
+   npm run db:generate
+   ```
+2. **Run Migrations:**
+   To apply the initial schema to your database:
+   ```bash
+   npm run db:migrate
+   ```
+3. **Open Prisma Studio:** (Optional)
+   To view and interact with your database using Prisma's GUI:
+   ```bash
+   npm run db:studio
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Development Commands
+- Start the development server: `npm run dev`
+- Build for production: `npm run build`
+- Start production server: `npm run start`
+- Run linter: `npm run lint`
 
-## Learn More
+## Health Endpoint
+You can verify that the application is running and successfully connected to the database by accessing:
+`GET /api/health`
 
-To learn more about Next.js, take a look at the following resources:
+**Expected Successful Response:**
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "database": "connected",
+  "timestamp": "2023-10-25T12:00:00Z"
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Current Version 1 Scope
+- Next.js + TypeScript project initialization with App Router.
+- PostgreSQL + Prisma integration.
+- Standardized API response utilities.
+- Centralized error handling and validation (Zod) foundation.
+- System health-check API endpoint.
+- Fundamental backend folder architecture (`src/utils`, `src/lib`, etc.).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Features Intentionally Deferred
+- Customer registration and authentication (Auth.js)
+- Product and variant management
+- Cart, checkout, and order systems
+- Razorpay payment processing
+- External API integrations (Shiprocket, Cloudinary, Resend)
+- Any actual frontend/UI development (Customer facing and Admin Dashboard)
