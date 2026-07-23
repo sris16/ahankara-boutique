@@ -278,6 +278,7 @@ export class ProductService {
 
     const mappedItems = items.map(item => {
       const hasAvailableStock = item.variants.some(v => v.inventory && (v.inventory.quantity - v.inventory.reservedQuantity) > 0);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { variants: _, ...rest } = item;
       return {
         ...rest,

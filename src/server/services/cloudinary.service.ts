@@ -20,6 +20,7 @@ export class CloudinaryService {
   static async uploadProductImage(
     fileBuffer: Buffer,
     productId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _mimetype: string
   ): Promise<UploadApiResponse> {
     if (!env.CLOUDINARY_CLOUD_NAME) {

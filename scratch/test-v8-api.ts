@@ -169,13 +169,15 @@ async function run() {
       await OrderService.createCheckoutOrder(user.id, { shippingAddressId: address.id }, 'key-oos');
       assert(false, 'Should fail out of stock checkout');
     } catch(e: any) {
-      assert(e.name === 'ValidationError' || e.constructor.name === 'ValidationError', 'Out-of-stock Checkout result');
+      assert(e.name === 'ValidationError' || e.constructor.name === 'ValidationError', 'Out-of-stock Checkout result (Multi-item atomic failure)');
     }
+    const invA_Atomic = await prisma.inventory.findUnique({ where: { variantId: variantA.id } });
+    assert(invA_Atomic!.reservedQuantity === 0, 'Partial reservation leakage result (Rollback successful)');
 
-    await CartService.removeItem(user.id, (await CartService.getOrCreateCart(user.id)).items.find(i => i.variant.id === variantB_Out.id)!.cartItemId);
+    await CartService.removeItem(user.id, (await CartService.getOrCreateCart(user.id)).items.find((i: any) => i.variant.id === variantB_Out.id)!.cartItemId);
 
     // --- 4. Insufficient-stock result ---
-    const cartItemA = (await CartService.getOrCreateCart(user.id)).items.find(i => i.variant.id === variantA.id)!.cartItemId;
+    const cartItemA = (await CartService.getOrCreateCart(user.id)).items.find((i: any) => i.variant.id === variantA.id)!.cartItemId;
     await prisma.cartItem.update({ where: { id: cartItemA }, data: { quantity: 10 } });
     try {
       await OrderService.createCheckoutOrder(user.id, { shippingAddressId: address.id }, 'key-insuf');
@@ -210,15 +212,15 @@ async function run() {
     }
     
     await prisma.product.update({ where: { id: productB.id }, data: { status: 'PUBLISHED' } });
-    await CartService.removeItem(user.id, (await CartService.getOrCreateCart(user.id)).items.find(i => i.variant.id === variantB.id)!.cartItemId);
+    await CartService.removeItem(user.id, (await CartService.getOrCreateCart(user.id)).items.find((i: any) => i.variant.id === variantB.id)!.cartItemId);
 
     // --- 7. Valid Checkout result (plus snapshots) ---
-    await CartService.updateItemQuantity(user.id, (await CartService.getOrCreateCart(user.id)).items.find(i => i.variant.id === variantA.id)!.cartItemId, { quantity: 2 });
+    await CartService.updateItemQuantity(user.id, (await CartService.getOrCreateCart(user.id)).items.find((i: any) => i.variant.id === variantA.id)!.cartItemId, { quantity: 2 });
     
     const validOrder = await OrderService.createCheckoutOrder(user.id, { shippingAddressId: address.id }, 'key-valid-1');
     assert(validOrder.status === 'PENDING_PAYMENT', 'Valid Checkout result');
     assert(validOrder.totalAmount === 299800 && validOrder.subtotal === 299800, 'Integer-money result & Total invariant result');
-    assert(validOrder.items.length === 1 && validOrder.items[0].quantity === 2, 'Valid Checkout line item quantity');
+    assert((validOrder as any).items.length === 1 && (validOrder as any).items[0].quantity === 2, 'Valid Checkout line item quantity');
 
     // Verify inventory reservation logic (V6/V7 boundary)
     const invA = await prisma.inventory.findFirst({ where: { variantId: variantA.id }});
@@ -344,7 +346,7 @@ async function run() {
     // --- 19. Order-number uniqueness result ---
     const userOrders = await OrderService.getCustomerOrders(user.id);
     const userBOrders = await OrderService.getCustomerOrders(userB.id);
-    const allNums = new Set([...userOrders.orders.map(o => o.orderNumber), ...userBOrders.orders.map(o => o.orderNumber)]);
+    const allNums = new Set([...userOrders.orders.map((o: any) => o.orderNumber), ...userBOrders.orders.map((o: any) => o.orderNumber)]);
     assert(allNums.size === userOrders.orders.length + userBOrders.orders.length, 'Order-number uniqueness result');
 
     // Cleanup

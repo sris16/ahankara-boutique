@@ -6,8 +6,7 @@ import { handleError } from '@/utils/error-handler';
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await AuthService.requireAuth(req.headers);
-    AuthService.requireRole(user, 'ADMIN');
+    await AuthService.requireRole(req.headers, 'ADMIN');
     
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get('page') || '1');

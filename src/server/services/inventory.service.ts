@@ -133,12 +133,15 @@ export class InventoryService {
     }
   }
 
-  static async commitStock(productId: string, variantId: string, data: unknown) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async commitStock(productId: string, variantId: string, data: unknown, txClient?: any) {
     const validated = commitStockSchema.parse(data);
-    const variant = await prisma.productVariant.findFirst({ where: { id: variantId, productId }, include: { inventory: true }});
+    const client = txClient || prisma;
+    const variant = await client.productVariant.findFirst({ where: { id: variantId, productId }, include: { inventory: true }});
     if (!variant || !variant.inventory) throw new NotFoundError('Inventory not found');
 
-    return prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const execute = async (tx: any) => {
       const rows = await tx.$queryRaw<unknown[]>`
         UPDATE "inventories"
         SET "quantity" = "quantity" - ${validated.quantity},
@@ -166,7 +169,13 @@ export class InventoryService {
         }
       });
       return tx.inventory.findUnique({ where: { id: variant.inventory!.id } });
-    });
+    };
+
+    if (txClient) {
+      return execute(txClient);
+    } else {
+      return prisma.$transaction(execute);
+    }
   }
 
   static async getLowStockVariants() {

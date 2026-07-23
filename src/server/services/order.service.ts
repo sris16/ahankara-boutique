@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import { NotFoundError, ValidationError, ConflictError } from '@/utils/errors';
+import { NotFoundError, ValidationError } from '@/utils/errors';
 import { checkoutSchema } from '../validators/checkout.validator';
 import { CartService } from './cart.service';
 import { InventoryService } from './inventory.service';
+import { PricingService } from './pricing.service';
 
 export class OrderService {
   // Config: 15 minutes
@@ -49,6 +50,8 @@ export class OrderService {
       }
     }
 
+    const pricing = await PricingService.calculateCheckoutPricing(userId, validated.couponCode);
+
     // 3. Validate Addresses
     const shippingAddress = await prisma.address.findFirst({
       where: { id: validated.shippingAddressId, userId },
@@ -73,6 +76,11 @@ export class OrderService {
       // Re-fetch idempotency to be absolutely sure within transaction lock
       const doubleCheck = await tx.order.findUnique({
         where: { userId_idempotencyKey: { userId, idempotencyKey } },
+        include: {
+          items: true,
+          shippingAddress: true,
+          billingAddress: true,
+        }
       });
       if (doubleCheck) return doubleCheck;
 
@@ -144,17 +152,21 @@ export class OrderService {
           idempotencyKey,
           status: 'PENDING_PAYMENT',
           paymentStatus: 'PENDING',
-          subtotal: cart.subtotal,
-          shippingAmount: 0,
-          discountAmount: 0,
-          taxAmount: 0,
-          totalAmount: cart.subtotal, // Subtotal + shipping + tax - discount
+          subtotal: pricing.subtotal,
+          shippingAmount: pricing.shippingAmount,
+          discountAmount: pricing.discountAmount,
+          taxAmount: pricing.taxAmount,
+          totalAmount: pricing.totalAmount, // Subtotal + shipping + tax - discount
           currency: 'INR',
+          couponCode: pricing.coupon?.code || null,
+          couponType: pricing.coupon?.type || null,
+          couponValue: pricing.coupon?.value || null,
           reservationExpiresAt,
           shippingAddressId: shippingSnapshot.id,
           billingAddressId: billingSnapshotId,
           items: {
-            create: cart.items.map(item => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            create: cart.items.map((item: any) => ({
               productId: item.product.id,
               variantId: item.variant.id,
               productName: item.product.name,
