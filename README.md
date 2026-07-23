@@ -89,6 +89,16 @@ You can verify that the application is running and successfully connected to the
 - Created Address model supporting Indian formats (6-digit PIN validation).
 - Implemented `AddressType` enum (HOME, WORK, OTHER).
 - Created safe backend service logic (`UserService`, `AddressService`) with proper user isolation.
-- Built development REST APIs for managing addresses (`/api/users/:userId/addresses`).
 - Added Prisma transactions to handle switching `isDefaultShipping` and `isDefaultBilling`.
-- **Note:** Authentication is NOT implemented yet. These APIs currently use the URL parameter as identity solely for Version 2 domain testing.
+
+## Version 3 Scope — Authentication & Authorization
+- **Authentication Framework**: Integrated **Better Auth** (`^1.6.24`) with PostgreSQL & Prisma 7 adapter.
+- **Email Verification**: Integrated **Resend** (`^6.18.0`) service layer for transactional email verification and OTP dispatch.
+- **Database Schema**: Expanded `User` model (`emailVerified`, `image`, relations) and added `Session`, `Account`, and `Verification` models.
+- **Customer Registration**: Secure public registration defaulting strictly to `CUSTOMER` role and `ACTIVE` status. Includes email normalization and duplicate prevention.
+- **Admin Security**: Admin accounts are provisioned via controlled development mechanisms (`AuthService.seedAdminUser`). No public `/register-admin` endpoint exists.
+- **Session Management**: Reusable `AuthService.requireAuth` and `AuthService.requireRole` helpers enforcing active session, `CUSTOMER` / `ADMIN` roles, and blocking `SUSPENDED` / `DEACTIVATED` accounts.
+- **Address Security Migration**: Completely deleted insecure V2 URL-trusted routes (`/api/users/[userId]/addresses`). Introduced secure `/api/me/addresses` routes where user identity is strictly derived from verified Better Auth sessions.
+- **Self Profile Endpoint**: Added `GET /api/me` returning sanitized authenticated user details.
+- **Rate Limiting**: Added `checkRateLimit` utility enforcing request limits on sensitive authentication endpoints.
+

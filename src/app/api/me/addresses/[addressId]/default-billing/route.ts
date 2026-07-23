@@ -1,15 +1,17 @@
 import { NextRequest } from 'next/server';
+import { AuthService } from '@/server/services/auth.service';
 import { AddressService } from '@/server/services/address.service';
-import { handleError } from '@/utils/error-handler';
 import { successResponse } from '@/utils/api-response';
+import { handleError } from '@/utils/error-handler';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ userId: string; addressId: string }> }
+  { params }: { params: Promise<{ addressId: string }> }
 ) {
   try {
-    const { userId, addressId } = await params;
-    const address = await AddressService.setDefaultBilling(addressId, userId);
+    const user = await AuthService.requireAuth(req.headers);
+    const { addressId } = await params;
+    const address = await AddressService.setDefaultBilling(addressId, user.id);
     return successResponse(address, 'Default billing address updated successfully');
   } catch (error) {
     return handleError(error);

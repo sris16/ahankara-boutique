@@ -4,6 +4,7 @@ import { emailSchema } from '../validators/user.validator';
 
 // Safe user serialization to prevent leaking future sensitive fields
 export function serializeUser(user: User) {
+  const isVerified = user.emailVerified || !!user.emailVerifiedAt;
   return {
     id: user.id,
     email: user.email,
@@ -11,7 +12,8 @@ export function serializeUser(user: User) {
     phone: user.phone,
     role: user.role,
     status: user.status,
-    emailVerifiedAt: user.emailVerifiedAt,
+    emailVerified: isVerified,
+    emailVerifiedAt: isVerified ? (user.emailVerifiedAt ?? user.updatedAt) : null,
     createdAt: user.createdAt,
   };
 }
