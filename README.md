@@ -102,3 +102,33 @@ You can verify that the application is running and successfully connected to the
 - **Self Profile Endpoint**: Added `GET /api/me` returning sanitized authenticated user details.
 - **Rate Limiting**: Added `checkRateLimit` utility enforcing request limits on sensitive authentication endpoints.
 
+## Version 4 Scope — Categories & Collections
+- Created `Category` architecture for deeply nested category hierarchies (`parentId` reference). Includes prevention of self-parent loops and cycle detection.
+- Protected parent category deletion (cannot delete categories containing children).
+- Implemented `Collection` architecture for curated merchandising groups with features like `isFeatured` and automatic availability scheduling (`startsAt`, `endsAt`).
+- Deterministic, standardized URL-safe slug architecture for both entities, enforcing uniqueness.
+- **Admin APIs**: `POST`, `GET`, `PATCH`, `DELETE` operations secured with `requireRole(ADMIN)`.
+- **Public APIs**: Read-only fetch operations that automatically filter for `isActive: true` and current schedule validity.
+- **IMPORTANT**: Products are NOT implemented in Version 4. This establishes taxonomy before product inclusion.
+
+## Version 5 Scope — Product Catalog & Product Images
+- **Product Model**: Introduced robust product schema handling Name, Slug, Descriptions, Base Price, Compare-At Price, Category references, and explicit Collections matching.
+- **Product Status Lifecycle**: Products support `DRAFT`, `PUBLISHED`, and `ARCHIVED` statuses, preventing unintended public visibility.
+- **Money Representation**: Base Price and Compare-At price are correctly stored as integers (minor units / paise) avoiding floating-point precision issues.
+- **Cloudinary Architecture**: Integrated robust server-side Cloudinary upload and deletion operations, organizing media elegantly into unique product folders, while cleanly segregating operations using `CloudinaryService`.
+- **Product Images Model**: Advanced product media management resolving strict primary image rules, transactional image switching, explicit sort ordering, dimension scaling, and DB orphan-cleanup.
+- **APIs**:
+  - **Admin APIs**: Feature-complete authenticated APIs providing Create, Retrieval, Full-Update, Publish, Archive, and Collection-Membership transactional assignment. Deep media management provided through dedicated image endpoints.
+  - **Public APIs**: Read-only APIs gracefully surfacing only `PUBLISHED` products adhering to `Category` and `Collection` public-visibility policies. Supports pagination, complex filtering (category, collection, price bounds), generic search, and targeted sorting.
+- **Security**: Robust `ADMIN` lock enforced across all mutations.
+- **NOTE**: Product Variants and Inventory are NOT part of Version 5.
+
+## Version 6 Scope — Product Variants & Inventory Management
+- **ProductVariant Model**: Advanced variant architecture managing Size, Colour, SKU (unique constraint), and override Pricing logic in integers (paise). Supports safe normalizations across properties.
+- **Inventory & Stock Management**: Rigid 1:1 `Inventory` linkage utilizing atomic database transactions (`$executeRaw`) to flawlessly protect against parallel stock reservation races, negative stock, and logic desyncs.
+- **Inventory Audit Logging**: Transparent immutable `InventoryTransaction` event tracking for granular traceability around RESTOCK, RESERVATION, SALE, and ADJUSTMENT operations.
+- **Availability State**: `IN_STOCK`, `LOW_STOCK`, and `OUT_OF_STOCK` correctly mapped alongside the `hasAvailableStock` derived boolean preventing inactive/dry listings from frontend consumption.
+- **APIs**:
+  - **Admin APIs**: Secured APIs allowing CRUD operations over Variants, manual Stock Adjustment operations, and Low-Stock querying.
+  - **Public APIs**: Enhanced public Product payload mapping cleanly parsed inventory states and variant parameters dynamically without leaking warehouse operational limits to unauthenticated entities.
+- **Security & Integrity**: End-to-end admin boundary checking. Strict logical variant isolation and database constraints enforcing non-destructive cascades.

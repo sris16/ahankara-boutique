@@ -7,6 +7,10 @@ const envSchema = z.object({
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
   RESEND_API_KEY: z.string().optional(),
   AUTH_EMAIL_FROM: z.string().default('Ahankara Boutique <onboarding@resend.dev>'),
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 });
 
 export const env = (() => {

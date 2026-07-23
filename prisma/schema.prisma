@@ -35,10 +35,10 @@ model SystemHealth {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String  @id @default(uuid())
+  email         String  @unique
   name          String?
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean @default(false)
   image         String?
   phone         String?
 
@@ -51,6 +51,9 @@ model User {
   addresses Address[]
   sessions  Session[]
   accounts  Account[]
+  cart      Cart?
+  wishlist  WishlistItem[]
+  orders    Order[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,3 +140,366 @@ model Address {
   @@map("addresses")
 }
 
+model Category {
+  id              String     @id @default(uuid())
+  name            String
+  slug            String     @unique
+  description     String?
+  parentId        String?
+  parent          Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryToCategory")
+  imageUrl        String?
+  icon            String?
+  isActive        Boolean    @default(true)
+  sortOrder       Int        @default(0)
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  products Product[]
+
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+model Collection {
+  id              String    @id @default(uuid())
+  name            String
+  slug            String    @unique
+  description     String?
+  imageUrl        String?
+  isActive        Boolean   @default(true)
+  isFeatured      Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  products ProductCollection[]
+
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([sortOrder])
+  @@map("collections")
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Product {
+  id               String  @id @default(uuid())
+  name             String
+  slug             String  @unique
+  shortDescription String?
+  description      String?
+
+  basePrice      Int // Stored in paise
+  compareAtPrice Int? // Stored in paise
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  isFeatured Boolean       @default(false)
+  status     ProductStatus @default(DRAFT)
+
+  metaTitle       String?
+  metaDescription String?
+
+  collections   ProductCollection[]
+  images        ProductImage[]
+  variants      ProductVariant[]
+  wishlistItems WishlistItem[]
+  orderItems    OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isFeatured])
+  @@index([createdAt])
+  @@map("products")
+}
+
+model ProductCollection {
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@id([productId, collectionId])
+  @@index([productId])
+  @@index([collectionId])
+  @@index([sortOrder])
+  @@map("product_collections")
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url       String
+  secureUrl String
+  publicId  String
+
+  altText String?
+
+  width  Int?
+  height Int?
+  format String?
+  bytes  Int?
+
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([sortOrder])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id             String   @id @default(uuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku            String   @unique
+  size           String?
+  color          String?
+
+  price          Int?     // Stored in paise, overrides basePrice if present
+  compareAtPrice Int?     // Stored in paise, overrides compareAtPrice if present
+
+  isActive       Boolean  @default(true)
+
+  inventory      Inventory?
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Note: Application layer must enforce logical uniqueness for null size/color combinations
+  @@unique([productId, size, color])
+  @@index([productId])
+  @@index([isActive])
+  @@map("product_variants")
+}
+
+model Inventory {
+  id                String   @id @default(uuid())
+  variantId         String   @unique
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  quantity          Int      @default(0)
+  reservedQuantity  Int      @default(0)
+
+  lowStockThreshold Int      @default(0)
+
+  transactions      InventoryTransaction[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("inventories")
+}
+
+enum InventoryTransactionType {
+  RESTOCK
+  ADJUSTMENT
+  RESERVATION
+  RESERVATION_RELEASE
+  SALE
+  RETURN
+}
+
+model InventoryTransaction {
+  id             String                   @id @default(uuid())
+  inventoryId    String
+  inventory      Inventory                @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  type           InventoryTransactionType
+
+  quantityChange Int
+
+  quantityBefore Int
+  quantityAfter  Int
+
+  reservedBefore Int
+  reservedAfter  Int
+
+  reason         String?
+  reference      String?
+
+  createdAt      DateTime                 @default(now())
+
+  @@index([inventoryId])
+  @@index([createdAt])
+  @@map("inventory_transactions")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  items     CartItem[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String         @id @default(uuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  
+  quantity  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+  @@index([cartId])
+  @@index([variantId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("wishlist_items")
+}
+
+model Order {
+  id                 String   @id @default(uuid())
+  orderNumber        String   @unique
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  idempotencyKey     String?
+
+  status             OrderStatus   @default(PENDING_PAYMENT)
+  paymentStatus      PaymentStatus @default(PENDING)
+
+  subtotal           Int
+  shippingAmount     Int     @default(0)
+  discountAmount     Int     @default(0)
+  taxAmount          Int     @default(0)
+  totalAmount        Int
+
+  currency           String  @default("INR")
+
+  reservationExpiresAt DateTime?
+
+  shippingAddressId  String? @unique
+  billingAddressId   String? @unique
+  
+  shippingAddress    OrderAddress? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress     OrderAddress? @relation("BillingAddress", fields: [billingAddressId], references: [id])
+
+  items              OrderItem[]
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([orderNumber])
+  @@map("orders")
+}
+
+model OrderAddress {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  postalCode  String
+  country     String
+  landmark    String?
+
+  shippingFor Order? @relation("ShippingAddress")
+  billingFor  Order? @relation("BillingAddress")
+
+  @@map("order_addresses")
+}
+
+model OrderItem {
+  id             String  @id @default(uuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId      String?
+  variant        ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  
+  productName    String
+  productSlug    String
+  sku            String
+  size           String?
+  color          String?
+
+  unitPrice      Int
+  compareAtPrice Int?
+
+  quantity       Int
+  lineTotal      Int
+
+  createdAt      DateTime @default(now())
+
+  @@index([orderId])
+  @@map("order_items")
+}
