@@ -60,6 +60,9 @@ model User {
   wishlist          WishlistItem[]
   orders            Order[]
   couponRedemptions CouponRedemption[]
+  cancellations     OrderCancellation[]
+  returnRequests    ReturnRequest[]
+  exchangeRequests  ExchangeRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -219,6 +222,40 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum FulfillmentStatus {
+  UNFULFILLED
+  PROCESSING
+  PARTIALLY_FULFILLED
+  FULFILLED
+  DELIVERED
+  CANCELLED
+  RTO
+}
+
+enum ShippingProvider {
+  MOCK
+  SHIPROCKET
+  DELHIVERY
+  MANUAL
+}
+
+enum ShipmentStatus {
+  PENDING
+  READY_TO_SHIP
+  SHIPMENT_CREATED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  DELIVERY_ATTEMPTED
+  DELIVERY_FAILED
+  RTO_INITIATED
+  RTO_IN_TRANSIT
+  RTO_DELIVERED
+  CANCELLED
 }
 
 model Product {
@@ -438,8 +475,9 @@ model Order {
 
   idempotencyKey String?
 
-  status        OrderStatus   @default(PENDING_PAYMENT)
-  paymentStatus PaymentStatus @default(PENDING)
+  status            OrderStatus       @default(PENDING_PAYMENT)
+  paymentStatus     PaymentStatus     @default(PENDING)
+  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
 
   subtotal       Int
   shippingAmount Int @default(0)
@@ -463,7 +501,12 @@ model Order {
 
   items            OrderItem[]
   payments         Payment[]
+  shipments        Shipment[]
   couponRedemption CouponRedemption?
+  cancellation     OrderCancellation?
+  returnRequests   ReturnRequest[]
+  exchangeRequests ExchangeRequest[]
+  refunds          Refund[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -511,10 +554,15 @@ model OrderItem {
   unitPrice      Int
   compareAtPrice Int?
 
-  quantity  Int
-  lineTotal Int
+  quantity       Int
+  lineTotal      Int
+  discountAmount Int @default(0)
 
   createdAt DateTime @default(now())
+
+  shipmentItems ShipmentItem[]
+  returnItems   ReturnItem[]
+  exchangeItems ExchangeItem[]
 
   @@index([orderId])
   @@map("order_items")
@@ -646,4 +694,287 @@ model CouponRedemption {
   @@index([couponId])
   @@index([userId])
   @@map("coupon_redemptions")
+}
+
+model Shipment {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  provider           ShippingProvider @default(MOCK)
+  providerShipmentId String?
+  awb                String?
+  trackingNumber     String?
+
+  status      ShipmentStatus @default(PENDING)
+  courierName String?
+  trackingUrl String?
+
+  estimatedDeliveryAt DateTime?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+  cancelledAt         DateTime?
+
+  items          ShipmentItem[]
+  trackingEvents ShipmentTrackingEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@map("shipments")
+}
+
+model ShipmentItem {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  quantity Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([shipmentId, orderItemId])
+  @@index([shipmentId])
+  @@map("shipment_items")
+}
+
+model ShipmentTrackingEvent {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  providerEventId String?        @unique
+  status          ShipmentStatus
+  message         String?
+  location        String?
+  eventTime       DateTime
+
+  rawProviderStatus Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([shipmentId])
+  @@index([eventTime])
+  @@map("shipment_tracking_events")
+}
+
+// ----------------------------------------------------------------------
+// V12: Order Cancellation, Returns, Exchanges & Refunds
+// ----------------------------------------------------------------------
+
+enum CancellationInitiator {
+  CUSTOMER
+  ADMIN
+  SYSTEM
+}
+
+enum CancellationStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model OrderCancellation {
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  requestedByUserId String?
+  user              User?   @relation(fields: [requestedByUserId], references: [id], onDelete: SetNull)
+
+  initiator CancellationInitiator @default(CUSTOMER)
+  reason    String?
+  note      String?
+  status    CancellationStatus    @default(REQUESTED)
+
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([orderId])
+  @@map("order_cancellations")
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PICKUP_PENDING
+  IN_TRANSIT
+  RECEIVED
+  INSPECTION_PENDING
+  ACCEPTED
+  PARTIALLY_ACCEPTED
+  REJECTED_AFTER_INSPECTION
+  REFUND_PENDING
+  REFUNDED
+  COMPLETED
+  CANCELLED
+}
+
+enum ReturnReason {
+  SIZE_ISSUE
+  DAMAGED
+  DEFECTIVE
+  WRONG_ITEM
+  NOT_AS_DESCRIBED
+  QUALITY_ISSUE
+  CHANGED_MIND
+  OTHER
+}
+
+model ReturnRequest {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status       ReturnStatus @default(REQUESTED)
+  reason       ReturnReason
+  customerNote String?
+  adminNote    String?
+
+  requestedAt DateTime  @default(now())
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  receivedAt  DateTime?
+  inspectedAt DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  items   ReturnItem[]
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@map("return_requests")
+}
+
+model ReturnItem {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  quantity Int
+  reason   ReturnReason?
+
+  condition  String?
+  resolution String?
+
+  approvedQuantity Int @default(0)
+  receivedQuantity Int @default(0)
+  acceptedQuantity Int @default(0)
+
+  @@unique([returnRequestId, orderItemId])
+  @@index([returnRequestId])
+  @@map("return_items")
+}
+
+enum ExchangeStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RETURN_PENDING
+  RETURN_RECEIVED
+  REPLACEMENT_PENDING
+  REPLACEMENT_SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model ExchangeRequest {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status      ExchangeStatus @default(REQUESTED)
+  reason      String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  approvedAt  DateTime?
+  completedAt DateTime?
+
+  items ExchangeItem[]
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@map("exchange_requests")
+}
+
+model ExchangeItem {
+  id                String          @id @default(uuid())
+  exchangeRequestId String
+  exchangeRequest   ExchangeRequest @relation(fields: [exchangeRequestId], references: [id], onDelete: Cascade)
+
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  quantity Int
+
+  replacementVariantId String
+  // Using explicit String type for relations instead of directly mapping to prevent referential cascade chaos
+  // replacementVariant ProductVariant @relation(fields: [replacementVariantId], references: [id])
+
+  @@unique([exchangeRequestId, orderItemId])
+  @@index([exchangeRequestId])
+  @@map("exchange_items")
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REQUIRES_REVIEW
+}
+
+model Refund {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  paymentId String?
+  // Using string relation instead of strict Prisma FK to Payment if payment may not exist for some offline orders
+  // payment Payment? @relation(fields: [paymentId], references: [id])
+
+  returnRequestId String?
+  returnRequest   ReturnRequest? @relation(fields: [returnRequestId], references: [id], onDelete: SetNull)
+
+  providerRefundId String? @unique
+  idempotencyKey   String? @unique
+
+  amount Int // in paise
+  status RefundStatus @default(PENDING)
+  reason String?
+
+  failureReason String?
+
+  initiatedAt DateTime  @default(now())
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([idempotencyKey])
+  @@map("refunds")
 }

@@ -132,3 +132,27 @@ You can verify that the application is running and successfully connected to the
   - **Admin APIs**: Secured APIs allowing CRUD operations over Variants, manual Stock Adjustment operations, and Low-Stock querying.
   - **Public APIs**: Enhanced public Product payload mapping cleanly parsed inventory states and variant parameters dynamically without leaking warehouse operational limits to unauthenticated entities.
 - **Security & Integrity**: End-to-end admin boundary checking. Strict logical variant isolation and database constraints enforcing non-destructive cascades.
+
+## Version 11 Scope — Shipping, Logistics & Real-Time Order Tracking
+- **Shipping Architecture**: Established a provider-neutral fulfillment architecture de-coupling logistics from the commercial payment lifecycle.
+- **Provider Abstraction**: Integrated a strict `ShippingProviderAdapter` interface for future external courier implementations (Shiprocket, Delhivery).
+- **Mock Provider**: Created a robust `MockShippingProvider` for reliable development/testing integration and webhooks simulation.
+- **Shipment & ShipmentItem Models**: Models 1:N order fulfillment safely, linking shipments directly back to order items cleanly to support partial and split fulfillments.
+- **Tracking Events**: `ShipmentTrackingEvent` creates a deterministic, chronological history of tracking updates driven by courier webhooks.
+- **Fulfillment Lifecycle & State Machine**: Implemented `FulfillmentStatus` (on Order) and `ShipmentStatus` (on Shipment) ensuring strict state validation (e.g. blocking cancellation of delivered packages, filtering out-of-order webhook events).
+- **Immutable OrderAddress Usage**: Shipments are explicitly built against the V8 immutable snapshot of the customer's delivery address to protect against subsequent user profile modifications.
+- **Customer Tracking API**: Created a secure public tracking endpoint `GET /api/me/orders/[orderId]/tracking` surfacing only safe fulfillment details per authorized customer.
+- **Admin Fulfillment APIs**: Developed complete `admin/shipments` ecosystem for dispatch, status reconciliation, and cancellation mutations.
+- **Webhook Idempotency Architecture**: Built safe, transaction-bound state transitions ignoring duplicated payload event identities.
+- **Inventory & Payment Boundaries**: Verified that fulfillment acts entirely independent of product inventory commits (V9) and financial coupon pricing limits (V10), protecting core platform metrics.
+- **Deferred Provider Integration**: Live Courier API integration natively deferred pending final business vendor selection.
+
+## Version 12 Scope — Order Cancellation, Returns, Exchanges & Refunds
+- **Cancellation Architecture**: Evaluates order and fulfillment state to ensure pre-shipment order cancellation is allowed. Automatically releases stock reservation (unpaid) or creates a refund liability and logical restock (paid).
+- **Return Architecture & State Machine**: Granular control over the returns lifecycle (`REQUESTED` -> `APPROVED` -> `RECEIVED` -> `ACCEPTED` / `PARTIALLY_ACCEPTED`). Restocks physical inventory *only* after items are safely returned and inspected.
+- **Refund Architecture & Constraints**: Ledger-based `Refund` system decoupled from raw provider webhooks. Features idempotency protections, concurrency locking, and maximum-refund calculations guarding against over-refunding.
+- **Coupon-Aware Refund Calculations**: `PostPurchaseService` allocates historical order discounts precisely down to the paise, dynamically scaling partial returns to ensure users only get back the exact effective price paid, rather than standard catalog price.
+- **Exchange Architecture**: Allows size/variant swaps. Ensures exchange stock is successfully reserved upfront upon request approval, while deferring the original item's restock until successful return delivery.
+- **Strict Return/Exchange Quantity Protection**: Protects against concurrent or overlapping return/exchange attempts across items, accurately tracking `purchasedQuantity` vs `remainingEligibleQuantity` via deterministic math.
+- **Security**: Customers have strictly constrained pathways ensuring they cannot authorize their own returns, set refund values, or manipulate external users' properties.
+- **Deferred External Integrations**: Real Razorpay refund endpoints and LIVE reverse logistics courier endpoints are currently deferred until final business vendor selection.

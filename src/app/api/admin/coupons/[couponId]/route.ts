@@ -8,13 +8,14 @@ import { UserRole } from '@prisma/client';
 
 export async function GET(
   request: Request,
-  { params }: { params: { couponId: string } }
+  { params }: { params: Promise<{ couponId: string }> }
 ) {
   try {
-    await AuthService.requireRole(request, UserRole.ADMIN);
+    await AuthService.requireRole(request.headers, UserRole.ADMIN);
+    const resolvedParams = await params;
 
     const coupon = await prisma.coupon.findUnique({
-      where: { id: params.couponId },
+      where: { id: resolvedParams.couponId },
       include: {
         products: true,
         categories: true,
@@ -41,16 +42,17 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { couponId: string } }
+  { params }: { params: Promise<{ couponId: string }> }
 ) {
   try {
     await AuthService.requireRole(request.headers, UserRole.ADMIN);
+    const resolvedParams = await params;
 
     const body = await request.json();
     const validated = updateCouponSchema.parse(body);
 
     const existing = await prisma.coupon.findUnique({
-      where: { id: params.couponId }
+      where: { id: resolvedParams.couponId }
     });
 
     if (!existing) {
@@ -68,28 +70,28 @@ export async function PATCH(
 
     const coupon = await prisma.$transaction(async (tx) => {
       if (validated.productIds !== undefined) {
-        await tx.couponProduct.deleteMany({ where: { couponId: params.couponId } });
+        await tx.couponProduct.deleteMany({ where: { couponId: resolvedParams.couponId } });
         if (validated.productIds.length > 0) {
           await tx.couponProduct.createMany({
-            data: validated.productIds.map(id => ({ couponId: params.couponId, productId: id }))
+            data: validated.productIds.map(id => ({ couponId: resolvedParams.couponId, productId: id }))
           });
         }
       }
 
       if (validated.categoryIds !== undefined) {
-        await tx.couponCategory.deleteMany({ where: { couponId: params.couponId } });
+        await tx.couponCategory.deleteMany({ where: { couponId: resolvedParams.couponId } });
         if (validated.categoryIds.length > 0) {
           await tx.couponCategory.createMany({
-            data: validated.categoryIds.map(id => ({ couponId: params.couponId, categoryId: id }))
+            data: validated.categoryIds.map(id => ({ couponId: resolvedParams.couponId, categoryId: id }))
           });
         }
       }
 
       if (validated.collectionIds !== undefined) {
-        await tx.couponCollection.deleteMany({ where: { couponId: params.couponId } });
+        await tx.couponCollection.deleteMany({ where: { couponId: resolvedParams.couponId } });
         if (validated.collectionIds.length > 0) {
           await tx.couponCollection.createMany({
-            data: validated.collectionIds.map(id => ({ couponId: params.couponId, collectionId: id }))
+            data: validated.collectionIds.map(id => ({ couponId: resolvedParams.couponId, collectionId: id }))
           });
         }
       }
@@ -98,7 +100,7 @@ export async function PATCH(
       const { productIds, categoryIds, collectionIds, ...updateData } = validated;
 
       return await tx.coupon.update({
-        where: { id: params.couponId },
+        where: { id: resolvedParams.couponId },
         data: updateData,
         include: {
           products: true,
@@ -114,7 +116,7 @@ export async function PATCH(
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error('Update coupon error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -123,13 +125,14 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { couponId: string } }
+  { params }: { params: Promise<{ couponId: string }> }
 ) {
   try {
-    await AuthService.requireRole(request, UserRole.ADMIN);
+    await AuthService.requireRole(request.headers, UserRole.ADMIN);
+    const resolvedParams = await params;
 
     const coupon = await prisma.coupon.findUnique({
-      where: { id: params.couponId },
+      where: { id: resolvedParams.couponId },
       include: {
         _count: {
           select: { redemptions: true }
@@ -144,14 +147,14 @@ export async function DELETE(
     if (coupon._count.redemptions > 0) {
       // Deactivate instead of deleting to preserve audit history
       await prisma.coupon.update({
-        where: { id: params.couponId },
+        where: { id: resolvedParams.couponId },
         data: { isActive: false }
       });
       return NextResponse.json({ message: 'Coupon deactivated as it has existing redemptions' });
     }
 
     await prisma.coupon.delete({
-      where: { id: params.couponId }
+      where: { id: resolvedParams.couponId }
     });
 
     return NextResponse.json({ message: 'Coupon deleted successfully' });

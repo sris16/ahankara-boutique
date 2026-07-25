@@ -10,7 +10,7 @@ const validateCouponSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const user = await AuthService.requireUser(request.headers);
+    const user = await AuthService.requireAuth(request.headers);
 
     const body = await request.json();
     const validated = validateCouponSchema.parse(body);
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error('Validate coupon error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
