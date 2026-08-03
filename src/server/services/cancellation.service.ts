@@ -26,7 +26,7 @@ export class CancellationService {
 
     if (role === UserRole.CUSTOMER) {
       // Customers cannot cancel if fulfillment has progressed beyond PROCESSING
-      const irreversibleFulfillmentStatuses = [
+      const irreversibleFulfillmentStatuses: FulfillmentStatus[] = [
         FulfillmentStatus.PARTIALLY_FULFILLED,
         FulfillmentStatus.FULFILLED,
         FulfillmentStatus.DELIVERED,
@@ -38,7 +38,7 @@ export class CancellationService {
 
       // Check if there are any shipments that are beyond READY_TO_SHIP
       const shipments = await prisma.shipment.findMany({ where: { orderId: order.id } });
-      const irreversibleShipmentStatuses = [
+      const irreversibleShipmentStatuses: ShipmentStatus[] = [
         ShipmentStatus.PICKED_UP,
         ShipmentStatus.IN_TRANSIT,
         ShipmentStatus.OUT_FOR_DELIVERY,

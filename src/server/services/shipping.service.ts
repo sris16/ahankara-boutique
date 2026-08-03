@@ -3,12 +3,15 @@ import { ShipmentStatus, ShippingProvider, FulfillmentStatus, OrderStatus } from
 import { ValidationError, ConflictError } from '@/utils/errors';
 import { ShippingProviderAdapter, NormalizedTrackingEvent } from './shipping/providers/shipping-provider.interface';
 import { MockShippingProvider } from './shipping/providers/mock-shipping.provider';
+import { ShiprocketShippingProvider } from './shipping/providers/shiprocket.provider';
 
 export class ShippingService {
   private static getProviderAdapter(provider: ShippingProvider): ShippingProviderAdapter {
     switch (provider) {
       case ShippingProvider.MOCK:
         return new MockShippingProvider();
+      case ShippingProvider.SHIPROCKET:
+        return new ShiprocketShippingProvider();
       default:
         throw new Error(`Provider ${provider} adapter not implemented`);
     }

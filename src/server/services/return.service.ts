@@ -179,7 +179,7 @@ export class ReturnService {
         }
       }
 
-      let newStatus = ReturnStatus.REJECTED_AFTER_INSPECTION;
+      let newStatus: ReturnStatus = ReturnStatus.REJECTED_AFTER_INSPECTION;
       if (totalAccepted === totalRequested) {
         newStatus = ReturnStatus.ACCEPTED;
       } else if (totalAccepted > 0) {

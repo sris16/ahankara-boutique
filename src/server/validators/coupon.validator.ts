@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CouponType } from '@prisma/client';
 
-export const createCouponSchema = z.object({
+const baseCouponSchema = z.object({
   code: z.string().min(3).max(30).regex(/^[A-Z0-9_-]+$/, 'Code can only contain uppercase letters, numbers, hyphens, and underscores'),
   name: z.string().min(2).max(100),
   description: z.string().optional().nullable(),
@@ -17,7 +17,9 @@ export const createCouponSchema = z.object({
   productIds: z.array(z.string().uuid()).optional(),
   categoryIds: z.array(z.string().uuid()).optional(),
   collectionIds: z.array(z.string().uuid()).optional(),
-}).refine(data => {
+});
+
+export const createCouponSchema = baseCouponSchema.refine(data => {
   if (data.startsAt && data.endsAt) {
     return data.startsAt < data.endsAt;
   }
@@ -35,6 +37,20 @@ export const createCouponSchema = z.object({
   path: ["value"]
 });
 
-export const updateCouponSchema = createCouponSchema.partial().extend({
-  code: z.string().min(3).max(30).regex(/^[A-Z0-9_-]+$/).optional(),
+export const updateCouponSchema = baseCouponSchema.partial().refine(data => {
+  if (data.startsAt && data.endsAt) {
+    return data.startsAt < data.endsAt;
+  }
+  return true;
+}, {
+  message: "End date must be after start date",
+  path: ["endsAt"]
+}).refine(data => {
+  if (data.type === CouponType.PERCENTAGE && data.value !== undefined) {
+    return data.value <= 100;
+  }
+  return true;
+}, {
+  message: "Percentage value cannot exceed 100",
+  path: ["value"]
 });

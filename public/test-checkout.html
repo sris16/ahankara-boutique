@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ahankara Boutique - Razorpay Late Payment Test Checkout</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: #f8fafc; margin: 0; }
+    .card { background: #1e293b; padding: 2rem; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); text-align: center; max-width: 520px; width: 100%; }
+    h2 { color: #f8fafc; margin-bottom: 0.5rem; }
+    .badge { background: #ef4444; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+    p { color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .btn { background: #e11d48; color: white; border: none; padding: 0.8rem 1.8rem; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { background: #be123c; }
+    #output { margin-top: 1.5rem; font-family: monospace; font-size: 0.85rem; text-align: left; background: #090d16; padding: 1rem; border-radius: 6px; display: none; color: #38bdf8; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Ahankara Boutique <span class="badge">EXPIRED ORDER</span></h2>
+    <p>Controlled Late Payment Execution (PAYMENT_REVIEW Test)</p>
+    <p><strong>Application Order ID:</strong> 98b4cc24-3810-44e4-9ac8-65a783e8d150<br><strong>Razorpay Order:</strong> order_TJEMF8fKs3qMxK<br><strong>Amount:</strong> ₹1,500.00 (150000 paise)<br><strong>Order Status:</strong> EXPIRED (Reservation Released)</p>
+    <button class="btn" id="payBtn" onclick="openRazorpay()">Execute Late Payment in Test Mode</button>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    function openRazorpay() {
+      const outputDiv = document.getElementById('output');
+      outputDiv.style.display = 'block';
+      outputDiv.style.color = '#38bdf8';
+      outputDiv.innerText = 'Initializing Razorpay Test Modal for EXPIRED Order...';
+
+      if (typeof Razorpay === 'undefined') {
+        outputDiv.style.color = '#ef4444';
+        outputDiv.innerText = 'ERROR: Razorpay checkout.js script is blocked or failed to load.';
+        alert('Razorpay script not loaded. Please check ad-blocker or browser extensions.');
+        return;
+      }
+
+      try {
+        var options = {
+          "key": "rzp_test_TJDXrH4xbqeAu2",
+          "amount": 150000,
+          "currency": "INR",
+          "name": "Ahankara Boutique",
+          "description": "Late Payment Test #AHK-20260729-55CFC3",
+          "order_id": "order_TJEMF8fKs3qMxK",
+          "handler": function (response) {
+            outputDiv.style.color = '#4ade80';
+            outputDiv.innerText = 'Late Payment Transmitted to Razorpay!\n\nRazorpay Payment ID: ' + response.razorpay_payment_id + '\nRazorpay Order ID: ' + response.razorpay_order_id + '\nSignature: ' + response.razorpay_signature;
+            console.log('Payment Response:', response);
+          },
+          "modal": {
+            "ondismiss": function() {
+              outputDiv.style.color = '#fbbf24';
+              outputDiv.innerText = 'Checkout modal dismissed by user.';
+            }
+          },
+          "prefill": {
+            "name": "Sri Sakthi",
+            "email": "srisakthi7890@gmail.com",
+            "contact": "9876543210"
+          },
+          "theme": {
+            "color": "#e11d48"
+          }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.open();
+      } catch (err) {
+        outputDiv.style.color = '#ef4444';
+        outputDiv.innerText = 'Error launching Razorpay modal: ' + err.message;
+        console.error('Razorpay Launch Error:', err);
+      }
+    }
+  </script>
+</body>
+</html>
