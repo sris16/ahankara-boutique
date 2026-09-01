@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const data = createCollectionSchema.parse(body);
     const collection = await CollectionService.createCollection(data);
 
-    return NextResponse.json(successResponse(collection, 'Collection created successfully'), { status: 201 });
+    return successResponse(collection, 'Collection created successfully', 201);
   } catch (error) {
     return handleError(error);
   }
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     await AuthService.requireRole(req.headers, 'ADMIN');
     
     const collections = await CollectionService.getCollections(false);
-    return NextResponse.json(successResponse(collections));
+    return successResponse(collections);
   } catch (error) {
     return handleError(error);
   }

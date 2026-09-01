@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     const { slug } = await params;
     const category = await CategoryService.getCategoryBySlug(slug, true);
-    return NextResponse.json(successResponse(category));
+    return successResponse(category);
   } catch (error) {
     return handleError(error);
   }

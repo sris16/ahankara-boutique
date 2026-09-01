@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const isFeatured = searchParams.get('featured') === 'true';
 
     const collections = await CollectionService.getCollections(true, isFeatured);
-    return NextResponse.json(successResponse(collections));
+    return successResponse(collections);
   } catch (error) {
     return handleError(error);
   }

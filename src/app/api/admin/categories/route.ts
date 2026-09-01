@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const data = createCategorySchema.parse(body);
     const category = await CategoryService.createCategory(data);
 
-    return NextResponse.json(successResponse(category, 'Category created successfully'), { status: 201 });
+    return successResponse(category, 'Category created successfully', 201);
   } catch (error) {
     return handleError(error);
   }
@@ -33,11 +33,11 @@ export async function GET(req: NextRequest) {
 
     if (isTree) {
       const tree = await CategoryService.getCategoryTree(false);
-      return NextResponse.json(successResponse(tree));
+      return successResponse(tree);
     }
 
     const categories = await CategoryService.getCategories(false);
-    return NextResponse.json(successResponse(categories));
+    return successResponse(categories);
   } catch (error) {
     return handleError(error);
   }

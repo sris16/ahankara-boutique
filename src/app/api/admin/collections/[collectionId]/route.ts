@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const { collectionId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
     const collection = await CollectionService.getCollectionById(collectionId, false);
-    return NextResponse.json(successResponse(collection));
+    return successResponse(collection);
   } catch (error) {
     return handleError(error);
   }
@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const data = updateCollectionSchema.parse(body);
     const collection = await CollectionService.updateCollection(collectionId, data);
 
-    return NextResponse.json(successResponse(collection, 'Collection updated successfully'));
+    return successResponse(collection, 'Collection updated successfully');
   } catch (error) {
     return handleError(error);
   }
@@ -48,7 +48,7 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     const { collectionId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
     await CollectionService.deleteCollection(collectionId);
-    return NextResponse.json(successResponse(null, 'Collection deleted successfully'));
+    return successResponse(null, 'Collection deleted successfully');
   } catch (error) {
     return handleError(error);
   }

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     const { slug } = await params;
     const collection = await CollectionService.getCollectionBySlug(slug, true);
-    return NextResponse.json(successResponse(collection));
+    return successResponse(collection);
   } catch (error) {
     return handleError(error);
   }

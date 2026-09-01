@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const { categoryId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
     const category = await CategoryService.getCategoryById(categoryId, false);
-    return NextResponse.json(successResponse(category));
+    return successResponse(category);
   } catch (error) {
     return handleError(error);
   }
@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const data = updateCategorySchema.parse(body);
     const category = await CategoryService.updateCategory(categoryId, data);
 
-    return NextResponse.json(successResponse(category, 'Category updated successfully'));
+    return successResponse(category, 'Category updated successfully');
   } catch (error) {
     return handleError(error);
   }
@@ -49,7 +49,7 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     const { categoryId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
     await CategoryService.deleteCategory(categoryId);
-    return NextResponse.json(successResponse(null, 'Category deleted successfully'));
+    return successResponse(null, 'Category deleted successfully');
   } catch (error) {
     return handleError(error);
   }

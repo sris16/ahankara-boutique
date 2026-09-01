@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
 
     if (isTree) {
       const tree = await CategoryService.getCategoryTree(true);
-      return NextResponse.json(successResponse(tree));
+      return successResponse(tree);
     }
 
     const categories = await CategoryService.getCategories(true);
-    return NextResponse.json(successResponse(categories));
+    return successResponse(categories);
   } catch (error) {
     return handleError(error);
   }

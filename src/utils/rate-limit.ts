@@ -22,10 +22,10 @@ export function checkRateLimit(req: NextRequest, options: RateLimitOptions = {})
   const windowMs = options.windowMs ?? 60 * 1000;
   const max = options.max ?? 5;
 
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    '127.0.0.1';
+  // Rely on Next.js req.ip (populated securely by the hosting platform like Vercel)
+  // Blindly trusting x-forwarded-for allows trivial spoofing bypass on unprotected endpoints
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ip = (req as any).ip ?? req.headers.get('x-forwarded-for') ?? '127.0.0.1';
 
   const now = Date.now();
   const key = `${req.nextUrl.pathname}:${ip}`;
