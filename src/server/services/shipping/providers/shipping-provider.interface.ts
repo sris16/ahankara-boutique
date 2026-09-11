@@ -4,10 +4,13 @@ export interface CreateProviderShipmentRequest {
   shipmentId: string;
   order: Order;
   shippingAddress: OrderAddress;
-  items: (ShipmentItem & { orderItem: OrderItem })[];
+  billingAddress: OrderAddress | null;
+  customerEmail: string;
+  items: (ShipmentItem & { orderItem: OrderItem & { variant: import('@prisma/client').ProductVariant | null } })[];
 }
 
 export interface CreateProviderShipmentResponse {
+  providerOrderId?: string;
   providerShipmentId: string;
   awb?: string;
   trackingNumber?: string;
@@ -25,12 +28,24 @@ export interface NormalizedTrackingEvent {
   rawPayload?: unknown;
 }
 
+export interface AssignAWBRequest {
+  courierId?: string;
+}
+
+export interface AssignAWBResponse {
+  awb: string;
+  courierName?: string;
+  trackingUrl?: string;
+}
+
 export interface ShippingProviderAdapter {
   get providerType(): ShippingProvider;
 
   createShipment(request: CreateProviderShipmentRequest): Promise<CreateProviderShipmentResponse>;
 
-  cancelShipment(providerShipmentId: string): Promise<void>;
+  cancelShipment(providerShipmentId: string, providerOrderId?: string | null): Promise<void>;
 
-  getTracking(providerShipmentId: string): Promise<NormalizedTrackingEvent[]>;
+  assignAWB(providerShipmentId: string, options?: AssignAWBRequest): Promise<AssignAWBResponse>;
+
+  getTracking(providerShipmentId: string, awb: string | null): Promise<NormalizedTrackingEvent[]>;
 }

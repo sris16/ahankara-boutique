@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Ahankara Boutique - Razorpay Late Payment Test Checkout</title>
+  <title>Ahankara Studios - Razorpay Late Payment Test Checkout</title>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: #f8fafc; margin: 0; }
@@ -16,7 +16,7 @@
 </head>
 <body>
   <div class="card">
-    <h2>Ahankara Boutique <span class="badge">EXPIRED ORDER</span></h2>
+    <h2>Ahankara Studios <span class="badge">EXPIRED ORDER</span></h2>
     <p>Controlled Late Payment Execution (PAYMENT_REVIEW Test)</p>
     <p><strong>Application Order ID:</strong> 98b4cc24-3810-44e4-9ac8-65a783e8d150<br><strong>Razorpay Order:</strong> order_TJEMF8fKs3qMxK<br><strong>Amount:</strong> ₹1,500.00 (150000 paise)<br><strong>Order Status:</strong> EXPIRED (Reservation Released)</p>
     <button class="btn" id="payBtn" onclick="openRazorpay()">Execute Late Payment in Test Mode</button>
@@ -42,7 +42,7 @@
           "key": "rzp_test_TJDXrH4xbqeAu2",
           "amount": 150000,
           "currency": "INR",
-          "name": "Ahankara Boutique",
+          "name": "Ahankara Studios",
           "description": "Late Payment Test #AHK-20260729-55CFC3",
           "order_id": "order_TJEMF8fKs3qMxK",
           "handler": function (response) {

@@ -351,6 +351,11 @@ model ProductVariant {
   price          Int? // Stored in paise, overrides basePrice if present
   compareAtPrice Int? // Stored in paise, overrides compareAtPrice if present
 
+  weightInGrams Int?
+  lengthCm      Float?
+  breadthCm     Float?
+  heightCm      Float?
+
   isActive Boolean @default(true)
 
   inventory  Inventory?
@@ -703,6 +708,7 @@ model Shipment {
 
   provider           ShippingProvider @default(MOCK)
   providerShipmentId String?
+  providerOrderId    String?
   awb                String?
   trackingNumber     String?
 

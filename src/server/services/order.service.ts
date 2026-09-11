@@ -42,7 +42,7 @@ export class OrderService {
     if (cart.itemCount === 0) {
       throw new ValidationError('Cannot checkout an empty cart');
     }
-    
+
     // Check for any issues in the evaluated cart (stale items, insufficient stock)
     for (const item of cart.items) {
       if (!item.availability.available) {
@@ -245,7 +245,7 @@ export class OrderService {
 
   static async getCustomerOrders(userId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
-    
+
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where: { userId },
@@ -277,6 +277,14 @@ export class OrderService {
         items: true,
         shippingAddress: true,
         billingAddress: true,
+        cancellation: true,
+        returnRequests: {
+          include: { items: true }
+        },
+        exchangeRequests: {
+          include: { items: true }
+        },
+        refunds: true,
       }
     });
 
@@ -289,7 +297,7 @@ export class OrderService {
 
   static async getAllOrders(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
-    
+
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         orderBy: { createdAt: 'desc' },

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { ShipmentStatus, ShippingProvider, FulfillmentStatus, OrderStatus } from '@prisma/client';
+import { ShipmentStatus, ShippingProvider, FulfillmentStatus, OrderStatus, Shipment } from '@prisma/client';
 import { ValidationError, ConflictError } from '@/utils/errors';
 import { ShippingProviderAdapter, NormalizedTrackingEvent } from './shipping/providers/shipping-provider.interface';
 import { MockShippingProvider } from './shipping/providers/mock-shipping.provider';
@@ -23,8 +23,8 @@ export class ShippingService {
   private static isValidTransition(current: ShipmentStatus, next: ShipmentStatus): boolean {
     const order: Record<ShipmentStatus, number> = {
       PENDING: 0,
-      READY_TO_SHIP: 1,
-      SHIPMENT_CREATED: 2,
+      SHIPMENT_CREATED: 1,
+      READY_TO_SHIP: 2,
       PICKUP_SCHEDULED: 3,
       PICKED_UP: 4,
       IN_TRANSIT: 5,
@@ -37,7 +37,7 @@ export class ShippingService {
       RTO_DELIVERED: 10,
       CANCELLED: 99
     };
-    
+
     // Ignore out-of-order retrogressions (e.g. DELIVERED back to IN_TRANSIT)
     // unless it's a special reset mechanism, which we don't have.
     if (order[next] < order[current] && current !== ShipmentStatus.DELIVERY_ATTEMPTED) {
@@ -127,7 +127,12 @@ export class ShippingService {
       // 2. Validate Order state
       const order = await tx.order.findUnique({
         where: { id: orderId },
-        include: { shippingAddress: true, shipments: { include: { items: true } } }
+        include: {
+          shippingAddress: true,
+          billingAddress: true,
+          user: { select: { email: true } },
+          shipments: { include: { items: true } }
+        }
       });
 
       if (!order) throw new ValidationError('Order not found');
@@ -173,16 +178,18 @@ export class ShippingService {
             }))
           }
         },
-        include: { items: { include: { orderItem: true } } }
+        include: { items: { include: { orderItem: { include: { variant: true } } } } }
       });
 
       // 5. Call Provider Adapter
       const adapter = this.getProviderAdapter(providerType);
-      
+
       const providerRequest = {
         shipmentId: shipment.id,
         order,
         shippingAddress: order.shippingAddress,
+        billingAddress: order.billingAddress,
+        customerEmail: order.user.email,
         items: shipment.items
       };
 
@@ -193,6 +200,7 @@ export class ShippingService {
         where: { id: shipment.id },
         data: {
           status: ShipmentStatus.SHIPMENT_CREATED,
+          providerOrderId: providerResponse.providerOrderId,
           providerShipmentId: providerResponse.providerShipmentId,
           awb: providerResponse.awb,
           trackingNumber: providerResponse.trackingNumber,
@@ -216,7 +224,7 @@ export class ShippingService {
       await this.syncOrderFulfillmentStatus(orderId, tx);
 
       return updatedShipment;
-    });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   public static async cancelShipment(shipmentId: string) {
@@ -234,7 +242,7 @@ export class ShippingService {
 
       const adapter = this.getProviderAdapter(shipment.provider);
       if (shipment.providerShipmentId) {
-        await adapter.cancelShipment(shipment.providerShipmentId);
+        await adapter.cancelShipment(shipment.providerShipmentId, shipment.providerOrderId);
       }
 
       const cancelled = await tx.shipment.update({
@@ -257,7 +265,60 @@ export class ShippingService {
       await this.syncOrderFulfillmentStatus(shipment.orderId, tx);
 
       return cancelled;
-    });
+    }, { maxWait: 5000, timeout: 20000 });
+  }
+
+  public static async assignAWB(shipmentId: string, courierId?: string) {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Lock the row to prevent concurrent assignment attempts
+      const lockedShipments = await tx.$queryRaw<Shipment[]>`SELECT * FROM shipments WHERE id = ${shipmentId} FOR UPDATE`;
+      if (!lockedShipments.length) throw new ValidationError('Shipment not found');
+
+      const shipment = lockedShipments[0];
+
+      // 2. Idempotency Check
+      if (shipment.awb) {
+        return shipment; // Already assigned, do nothing safely
+      }
+
+      // 3. Validation
+      if (!this.isValidTransition(shipment.status, ShipmentStatus.READY_TO_SHIP)) {
+        throw new ConflictError(`Cannot assign AWB to shipment in ${shipment.status} state`);
+      }
+
+      if (!shipment.providerShipmentId) {
+        throw new ConflictError('Cannot assign AWB: missing provider shipment ID');
+      }
+
+      const adapter = this.getProviderAdapter(shipment.provider);
+
+      // 4. Provider Call
+      const response = await adapter.assignAWB(shipment.providerShipmentId, { courierId });
+
+      // 5. DB Persistence
+      const updated = await tx.shipment.update({
+        where: { id: shipment.id },
+        data: {
+          status: ShipmentStatus.READY_TO_SHIP,
+          awb: response.awb,
+          courierName: response.courierName,
+          trackingUrl: response.trackingUrl,
+          updatedAt: new Date()
+        }
+      });
+
+      // 6. Tracking Event
+      await tx.shipmentTrackingEvent.create({
+        data: {
+          shipmentId: shipment.id,
+          status: ShipmentStatus.READY_TO_SHIP,
+          eventTime: new Date(),
+          message: `AWB Assigned: ${response.awb}${response.courierName ? ` via ${response.courierName}` : ''}`
+        }
+      });
+
+      return updated;
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   public static async processTrackingEvent(shipmentId: string, event: NormalizedTrackingEvent) {
@@ -292,7 +353,7 @@ export class ShippingService {
       // 3. Update Shipment Status safely
       if (this.isValidTransition(shipment.status, event.status)) {
         const updateData: Record<string, unknown> = { status: event.status };
-        
+
         if (event.status === ShipmentStatus.DELIVERED && !shipment.deliveredAt) {
           updateData.deliveredAt = event.eventTime;
         } else if (event.status === ShipmentStatus.SHIPMENT_CREATED && !shipment.shippedAt) {
@@ -308,6 +369,6 @@ export class ShippingService {
       }
 
       return await tx.shipment.findUnique({ where: { id: shipmentId } });
-    });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 }

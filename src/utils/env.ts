@@ -6,7 +6,7 @@ const envSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(16).default('ahankara_boutique_v3_super_secret_key_32bytes'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
   RESEND_API_KEY: z.string().optional(),
-  AUTH_EMAIL_FROM: z.string().default('Ahankara Boutique <onboarding@resend.dev>'),
+  AUTH_EMAIL_FROM: z.string().default('Ahankara Studios <onboarding@resend.dev>'),
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
@@ -18,6 +18,8 @@ const envSchema = z.object({
   // Shiprocket
   SHIPROCKET_EMAIL: z.string().optional(),
   SHIPROCKET_PASSWORD: z.string().optional(),
+  SHIPROCKET_PICKUP_LOCATION: z.string().min(1, 'SHIPROCKET_PICKUP_LOCATION is required'),
+  SHIPROCKET_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export const env = (() => {

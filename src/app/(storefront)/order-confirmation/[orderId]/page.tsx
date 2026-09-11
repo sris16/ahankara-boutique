@@ -70,7 +70,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
           Your order <strong className="text-foreground">{order.orderNumber}</strong> has been confirmed.
         </p>
         <p className="text-muted-foreground mt-2">
-          We'll send you an email with shipping information when your order ships.
+          We&apos;ll send you an email with shipping information when your order ships.
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
         <div className="md:col-span-2 flex flex-col gap-8">
           <div className="border rounded-sm p-6">
             <h2 className="text-lg font-medium uppercase tracking-wide mb-6 border-b pb-4">Order Details</h2>
-            
+
             <div className="flex flex-col gap-6">
               {order.items.map((item) => (
                 <div key={item.id} className="flex gap-4">
@@ -142,7 +142,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
               <span className="mt-2 block">{order.shippingAddress.phone}</span>
             </p>
           </div>
-          
+
           <div className="border rounded-sm p-6">
             <h2 className="text-sm font-medium uppercase tracking-wide mb-4">Payment Status</h2>
             <p className="text-sm font-medium">
@@ -157,7 +157,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
           </div>
         </div>
       </div>
-      
+
       <div className="mt-12 text-center border-t pt-8">
         <Button asChild variant="outline" size="lg">
           <Link href="/">Continue Shopping</Link>

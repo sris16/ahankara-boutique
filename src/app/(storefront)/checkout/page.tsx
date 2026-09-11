@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const { user, loading: authLoading } = useAuth();
   const { cart, isLoading: cartLoading } = useCart();
   const { addresses, isLoading: addressLoading, createAddress } = useAddress();
-  
+
   const {
     pricingInfo,
     appliedCoupon,
@@ -37,11 +37,11 @@ export default function CheckoutPage() {
   const [selectedShippingId, setSelectedShippingId] = useState<string | null>(null);
   const [selectedBillingId, setSelectedBillingId] = useState<string | null>(null);
   const [isBillingSame, setIsBillingSame] = useState(true);
-  
+
   const [showAddressForm, setShowAddressForm] = useState(false);
-  
+
   const [couponCode, setCouponCode] = useState("");
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!selectedShippingId && addresses.length > 0) {
       const defaultShipping = addresses.find(a => a.isDefaultShipping) || addresses[0];
-      setSelectedShippingId(defaultShipping.id);
+      setTimeout(() => setSelectedShippingId(defaultShipping.id), 0);
     }
   }, [addresses, selectedShippingId]);
 
@@ -71,8 +71,9 @@ export default function CheckoutPage() {
       const newAddress = await createAddress(data);
       setSelectedShippingId(newAddress.id);
       setShowAddressForm(false);
-    } catch (err: any) {
-      alert(err.message || "Failed to save address");
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || "Failed to save address");
     }
   };
 
@@ -90,7 +91,7 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     setCheckoutError(null);
-    
+
     // Idempotency key for this submission attempt
     const idempotencyKey = crypto.randomUUID();
 
@@ -108,8 +109,9 @@ export default function CheckoutPage() {
       const payment = await checkoutApi.createPaymentAttempt(order.id);
       setPaymentAttempt(payment);
 
-    } catch (err: any) {
-      setCheckoutError(err.message || "Failed to process checkout. Please try again.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setCheckoutError(error.message || "Failed to process checkout. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -190,23 +192,23 @@ export default function CheckoutPage() {
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Left Column: Details */}
         <div className="flex-1 flex flex-col gap-10">
-          
+
           {/* Shipping Address */}
           <section>
             <h2 className="text-lg font-medium tracking-wide uppercase mb-6 flex items-center gap-2">
               <span className="bg-foreground text-background w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
               Shipping Address
             </h2>
-            
+
             {showAddressForm ? (
-              <AddressForm 
-                onCancel={() => setShowAddressForm(false)} 
+              <AddressForm
+                onCancel={() => setShowAddressForm(false)}
                 onSubmit={handleAddressSubmit}
               />
             ) : (
-              <AddressSelector 
-                addresses={addresses} 
-                selectedId={selectedShippingId} 
+              <AddressSelector
+                addresses={addresses}
+                selectedId={selectedShippingId}
                 onSelect={setSelectedShippingId}
                 onAddNew={() => setShowAddressForm(true)}
               />
@@ -219,11 +221,11 @@ export default function CheckoutPage() {
               <span className="bg-foreground text-background w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
               Billing Address
             </h2>
-            
+
             <div className="flex items-center gap-2 mb-6">
-              <input 
-                type="checkbox" 
-                id="sameAsShipping" 
+              <input
+                type="checkbox"
+                id="sameAsShipping"
                 checked={isBillingSame}
                 onChange={(e) => setIsBillingSame(e.target.checked)}
                 className="rounded border-input text-foreground focus:ring-foreground"
@@ -234,9 +236,9 @@ export default function CheckoutPage() {
             </div>
 
             {!isBillingSame && (
-              <AddressSelector 
-                addresses={addresses} 
-                selectedId={selectedBillingId} 
+              <AddressSelector
+                addresses={addresses}
+                selectedId={selectedBillingId}
                 onSelect={setSelectedBillingId}
                 onAddNew={() => setShowAddressForm(true)} // In a full implementation, you'd track form mode
               />
@@ -249,7 +251,7 @@ export default function CheckoutPage() {
         <div className="w-full lg:w-[420px] shrink-0">
           <div className="bg-muted/10 rounded-sm p-6 lg:sticky lg:top-24 border">
             <h2 className="font-serif text-xl mb-6 border-b pb-4">Order Summary</h2>
-            
+
             {/* Items */}
             <div className="flex flex-col gap-4 mb-6 border-b pb-6">
               {cart.items.map((item) => (
@@ -292,10 +294,10 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 <form onSubmit={handleCouponSubmit} className="flex gap-2">
-                  <Input 
-                    placeholder="Gift card or discount code" 
-                    value={couponCode} 
-                    onChange={(e) => setCouponCode(e.target.value)} 
+                  <Input
+                    placeholder="Gift card or discount code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
                     className="uppercase placeholder:normal-case"
                   />
                   <Button type="submit" variant="secondary" disabled={!couponCode.trim() || couponProcessing}>
@@ -312,19 +314,19 @@ export default function CheckoutPage() {
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatPrice(displaySubtotal)}</span>
               </div>
-              
+
               {displayDiscount > 0 && (
                 <div className="flex justify-between text-green-600 dark:text-green-400">
                   <span>Discount</span>
                   <span>-{formatPrice(displayDiscount)}</span>
                 </div>
               )}
-              
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
                 <span>{displayShipping === 0 ? "Free" : formatPrice(displayShipping)}</span>
               </div>
-              
+
               {displayTax > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Taxes</span>
@@ -338,9 +340,9 @@ export default function CheckoutPage() {
               <span className="font-medium text-2xl tracking-tight">{formatPrice(displayTotal)}</span>
             </div>
 
-            <Button 
-              className="w-full uppercase tracking-widest h-14" 
-              size="lg" 
+            <Button
+              className="w-full uppercase tracking-widest h-14"
+              size="lg"
               onClick={handleCheckoutSubmit}
               disabled={isSubmitting || hasUnavailableItems || !selectedShippingId}
             >
@@ -350,7 +352,7 @@ export default function CheckoutPage() {
                 <><ShieldCheck className="w-5 h-5 mr-2" /> Place Order</>
               )}
             </Button>
-            
+
             <p className="text-xs text-muted-foreground text-center mt-4">
               By placing your order, you agree to our Terms of Service and Privacy Policy.
             </p>
@@ -360,7 +362,7 @@ export default function CheckoutPage() {
 
       {/* Mount Payment Modal if attempt is active */}
       {paymentAttempt && pendingOrder && (
-        <PaymentHandler 
+        <PaymentHandler
           order={pendingOrder}
           paymentAttempt={paymentAttempt}
           onSuccess={handlePaymentSuccess}

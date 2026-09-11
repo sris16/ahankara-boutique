@@ -16,3 +16,10 @@ export function formatPrice(paise: number) {
     maximumFractionDigits: 0,
   }).format(paise / 100);
 }
+
+export function formatDate(dateString: string | Date) {
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(dateString));
+}

@@ -19,10 +19,10 @@ export class EmailService {
    * Send a branded authentication OTP email via Resend (or log gracefully in development).
    */
   static async sendVerificationOtp({ email, otp, type }: SendVerificationOtpOptions): Promise<boolean> {
-    const subject = `Your Ahankara Boutique Verification Code: ${otp}`;
+    const subject = `Your Ahankara Studios Verification Code: ${otp}`;
     const html = `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #eaeaea; borderRadius: 8px;">
-        <h2 style="color: #1a1a1a; margin-top: 0;">Ahankara Boutique</h2>
+        <h2 style="color: #1a1a1a; margin-top: 0;">Ahankara Studios</h2>
         <p style="color: #4a4a4a; font-size: 15px;">Your verification code for <strong>${type}</strong> is:</p>
         <div style="background-color: #f4f4f5; padding: 16px; text-align: center; border-radius: 6px; margin: 20px 0;">
           <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #111827;">${otp}</span>
