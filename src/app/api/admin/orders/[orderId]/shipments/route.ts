@@ -48,7 +48,11 @@ export async function GET(
     const shipments = await prisma.shipment.findMany({
       where: { orderId: resolvedParams.orderId },
       include: {
-        items: true,
+        items: {
+          include: {
+            orderItem: true
+          }
+        },
         trackingEvents: {
           orderBy: { eventTime: 'desc' }
         }

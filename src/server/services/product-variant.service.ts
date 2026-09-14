@@ -31,6 +31,10 @@ export class ProductVariantService {
           color: validated.color,
           price: validated.price,
           compareAtPrice: validated.compareAtPrice,
+          weightInGrams: validated.weightInGrams,
+          lengthCm: validated.lengthCm,
+          breadthCm: validated.breadthCm,
+          heightCm: validated.heightCm,
           isActive: validated.isActive !== undefined ? validated.isActive : true,
           inventory: {
             create: {
@@ -98,6 +102,10 @@ export class ProductVariantService {
           price: validated.price !== undefined ? validated.price : undefined,
           compareAtPrice: validated.compareAtPrice !== undefined ? validated.compareAtPrice : undefined,
           isActive: validated.isActive !== undefined ? validated.isActive : undefined,
+          weightInGrams: validated.weightInGrams !== undefined ? validated.weightInGrams : undefined,
+          lengthCm: validated.lengthCm !== undefined ? validated.lengthCm : undefined,
+          breadthCm: validated.breadthCm !== undefined ? validated.breadthCm : undefined,
+          heightCm: validated.heightCm !== undefined ? validated.heightCm : undefined,
         },
         include: { inventory: true }
       });

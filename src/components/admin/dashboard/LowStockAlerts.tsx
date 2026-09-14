@@ -43,16 +43,17 @@ export async function LowStockAlerts() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {lowStockItems.map((item: { id: string, sku: string, size: string, color: string | null, availableQuantity: number, product: { name: string } }) => (
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {lowStockItems.map((item: any) => (
               <tr key={item.id} className="hover:bg-muted/5 transition-colors">
-                <td className="px-4 py-3 font-medium">{item.product.name}</td>
+                <td className="px-4 py-3 font-medium">{item.productId}</td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">
                   SKU: {item.sku}<br/>
                   {item.size} {item.color ? `| ${item.color}` : ''}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className="inline-flex items-center justify-center bg-destructive/10 text-destructive font-bold px-2 py-1 rounded-sm min-w-[2rem]">
-                    {item.availableQuantity}
+                    {item.quantity - item.reservedQuantity}
                   </span>
                 </td>
               </tr>

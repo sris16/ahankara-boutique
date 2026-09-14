@@ -26,10 +26,11 @@ const getStatusDisplay = (status: OrderStatus, fulfillment: FulfillmentStatus) =
 
 export default async function OrdersPage() {
   const reqHeaders = await headers();
+  const cookieHeader = reqHeaders.get('cookie') ?? '';
   let data;
 
   try {
-    data = await orderApi.getOrders(1, 20, reqHeaders);
+    data = await orderApi.getOrders(1, 20, { Cookie: cookieHeader });
   } catch (error) {
     console.error("Failed to load orders", error);
     return (
@@ -46,7 +47,7 @@ export default async function OrdersPage() {
         <h2 className="font-serif text-2xl mb-2">No orders yet</h2>
         <p className="text-muted-foreground mb-6">When you place an order, it will appear here.</p>
         <Button asChild>
-          <Link href="/">Start Shopping</Link>
+          <Link href="/products">Start Shopping</Link>
         </Button>
       </div>
     );

@@ -160,7 +160,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
 
       <div className="mt-12 text-center border-t pt-8">
         <Button asChild variant="outline" size="lg">
-          <Link href="/">Continue Shopping</Link>
+          <Link href="/products">Continue Shopping</Link>
         </Button>
       </div>
     </div>

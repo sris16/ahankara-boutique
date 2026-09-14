@@ -36,14 +36,15 @@ const getPaymentStatusColor = (status: PaymentStatus) => {
 export default async function OrderDetailsPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
   const reqHeaders = await headers();
+  const cookieHeader = reqHeaders.get('cookie') ?? '';
 
   let orderData;
   let trackingData;
 
   try {
     const [orderRes, trackingRes] = await Promise.all([
-      orderApi.getOrderById(orderId, reqHeaders),
-      orderApi.getOrderTracking(orderId, reqHeaders).catch(() => null)
+      orderApi.getOrderById(orderId, { Cookie: cookieHeader }),
+      orderApi.getOrderTracking(orderId, { Cookie: cookieHeader }).catch(() => null)
     ]);
 
     orderData = orderRes;

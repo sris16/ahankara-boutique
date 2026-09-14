@@ -19,8 +19,6 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { WishlistProvider } from "@/hooks/use-wishlist";
 import { AddressProvider } from "@/hooks/use-address";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "AHANKARA STUDIOS",
@@ -47,11 +45,9 @@ export default function RootLayout({
             <WishlistProvider>
               <AddressProvider>
                 <div className="flex min-h-screen flex-col selection:bg-primary selection:text-primary-foreground">
-                  <Navbar />
-                  <main className="flex-1">
+                  <main className="flex-1 min-h-screen">
                     {children}
                   </main>
-                  <Footer />
                 </div>
               </AddressProvider>
             </WishlistProvider>

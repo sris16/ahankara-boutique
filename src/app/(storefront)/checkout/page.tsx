@@ -152,7 +152,7 @@ export default function CheckoutPage() {
         <h1 className="font-serif text-3xl mb-4">Your bag is empty</h1>
         <p className="text-muted-foreground mb-8">You need items in your bag to checkout.</p>
         <Button asChild size="lg">
-          <Link href="/">Continue Shopping</Link>
+          <Link href="/products">Continue Shopping</Link>
         </Button>
       </div>
     );

@@ -33,6 +33,11 @@ export const createProductVariantSchema = z.object({
   // Initial inventory
   quantity: z.number().int().min(0, 'Quantity cannot be negative').default(0).optional(),
   lowStockThreshold: z.number().int().min(0, 'Threshold cannot be negative').default(0).optional(),
+  
+  weightInGrams: z.number().int().min(1, 'Weight must be greater than 0').nullable().optional(),
+  lengthCm: z.number().min(0.1, 'Length must be greater than 0').nullable().optional(),
+  breadthCm: z.number().min(0.1, 'Breadth must be greater than 0').nullable().optional(),
+  heightCm: z.number().min(0.1, 'Height must be greater than 0').nullable().optional(),
 }).refine(data => {
   if (data.price && data.compareAtPrice) {
     return data.compareAtPrice >= data.price;
@@ -53,6 +58,11 @@ export const updateProductVariantSchema = z.object({
   
   isActive: z.boolean().optional(),
   lowStockThreshold: z.number().int().min(0).optional(),
+
+  weightInGrams: z.number().int().min(1, 'Weight must be greater than 0').nullable().optional(),
+  lengthCm: z.number().min(0.1, 'Length must be greater than 0').nullable().optional(),
+  breadthCm: z.number().min(0.1, 'Breadth must be greater than 0').nullable().optional(),
+  heightCm: z.number().min(0.1, 'Height must be greater than 0').nullable().optional(),
 }).refine(data => {
   if (data.price && data.compareAtPrice) {
     return data.compareAtPrice >= data.price;

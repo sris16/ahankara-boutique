@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { User } from '@prisma/client';
-import { emailSchema } from '../validators/user.validator';
+import { emailSchema, updateProfileSchema } from '../validators/user.validator';
 
 // Safe user serialization to prevent leaking future sensitive fields
 export function serializeUser(user: User) {
@@ -43,6 +43,22 @@ export class UserService {
         ...data,
         email: normalizedEmail,
       },
+    });
+    
+    return serializeUser(user);
+  }
+
+  static async updateProfile(userId: string, data: unknown) {
+    const validData = updateProfileSchema.parse(data);
+    
+    // Ensure we don't save empty strings if they are meant to be null/undefined for optional fields
+    const updateData: Record<string, string | null> = {};
+    if (validData.name !== undefined) updateData.name = validData.name || null;
+    if (validData.phone !== undefined) updateData.phone = validData.phone || null;
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
     });
     
     return serializeUser(user);

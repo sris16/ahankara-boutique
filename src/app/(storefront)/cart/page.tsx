@@ -66,7 +66,7 @@ export default function CartPage() {
         <h1 className="font-serif text-3xl mb-4">Your bag is waiting.</h1>
         <p className="text-muted-foreground mb-8">Discover our latest pieces and elevate your wardrobe.</p>
         <Button asChild size="lg">
-          <Link href="/">Continue Shopping</Link>
+          <Link href="/products">Continue Shopping</Link>
         </Button>
       </div>
     );

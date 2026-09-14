@@ -20,3 +20,7 @@ export const releaseStockSchema = z.object({
   quantity: z.number().int().min(1, 'Release quantity must be at least 1'),
   reference: z.string().optional()
 });
+
+export const updateThresholdSchema = z.object({
+  lowStockThreshold: z.number().int().min(0, 'Threshold must be at least 0')
+});

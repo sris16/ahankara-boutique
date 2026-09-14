@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { ConflictError, NotFoundError } from '@/utils/errors';
 import { InventoryTransactionType } from '@prisma/client';
-import { adjustStockSchema, reserveStockSchema, releaseStockSchema, commitStockSchema } from '../validators/inventory.validator';
+import { adjustStockSchema, reserveStockSchema, releaseStockSchema, commitStockSchema, updateThresholdSchema } from '../validators/inventory.validator';
 
 export class InventoryService {
   
@@ -187,5 +187,39 @@ export class InventoryService {
         AND (i.quantity - i."reservedQuantity") <= i."lowStockThreshold"
     `;
     return items;
+  }
+
+  static async getInventoryTransactions(productId: string, variantId: string, page = 1, limit = 20) {
+    const variant = await prisma.productVariant.findFirst({ where: { id: variantId, productId }, include: { inventory: true } });
+    if (!variant || !variant.inventory) throw new NotFoundError('Inventory not found');
+
+    const skip = (page - 1) * limit;
+
+    const [total, items] = await Promise.all([
+      prisma.inventoryTransaction.count({ where: { inventoryId: variant.inventory.id } }),
+      prisma.inventoryTransaction.findMany({
+        where: { inventoryId: variant.inventory.id },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      })
+    ]);
+
+    return {
+      data: items,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
+    };
+  }
+
+  static async updateLowStockThreshold(productId: string, variantId: string, data: unknown) {
+    const validated = updateThresholdSchema.parse(data);
+    
+    const variant = await prisma.productVariant.findFirst({ where: { id: variantId, productId }, include: { inventory: true } });
+    if (!variant || !variant.inventory) throw new NotFoundError('Inventory not found');
+
+    return prisma.inventory.update({
+      where: { id: variant.inventory.id },
+      data: { lowStockThreshold: validated.lowStockThreshold }
+    });
   }
 }

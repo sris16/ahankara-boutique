@@ -73,7 +73,7 @@ export default function WishlistPage() {
         <h1 className="font-serif text-3xl mb-4">Your wishlist is empty.</h1>
         <p className="text-muted-foreground mb-8">Save your favorite pieces here.</p>
         <Button asChild size="lg">
-          <Link href="/">Discover Pieces</Link>
+          <Link href="/products">Discover Pieces</Link>
         </Button>
       </div>
     );

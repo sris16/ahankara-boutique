@@ -20,3 +20,8 @@ export const createUserSchema = z.object({
   name: z.string().trim().min(2, 'Name is required').optional(),
   phone: phoneSchema.optional(),
 });
+
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2, 'Name is required').optional(),
+  phone: phoneSchema.optional().or(z.literal('')),
+});

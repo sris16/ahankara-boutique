@@ -299,7 +299,8 @@ export class ProductService {
     if (filters.search) {
       where.OR = [
         { name: { contains: filters.search, mode: 'insensitive' } },
-        { slug: { contains: filters.search, mode: 'insensitive' } }
+        { slug: { contains: filters.search, mode: 'insensitive' } },
+        { variants: { some: { sku: { contains: filters.search, mode: 'insensitive' } } } }
       ];
     }
     if (filters.categoryId) where.categoryId = filters.categoryId;

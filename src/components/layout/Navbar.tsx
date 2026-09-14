@@ -36,10 +36,10 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex flex-1 items-center gap-6">
-          <Link href="/" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+          <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
             New Arrivals
           </Link>
-          <Link href="/" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+          <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
             Collections
           </Link>
         </nav>
@@ -72,7 +72,7 @@ export function Navbar() {
               <Skeleton className="h-9 w-20" />
             ) : user ? (
               <div className="flex items-center gap-4">
-                <Link href="/" className="text-sm font-medium hidden sm:block">
+                <Link href="/account/profile" className="text-sm font-medium hidden sm:block">
                   Account
                 </Link>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -92,10 +92,10 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="flex flex-col px-4 py-6 gap-4">
-            <Link href="/" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+            <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               New Arrivals
             </Link>
-            <Link href="/" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+            <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               Collections
             </Link>
             <div className="h-px bg-border my-2" />
@@ -111,7 +111,7 @@ export function Navbar() {
               )}
             </Link>
             {user && (
-              <Link href="/" className="text-sm font-medium">
+              <Link href="/account/profile" className="text-sm font-medium">
                 Account
               </Link>
             )}
