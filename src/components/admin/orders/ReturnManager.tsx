@@ -22,7 +22,8 @@ export function ReturnManager({ returnRequests }: { returnRequests: any[] }) {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to approve return');
+        const errorMessage = data.message || (typeof data.error === 'string' ? data.error : null) || 'Failed to approve return';
+        throw new Error(errorMessage);
       }
       router.refresh();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,7 +52,8 @@ export function ReturnManager({ returnRequests }: { returnRequests: any[] }) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to inspect return');
+        const errorMessage = data.message || (typeof data.error === 'string' ? data.error : null) || 'Failed to inspect return';
+        throw new Error(errorMessage);
       }
 
       setInspectingReturnId(null);

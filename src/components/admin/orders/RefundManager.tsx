@@ -23,7 +23,8 @@ export function RefundManager({ refunds }: { refunds: any[] }) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to process refund');
+        const errorMessage = data.message || (typeof data.error === 'string' ? data.error : null) || 'Failed to process refund';
+        throw new Error(errorMessage);
       }
 
       router.refresh();

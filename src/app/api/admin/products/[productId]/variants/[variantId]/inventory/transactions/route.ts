@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prod
     const safeLimit = Math.min(limit, 100);
 
     const result = await InventoryService.getInventoryTransactions(productId, variantId, page, safeLimit);
-    return NextResponse.json({ success: true, data: result.data, meta: result.meta });
+    return NextResponse.json({ success: true, data: { data: result.data, meta: result.meta } });
   } catch (error) {
     return handleError(error);
   }

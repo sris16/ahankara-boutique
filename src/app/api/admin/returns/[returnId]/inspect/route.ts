@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
+import { handleError } from "@/utils/error-handler";
 import { AuthService } from '@/server/services/auth.service';
 import { ReturnService } from '@/server/services/return.service';
 import { UserRole } from '@prisma/client';
-import { AppError } from '@/utils/errors';
 import { z } from 'zod';
 
 const inspectPayloadSchema = z.object({
@@ -12,6 +12,7 @@ const inspectPayloadSchema = z.object({
   })).min(1, 'At least one item must be inspected')
 });
 
+// BACKEND-ONLY API - intended to be called from Order Details UI
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ returnId: string }> }
@@ -28,15 +29,8 @@ export async function PATCH(
       validated.items
     );
 
-    return NextResponse.json(updatedReturn);
+    return NextResponse.json({ success: true, data: updatedReturn });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    console.error('Inspect return error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

@@ -45,24 +45,24 @@ export async function RecentOrders() {
           <thead className="text-xs text-muted-foreground uppercase bg-muted/5 border-b">
             <tr>
               <th className="px-4 py-3 font-medium">Order</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
+              <th className="px-4 py-3 font-medium hidden md:table-cell">Customer</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Total</th>
-              <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 font-medium hidden md:table-cell">Date</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {orders.map((order: { id: string, orderNumber: string, status: string, totalAmount: number, createdAt: Date, user: { email?: string } }) => (
               <tr key={order.id} className="hover:bg-muted/5 transition-colors">
                 <td className="px-4 py-3 font-medium">{order.orderNumber}</td>
-                <td className="px-4 py-3 text-muted-foreground">{order.user?.email || "Unknown"}</td>
+                <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{order.user?.email || "Unknown"}</td>
                 <td className="px-4 py-3">
                   <span className="px-2 py-1 bg-foreground/10 text-foreground text-[10px] rounded-sm uppercase font-medium">
                     {order.status.replace(/_/g, " ")}
                   </span>
                 </td>
                 <td className="px-4 py-3 font-medium">{formatPrice(order.totalAmount)}</td>
-                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt.toISOString())}</td>
+                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap hidden md:table-cell">{formatDate(order.createdAt.toISOString())}</td>
               </tr>
             ))}
           </tbody>

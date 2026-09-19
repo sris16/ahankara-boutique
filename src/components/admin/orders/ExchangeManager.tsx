@@ -20,7 +20,8 @@ export function ExchangeManager({ exchangeRequests }: { exchangeRequests: any[] 
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || `Failed to ${action} exchange`);
+        const errorMessage = data.message || (typeof data.error === 'string' ? data.error : null) || 'Failed to ${action} exchange';
+        throw new Error(errorMessage);
       }
       router.refresh();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

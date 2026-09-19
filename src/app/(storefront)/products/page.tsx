@@ -3,6 +3,8 @@ import { apiClient } from "@/lib/api/client";
 import { ProductListResponse, CategoryTree, Collection } from "@/types/catalog";
 import { ProductCard, ProductCardSkeleton } from "@/components/catalog/ProductCard";
 import { CatalogFilters } from "@/components/catalog/CatalogFilters";
+import { FilterChips } from "@/components/catalog/FilterChips";
+import { CatalogPagination } from "@/components/catalog/CatalogPagination";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -52,14 +54,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     <div className="container mx-auto px-4 py-8 md:py-12 flex flex-col md:flex-row gap-8">
       {/* Desktop Sidebar / Mobile Drawer included inside CatalogFilters */}
       <aside className="w-full md:w-64 shrink-0">
-        <CatalogFilters 
-          categories={categoriesTree} 
-          collections={collections} 
-          initialParams={params} 
+        <CatalogFilters
+          categories={categoriesTree}
+          collections={collections}
+          initialParams={params}
         />
       </aside>
 
       <main className="flex-1 min-w-0">
+        <FilterChips categories={categoriesTree} collections={collections} />
+
         <div className="flex flex-col gap-4 mb-8">
           <h1 className="font-serif text-3xl md:text-4xl">
             {params.q ? `Search: ${params.q}` : "All Pieces"}
@@ -99,63 +103,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           )}
         </Suspense>
       </main>
-    </div>
-  );
-}
-
-// Inline simple pagination component for Server Side
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
-function CatalogPagination({ 
-  meta, 
-  searchParams 
-}: { 
-  meta: ProductListResponse["meta"], 
-  searchParams: SearchParamsObject
-}) {
-  const currentPage = meta.page;
-  const totalPages = meta.totalPages;
-
-  const buildPageUrl = (page: number) => {
-    const params = new URLSearchParams(searchParams as Record<string, string>);
-    params.set("page", page.toString());
-    return `/products?${params.toString()}`;
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      {currentPage > 1 ? (
-        <Link 
-          href={buildPageUrl(currentPage - 1)} 
-          className="p-2 border rounded-sm hover:bg-muted transition-colors"
-          aria-label="Previous Page"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Link>
-      ) : (
-        <div className="p-2 border rounded-sm opacity-50 cursor-not-allowed">
-          <ChevronLeft className="w-4 h-4" />
-        </div>
-      )}
-
-      <div className="px-4 py-2 text-sm font-medium">
-        Page {currentPage} of {totalPages}
-      </div>
-
-      {currentPage < totalPages ? (
-        <Link 
-          href={buildPageUrl(currentPage + 1)} 
-          className="p-2 border rounded-sm hover:bg-muted transition-colors"
-          aria-label="Next Page"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-      ) : (
-        <div className="p-2 border rounded-sm opacity-50 cursor-not-allowed">
-          <ChevronRight className="w-4 h-4" />
-        </div>
-      )}
     </div>
   );
 }
