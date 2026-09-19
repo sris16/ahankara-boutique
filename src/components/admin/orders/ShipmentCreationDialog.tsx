@@ -148,9 +148,9 @@ export function ShipmentCreationDialog({ order, shipments, onClose }: ShipmentCr
           <Button onClick={onClose} variant="outline" disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            form="create-shipment-form" 
+          <Button
+            type="submit"
+            form="create-shipment-form"
             disabled={isSubmitting || totalSelected === 0}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >

@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId } = await params;
     const body = await req.json();
-    
+
     await ProductImageService.reorderImages(productId, body);
     return successResponse({ message: 'Images reordered successfully' });
   } catch (error) {

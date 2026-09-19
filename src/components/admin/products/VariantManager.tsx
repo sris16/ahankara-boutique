@@ -108,7 +108,7 @@ export function VariantManager({ product }: { product: AdminProduct }) {
       )}
 
       {isFormOpen && (
-        <VariantForm 
+        <VariantForm
           productId={product.id}
           variant={editingVariant}
           onClose={() => setIsFormOpen(false)}

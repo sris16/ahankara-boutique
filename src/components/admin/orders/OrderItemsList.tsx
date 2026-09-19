@@ -28,7 +28,7 @@ export function OrderItemsList({ order, shipments }: { order: AdminOrder; shipme
         <div className="border-b px-6 py-4 bg-gray-50">
           <h3 className="font-medium text-gray-900">Order Items</h3>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-600 border-b">

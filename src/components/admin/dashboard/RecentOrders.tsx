@@ -1,4 +1,6 @@
-import { adminApi } from "@/lib/api/admin";
+import { OrderService } from "@/server/services/order.service";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { headers } from "next/headers";
 import { PackageX } from "lucide-react";
@@ -8,7 +10,11 @@ export async function RecentOrders() {
   let orders = [];
 
   try {
-    const res = await adminApi.getRecentOrders(5, reqHeaders) as any;
+    // 1. Authorize explicitly at component level to preserve API-like security boundary
+    await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+    // 2. Direct Service Invocation instead of adminApi (HTTP)
+    const res = await OrderService.getAllOrders(1, 5);
     orders = res.orders || [];
   } catch (error) {
     console.error("Failed to fetch recent orders:", error);
@@ -46,7 +52,7 @@ export async function RecentOrders() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {orders.map((order: { id: string, orderNumber: string, status: string, totalAmount: number, createdAt: string, user: { email?: string } }) => (
+            {orders.map((order: { id: string, orderNumber: string, status: string, totalAmount: number, createdAt: Date, user: { email?: string } }) => (
               <tr key={order.id} className="hover:bg-muted/5 transition-colors">
                 <td className="px-4 py-3 font-medium">{order.orderNumber}</td>
                 <td className="px-4 py-3 text-muted-foreground">{order.user?.email || "Unknown"}</td>
@@ -56,7 +62,7 @@ export async function RecentOrders() {
                   </span>
                 </td>
                 <td className="px-4 py-3 font-medium">{formatPrice(order.totalAmount)}</td>
-                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt)}</td>
+                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt.toISOString())}</td>
               </tr>
             ))}
           </tbody>

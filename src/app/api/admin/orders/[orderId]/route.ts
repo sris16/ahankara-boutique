@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ orde
   try {
     const { orderId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
-    
+
     const order = await OrderService.getAdminOrderById(orderId);
     return successResponse(order);
   } catch (error) {

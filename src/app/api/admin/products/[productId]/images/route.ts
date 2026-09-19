@@ -11,12 +11,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prod
   try {
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId } = await params;
-    
+
     const images = await prisma.productImage.findMany({
       where: { productId },
       orderBy: { sortOrder: 'asc' }
     });
-    
+
     return successResponse(images);
   } catch (error) {
     return handleError(error);
@@ -27,10 +27,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId } = await params;
-    
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    
+
     if (!file) {
       throw new ValidationError('File is required in formData under key "file"');
     }

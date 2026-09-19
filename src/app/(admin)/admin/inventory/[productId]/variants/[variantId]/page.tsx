@@ -1,5 +1,8 @@
 import React from 'react';
-import { adminApi } from '@/lib/api/admin';
+import { ProductVariantService } from '@/server/services/product-variant.service';
+import { ProductService } from '@/server/services/product.service';
+import { AuthService } from '@/server/services/auth.service';
+import { UserRole } from '@prisma/client';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { Package, ArrowLeft } from 'lucide-react';
@@ -19,18 +22,22 @@ export default async function InventoryVariantPage({
   params: Promise<{ productId: string; variantId: string }>
 }) {
   const { productId, variantId } = await params;
-  
+
   let variant;
   let product;
-  
+
   try {
     const reqHeaders = await headers();
-    // Use the existing variant endpoint which returns the variant with inventory
-    variant = await adminApi.getVariantById(productId, variantId, reqHeaders);
-    product = await adminApi.getProductById(productId, reqHeaders);
+    await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+    const rawVariant = await ProductVariantService.getVariantById(productId, variantId);
+    const rawProduct = await ProductService.getProductById(productId);
+
+    variant = JSON.parse(JSON.stringify(rawVariant));
+    product = JSON.parse(JSON.stringify(rawProduct));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    if (err.status === 404) {
+    if (err.name === 'NotFoundError' || err.status === 404) {
       notFound();
     }
     throw err;
@@ -68,20 +75,20 @@ export default async function InventoryVariantPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InventoryAdjustmentForm 
-          productId={productId} 
-          variantId={variantId} 
-          inventory={variant.inventory} 
+        <InventoryAdjustmentForm
+          productId={productId}
+          variantId={variantId}
+          inventory={variant.inventory}
         />
-        <InventoryThresholdForm 
-          productId={productId} 
-          variantId={variantId} 
-          inventory={variant.inventory} 
+        <InventoryThresholdForm
+          productId={productId}
+          variantId={variantId}
+          inventory={variant.inventory}
         />
       </div>
 
       <div className="pt-6">
-        <TransactionHistoryTable 
+        <TransactionHistoryTable
           productId={productId}
           variantId={variantId}
         />

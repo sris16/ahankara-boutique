@@ -17,9 +17,9 @@ interface Props {
 
 export function InventoryThresholdForm({ productId, variantId, inventory }: Props) {
   const router = useRouter();
-  
+
   const [thresholdStr, setThresholdStr] = useState<string>(inventory.lowStockThreshold.toString());
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -31,7 +31,7 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isValid || !isChanged) return;
-    
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -40,10 +40,10 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
       await adminApi.updateLowStockThreshold(productId, variantId, {
         lowStockThreshold: threshold
       });
-      
+
       setSuccess(true);
       router.refresh();
-      
+
       setTimeout(() => setSuccess(false), 3000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -56,7 +56,7 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
   return (
     <div className="bg-white rounded-lg border shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-6">Low Stock Configuration</h3>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
@@ -83,8 +83,8 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
               className="max-w-[120px]"
               required
             />
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={!isValid || !isChanged || loading}
               variant="secondary"
             >

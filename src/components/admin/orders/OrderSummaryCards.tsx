@@ -27,7 +27,7 @@ export function OrderSummaryCards({ order }: { order: AdminOrder }) {
       label: 'Fulfillment Status',
       value: order.fulfillmentStatus,
       icon: <Truck className="w-5 h-5 text-indigo-500" />,
-      colorClass: order.fulfillmentStatus === 'DELIVERED' ? 'text-green-600' : 
+      colorClass: order.fulfillmentStatus === 'DELIVERED' ? 'text-green-600' :
                   order.fulfillmentStatus === 'PARTIALLY_FULFILLED' ? 'text-yellow-600' : 'text-gray-900',
     },
     {

@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
   try {
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId, imageId } = await params;
-    
+
     const image = await ProductImageService.setPrimaryImage(productId, imageId);
     return successResponse(image);
   } catch (error) {

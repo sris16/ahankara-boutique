@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
-import { adminApi } from "@/lib/api/admin";
+import { CategoryService } from "@/server/services/category.service";
+import { CollectionService } from "@/server/services/collection.service";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
 import { ProductForm } from "@/components/admin/products/ProductForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -12,11 +15,21 @@ export const metadata = {
 
 export default async function NewProductPage() {
   const reqHeaders = await headers();
-  const cookieHeader = reqHeaders.get('cookie') ?? '';
-  const [categories, collections] = await Promise.all([
-    adminApi.getCategories({ Cookie: cookieHeader }).catch(() => []),
-    adminApi.getCollections({ Cookie: cookieHeader }).catch(() => [])
-  ]);
+  await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+  let categoriesData: any[] = [];
+  let collectionsData: any[] = [];
+
+  try {
+    const [rawCategories, rawCollections] = await Promise.all([
+      CategoryService.getCategories(),
+      CollectionService.getCollections()
+    ]);
+    categoriesData = JSON.parse(JSON.stringify(rawCategories));
+    collectionsData = JSON.parse(JSON.stringify(rawCollections));
+  } catch (err) {
+    console.error("Failed to fetch product dependencies:", err);
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-20">
@@ -32,10 +45,10 @@ export default async function NewProductPage() {
         </div>
       </div>
 
-      <ProductForm 
-        product={null} 
-        categories={categories} 
-        collections={collections} 
+      <ProductForm
+        product={null}
+        categories={categoriesData}
+        collections={collectionsData}
       />
     </div>
   );

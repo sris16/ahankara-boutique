@@ -24,10 +24,10 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    
+
     let startsAt = formData.get("startsAt") as string;
     let endsAt = formData.get("endsAt") as string;
-    
+
     // Ensure endsAt is strictly greater than startsAt if both provided
     if (startsAt && endsAt && new Date(endsAt) <= new Date(startsAt)) {
       setError("End date must be strictly after start date.");
@@ -97,10 +97,10 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <textarea 
-              id="description" 
-              name="description" 
-              defaultValue={collection?.description || ""} 
+            <textarea
+              id="description"
+              name="description"
+              defaultValue={collection?.description || ""}
               className="flex min-h-[80px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
@@ -121,24 +121,24 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
               <Label htmlFor="sortOrder">Sort Order</Label>
               <Input id="sortOrder" name="sortOrder" type="number" defaultValue={collection?.sortOrder ?? 0} />
             </div>
-            
+
             <div className="flex items-center space-x-2 pt-8">
-              <input 
-                type="checkbox" 
-                id="isActive" 
-                name="isActive" 
-                defaultChecked={collection ? collection.isActive : true} 
+              <input
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                defaultChecked={collection ? collection.isActive : true}
                 className="w-4 h-4 rounded-sm border-input"
               />
               <Label htmlFor="isActive">Active</Label>
             </div>
 
             <div className="flex items-center space-x-2 pt-8">
-              <input 
-                type="checkbox" 
-                id="isFeatured" 
-                name="isFeatured" 
-                defaultChecked={collection ? collection.isFeatured : false} 
+              <input
+                type="checkbox"
+                id="isFeatured"
+                name="isFeatured"
+                defaultChecked={collection ? collection.isFeatured : false}
                 className="w-4 h-4 rounded-sm border-input"
               />
               <Label htmlFor="isFeatured">Featured</Label>

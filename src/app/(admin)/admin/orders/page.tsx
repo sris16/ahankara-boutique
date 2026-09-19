@@ -1,5 +1,7 @@
 import React from 'react';
-import { adminApi } from '@/lib/api/admin';
+import { OrderService } from '@/server/services/order.service';
+import { AuthService } from '@/server/services/auth.service';
+import { UserRole } from '@prisma/client';
 import { OrderListTable } from '@/components/admin/orders/OrderListTable';
 import { headers } from 'next/headers';
 import { AlertTriangle } from 'lucide-react';
@@ -16,14 +18,14 @@ export default async function AdminOrdersPage({
 }) {
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || '1', 10);
-  
+
   const requestHeaders = await headers();
-  const cookieHeader = requestHeaders.get('cookie') ?? '';
-  
+
   try {
-    const response = await adminApi.getOrders(page, 20, {
-      Cookie: cookieHeader,
-    });
+    await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
+
+    const rawResponse = await OrderService.getAllOrders(page, 20);
+    const response = JSON.parse(JSON.stringify(rawResponse));
 
     return (
       <div className="space-y-6">

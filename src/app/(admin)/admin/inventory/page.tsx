@@ -1,5 +1,8 @@
 import React from 'react';
-import { adminApi } from '@/lib/api/admin';
+import type { AdminProduct } from '@/types/admin';
+import { ProductService } from '@/server/services/product.service';
+import { AuthService } from '@/server/services/auth.service';
+import { UserRole } from '@prisma/client';
 import { InventoryTable } from '@/components/admin/inventory/InventoryTable';
 import { LowStockAlerts } from '@/components/admin/inventory/LowStockAlerts';
 import { headers } from 'next/headers';
@@ -20,14 +23,20 @@ export default async function InventoryPage({
   const page = typeof params.page === 'string' ? parseInt(params.page, 10) : 1;
   const search = typeof params.search === 'string' ? params.search : undefined;
 
-  let products: any[] = [];
+  let products: AdminProduct[] = [];
   let totalPages = 1;
   let error = null;
 
   try {
     const reqHeaders = await headers();
-    const response = await adminApi.getProducts({ page, limit: 20, search }, reqHeaders);
-    products = response.data;
+
+    // Explicitly enforce ADMIN authorization at the component level
+    await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+    // Directly invoke the service instead of using the HTTP API
+    const response = await ProductService.getAdminProducts({ page, limit: 20, search });
+    // Serialize dates to strings to match the AdminProduct type which expects JSON-serialized data
+    products = JSON.parse(JSON.stringify(response.data));
     totalPages = response.meta.totalPages || 1;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
@@ -62,8 +71,8 @@ export default async function InventoryPage({
                 Page {page} of {totalPages} (paginated by product)
               </p>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   disabled={page <= 1}
                   asChild={page > 1}
@@ -76,8 +85,8 @@ export default async function InventoryPage({
                     <span>Previous</span>
                   )}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   disabled={page >= totalPages}
                   asChild={page < totalPages}

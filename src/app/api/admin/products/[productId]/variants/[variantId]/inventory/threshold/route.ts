@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId, variantId } = await params;
     const body = await req.json();
-    
+
     const result = await InventoryService.updateLowStockThreshold(productId, variantId, body);
     return successResponse(result);
   } catch (error) {

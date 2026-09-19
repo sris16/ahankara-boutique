@@ -29,10 +29,10 @@ export function ShipmentManager({ order, shipments }: { order: AdminOrder; shipm
           <Package className="w-5 h-5 mr-2" />
           Fulfillment
         </h2>
-        
+
         {order.status !== 'CANCELLED' && order.status !== 'EXPIRED' && hasUnfulfilledItems && (
-          <Button 
-            onClick={() => setIsCreating(true)} 
+          <Button
+            onClick={() => setIsCreating(true)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
             size="sm"
           >
@@ -54,10 +54,10 @@ export function ShipmentManager({ order, shipments }: { order: AdminOrder; shipm
       )}
 
       {isCreating && (
-        <ShipmentCreationDialog 
-          order={order} 
-          shipments={shipments} 
-          onClose={() => setIsCreating(false)} 
+        <ShipmentCreationDialog
+          order={order}
+          shipments={shipments}
+          onClose={() => setIsCreating(false)}
         />
       )}
     </div>

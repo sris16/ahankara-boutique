@@ -77,14 +77,14 @@ export function ProductMediaManager({ product }: { product: AdminProduct }) {
 
     const newOrder = [...images];
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    
+
     // Swap
     const temp = newOrder[index];
     newOrder[index] = newOrder[swapIndex];
     newOrder[swapIndex] = temp;
 
     const orderedIds = newOrder.map(img => img.id);
-    
+
     setError(null);
     try {
       await adminApi.reorderImages(product.id, orderedIds);
@@ -103,10 +103,10 @@ export function ProductMediaManager({ product }: { product: AdminProduct }) {
           <p className="text-sm text-muted-foreground">{images.length}/{maxImages} images</p>
         </div>
         <div>
-          <input 
-            type="file" 
-            id="image-upload" 
-            className="hidden" 
+          <input
+            type="file"
+            id="image-upload"
+            className="hidden"
             accept="image/jpeg,image/png,image/webp"
             onChange={handleUpload}
             disabled={!canUpload || isUploading}
@@ -136,23 +136,23 @@ export function ProductMediaManager({ product }: { product: AdminProduct }) {
           {images.map((img, idx) => (
             <div key={img.id} className={`group relative aspect-[3/4] bg-muted border rounded-sm overflow-hidden ${img.isPrimary ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
               <img src={img.secureUrl} alt={img.altText || 'Product image'} className="w-full h-full object-cover" />
-              
+
               {/* Overlay controls */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
                 <div className="flex justify-between items-start">
                   <div className="flex gap-1">
-                    <Button 
-                      variant="secondary" 
-                      size="icon" 
-                      className="h-7 w-7 rounded-sm opacity-90 hover:opacity-100" 
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-7 w-7 rounded-sm opacity-90 hover:opacity-100"
                       onClick={() => handleMove(idx, 'up')}
                       disabled={idx === 0}
                     >
                       <ArrowUp className="w-3 h-3" />
                     </Button>
-                    <Button 
-                      variant="secondary" 
-                      size="icon" 
+                    <Button
+                      variant="secondary"
+                      size="icon"
                       className="h-7 w-7 rounded-sm opacity-90 hover:opacity-100"
                       onClick={() => handleMove(idx, 'down')}
                       disabled={idx === images.length - 1}
@@ -160,9 +160,9 @@ export function ProductMediaManager({ product }: { product: AdminProduct }) {
                       <ArrowDown className="w-3 h-3" />
                     </Button>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-7 w-7 rounded-sm opacity-90 hover:opacity-100 text-destructive border-destructive"
                     onClick={() => handleDelete(img.id)}
                   >
@@ -171,9 +171,9 @@ export function ProductMediaManager({ product }: { product: AdminProduct }) {
                 </div>
 
                 {!img.isPrimary && (
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     className="w-full opacity-90 hover:opacity-100 h-8 text-xs"
                     onClick={() => handleSetPrimary(img.id)}
                   >

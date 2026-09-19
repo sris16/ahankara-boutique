@@ -65,10 +65,10 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
 
   const handleStatusChange = async (action: 'publish' | 'archive') => {
     if (!product) return;
-    const confirmMsg = action === 'publish' 
-      ? 'Are you sure you want to publish this product to the storefront?' 
+    const confirmMsg = action === 'publish'
+      ? 'Are you sure you want to publish this product to the storefront?'
       : 'Are you sure you want to archive this product? It will be hidden from the storefront.';
-    
+
     if (!window.confirm(confirmMsg)) return;
 
     try {
@@ -89,7 +89,7 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
           <p className="text-sm">{error}</p>
         </div>
       )}
-      
+
       {success && (
         <div className="p-3 bg-green-500/10 text-green-700 border border-green-500/20 rounded-sm flex items-start gap-2">
           <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
@@ -119,7 +119,7 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
       )}
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="name">Product Name *</Label>
             <Input id="name" name="name" defaultValue={product?.name} required />
@@ -130,7 +130,7 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="basePrice">Base Price (₹) *</Label>
             <Input id="basePrice" name="basePrice" type="number" step="0.01" min="0" defaultValue={product ? (product.basePrice / 100).toFixed(2) : ""} required />
@@ -143,10 +143,10 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
 
         <div className="space-y-2">
           <Label htmlFor="shortDescription">Short Description</Label>
-          <textarea 
-            id="shortDescription" 
-            name="shortDescription" 
-            defaultValue={product?.shortDescription || ""} 
+          <textarea
+            id="shortDescription"
+            name="shortDescription"
+            defaultValue={product?.shortDescription || ""}
             maxLength={255}
             className="flex min-h-[60px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
@@ -154,21 +154,21 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
 
         <div className="space-y-2">
           <Label htmlFor="description">Full Description</Label>
-          <textarea 
-            id="description" 
-            name="description" 
-            defaultValue={product?.description || ""} 
+          <textarea
+            id="description"
+            name="description"
+            defaultValue={product?.description || ""}
             className="flex min-h-[120px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="categoryId">Category *</Label>
-            <select 
-              id="categoryId" 
-              name="categoryId" 
-              defaultValue={product?.categoryId || ""} 
+            <select
+              id="categoryId"
+              name="categoryId"
+              defaultValue={product?.categoryId || ""}
               required
               className="flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -186,11 +186,11 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
                 const isChecked = product?.collections?.some(pc => pc.collection.id === c.id);
                 return (
                   <div key={c.id} className="flex items-center space-x-2">
-                    <input 
-                      type="checkbox" 
-                      id={`col-${c.id}`} 
-                      name="collectionIds" 
-                      value={c.id} 
+                    <input
+                      type="checkbox"
+                      id={`col-${c.id}`}
+                      name="collectionIds"
+                      value={c.id}
                       defaultChecked={isChecked}
                       className="rounded-sm border-input"
                     />
@@ -211,22 +211,22 @@ export function ProductForm({ product, categories, collections }: ProductFormPro
           </div>
           <div className="space-y-2">
             <Label htmlFor="metaDescription">Meta Description</Label>
-            <textarea 
-              id="metaDescription" 
-              name="metaDescription" 
-              defaultValue={product?.metaDescription || ""} 
+            <textarea
+              id="metaDescription"
+              name="metaDescription"
+              defaultValue={product?.metaDescription || ""}
               className="flex min-h-[60px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
         </div>
-        
+
         <div className="pt-2">
           <div className="flex items-center space-x-2">
-            <input 
-              type="checkbox" 
-              id="isFeatured" 
-              name="isFeatured" 
-              defaultChecked={product ? product.isFeatured : false} 
+            <input
+              type="checkbox"
+              id="isFeatured"
+              name="isFeatured"
+              defaultChecked={product ? product.isFeatured : false}
               className="w-4 h-4 rounded-sm border-input"
             />
             <Label htmlFor="isFeatured" className="font-medium">Feature this product</Label>

@@ -8,12 +8,12 @@ import { Plus, Edit2, Trash2, FolderTree, Folder, AlertTriangle } from "lucide-r
 import { adminApi } from "@/lib/api/admin";
 import { useRouter } from "next/navigation";
 
-export function CategoryManager({ 
-  initialTree, 
-  flatCategories 
-}: { 
-  initialTree: AdminCategoryTree[], 
-  flatCategories: AdminCategory[] 
+export function CategoryManager({
+  initialTree,
+  flatCategories
+}: {
+  initialTree: AdminCategoryTree[],
+  flatCategories: AdminCategory[]
 }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
@@ -114,7 +114,7 @@ export function CategoryManager({
       )}
 
       {isFormOpen && (
-        <CategoryForm 
+        <CategoryForm
           category={editingCategory}
           flatCategories={flatCategories}
           onClose={() => setIsFormOpen(false)}

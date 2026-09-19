@@ -1,4 +1,6 @@
-import { adminApi } from "@/lib/api/admin";
+import { InventoryService } from "@/server/services/inventory.service";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
 import { headers } from "next/headers";
 import { AlertCircle } from "lucide-react";
 
@@ -7,7 +9,11 @@ export async function LowStockAlerts() {
   let lowStockItems = [];
 
   try {
-    const res = await adminApi.getLowStockAlerts(reqHeaders);
+    // 1. Authorize explicitly at component level to preserve API-like security boundary
+    await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+    // 2. Direct Service Invocation instead of adminApi (HTTP)
+    const res = await InventoryService.getLowStockVariants();
     lowStockItems = Array.isArray(res) ? res : [];
   } catch (error) {
     console.error("Failed to fetch low stock alerts:", error);

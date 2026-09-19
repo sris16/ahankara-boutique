@@ -9,10 +9,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prod
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId, variantId } = await params;
     const { searchParams } = new URL(req.url);
-    
+
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
-    
+
     // Safety cap
     const safeLimit = Math.min(limit, 100);
 

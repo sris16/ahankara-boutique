@@ -83,20 +83,20 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <textarea 
-              id="description" 
-              name="description" 
-              defaultValue={category?.description || ""} 
+            <textarea
+              id="description"
+              name="description"
+              defaultValue={category?.description || ""}
               className="flex min-h-[80px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="parentId">Parent Category</Label>
-            <select 
-              id="parentId" 
-              name="parentId" 
-              defaultValue={category?.parentId || ""} 
+            <select
+              id="parentId"
+              name="parentId"
+              defaultValue={category?.parentId || ""}
               className="flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">None (Top Level)</option>
@@ -111,13 +111,13 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
               <Label htmlFor="sortOrder">Sort Order</Label>
               <Input id="sortOrder" name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} />
             </div>
-            
+
             <div className="flex items-center space-x-2 pt-8">
-              <input 
-                type="checkbox" 
-                id="isActive" 
-                name="isActive" 
-                defaultChecked={category ? category.isActive : true} 
+              <input
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                defaultChecked={category ? category.isActive : true}
                 className="w-4 h-4 rounded-sm border-input"
               />
               <Label htmlFor="isActive">Active</Label>

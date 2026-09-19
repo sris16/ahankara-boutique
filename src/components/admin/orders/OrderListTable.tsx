@@ -114,26 +114,28 @@ export function OrderListTable({ data }: OrderListTableProps) {
             Page {pagination.page} of {pagination.totalPages}
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              disabled={pagination.page <= 1}
-            >
-              <Link href={pagination.page > 1 ? `/admin/orders?page=${pagination.page - 1}` : '#'}>
+            {pagination.page <= 1 ? (
+              <Button variant="outline" size="sm" disabled>
                 <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              disabled={pagination.page >= pagination.totalPages}
-            >
-              <Link href={pagination.page < pagination.totalPages ? `/admin/orders?page=${pagination.page + 1}` : '#'}>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/admin/orders?page=${pagination.page - 1}`}>
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                </Link>
+              </Button>
+            )}
+            {pagination.page >= pagination.totalPages ? (
+              <Button variant="outline" size="sm" disabled>
                 Next <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/admin/orders?page=${pagination.page + 1}`}>
+                  Next <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       )}

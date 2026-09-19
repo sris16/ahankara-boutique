@@ -32,7 +32,7 @@ export function ShipmentTrackingTimeline({ events }: { events: AdminShipmentTrac
               ) : (
                 <Circle className="absolute -left-1.5 top-1.5 w-3 h-3 text-gray-400 bg-white fill-current" />
               )}
-              
+
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
                 <div>
                   <p className={`text-sm font-medium ${isLast ? 'text-gray-900' : 'text-gray-700'}`}>

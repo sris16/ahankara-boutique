@@ -17,11 +17,11 @@ interface Props {
 
 export function InventoryAdjustmentForm({ productId, variantId, inventory }: Props) {
   const router = useRouter();
-  
+
   const [deltaStr, setDeltaStr] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [reference, setReference] = useState<string>('');
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -38,7 +38,7 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isValidDelta || wouldFailReserve) return;
-    
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -49,13 +49,13 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
         reason: reason || undefined,
         reference: reference || undefined
       });
-      
+
       setSuccess(true);
       setDeltaStr('');
       setReason('');
       setReference('');
       router.refresh();
-      
+
       setTimeout(() => setSuccess(false), 3000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -68,7 +68,7 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
   return (
     <div className="bg-white rounded-lg border shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-6">Adjust Stock</h3>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
@@ -110,9 +110,9 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
           <div className="grid gap-2">
             <Label htmlFor="delta">Adjustment Amount (+ or -)</Label>
             <div className="flex rounded-md shadow-sm">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 className="rounded-r-none border-r-0"
                 onClick={() => setDeltaStr(prev => { const n = parseInt(prev || '0'); return (n - 1).toString(); })}
               >
@@ -127,9 +127,9 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
                 placeholder="e.g. 5 or -2"
                 required
               />
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 className="rounded-l-none border-l-0"
                 onClick={() => setDeltaStr(prev => { const n = parseInt(prev || '0'); return (n + 1).toString(); })}
               >
@@ -164,8 +164,8 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
           </div>
         </div>
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={!isValidDelta || loading || wouldFailReserve}
           className="w-full"
         >

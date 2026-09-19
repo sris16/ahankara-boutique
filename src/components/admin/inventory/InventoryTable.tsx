@@ -12,7 +12,7 @@ interface InventoryTableProps {
 
 export function InventoryTable({ products }: InventoryTableProps) {
   // Flatten products into a list of variants
-  const variants = products.flatMap((product) => 
+  const variants = products.flatMap((product) =>
     (product.variants || []).map((variant) => ({
       product,
       variant,

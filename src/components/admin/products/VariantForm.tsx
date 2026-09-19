@@ -131,16 +131,16 @@ export function VariantForm({ productId, variant, onClose, onSuccess }: VariantF
 
           <div className="pt-4 border-t flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="isActive" 
-                name="isActive" 
-                defaultChecked={variant ? variant.isActive : true} 
+              <input
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                defaultChecked={variant ? variant.isActive : true}
                 className="w-4 h-4 rounded-sm border-input"
               />
               <Label htmlFor="isActive" className="font-medium">Active Variant</Label>
             </div>
-            
+
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Cancel

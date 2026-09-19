@@ -14,8 +14,8 @@ interface CouponTableProps {
 export function CouponTable({ initialCoupons }: CouponTableProps) {
   const [search, setSearch] = useState("");
 
-  const filteredCoupons = initialCoupons.filter((c) => 
-    c.code.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredCoupons = initialCoupons.filter((c) =>
+    c.code.toLowerCase().includes(search.toLowerCase()) ||
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -34,8 +34,8 @@ export function CouponTable({ initialCoupons }: CouponTableProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        
-        <Link 
+
+        <Link
           href="/admin/coupons/new"
           className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
         >
@@ -74,8 +74,8 @@ export function CouponTable({ initialCoupons }: CouponTableProps) {
                     <div className="text-sm text-gray-500">{coupon.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {coupon.type === 'PERCENTAGE' 
-                      ? `${coupon.value}%` 
+                    {coupon.type === 'PERCENTAGE'
+                      ? `${coupon.value}%`
                       : formatPrice(coupon.value)
                     }
                   </td>
@@ -84,10 +84,10 @@ export function CouponTable({ initialCoupons }: CouponTableProps) {
                     {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ''}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <CouponStatusBadge 
-                      isActive={coupon.isActive} 
-                      startsAt={coupon.startsAt} 
-                      endsAt={coupon.endsAt} 
+                    <CouponStatusBadge
+                      isActive={coupon.isActive}
+                      startsAt={coupon.startsAt}
+                      endsAt={coupon.endsAt}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -97,12 +97,12 @@ export function CouponTable({ initialCoupons }: CouponTableProps) {
                   </td>
                 </tr>
               ))}
-              
+
               {filteredCoupons.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
-                    {initialCoupons.length === 0 
-                      ? "No coupons have been created yet." 
+                    {initialCoupons.length === 0
+                      ? "No coupons have been created yet."
                       : "No coupons match your search."}
                   </td>
                 </tr>

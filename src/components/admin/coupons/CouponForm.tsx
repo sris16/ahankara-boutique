@@ -26,8 +26,8 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
     name: initialData?.name || "",
     description: initialData?.description || "",
     type: initialData?.type || "PERCENTAGE" as CouponType,
-    value: initialData?.type === "FIXED_AMOUNT" 
-      ? toRupees(initialData.value) 
+    value: initialData?.type === "FIXED_AMOUNT"
+      ? toRupees(initialData.value)
       : initialData?.value?.toString() || "",
     minimumOrderAmount: toRupees(initialData?.minimumOrderAmount) || "0",
     maximumDiscountAmount: toRupees(initialData?.maximumDiscountAmount),
@@ -97,7 +97,7 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
   const handleDelete = async () => {
     if (!couponId) return;
     if (!window.confirm("Are you sure you want to delete this coupon?")) return;
-    
+
     setIsDeleting(true);
     setError(null);
     try {
@@ -361,7 +361,7 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
               </div>
             </div>
           </div>
-          
+
           {/* Restrictions (Simple CSV input for IDs for now, per plan) */}
           <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
             <label htmlFor="productIds" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
@@ -413,7 +413,7 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
               />
             </div>
           </div>
-          
+
         </div>
       </div>
 

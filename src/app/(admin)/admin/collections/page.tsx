@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
-import { adminApi } from "@/lib/api/admin";
+import { CollectionService } from "@/server/services/collection.service";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
 import { CollectionManager } from "@/components/admin/collections/CollectionManager";
 
 export const metadata = {
@@ -9,8 +11,15 @@ export const metadata = {
 
 export default async function CollectionsPage() {
   const reqHeaders = await headers();
-  
-  const collections = await adminApi.getCollections(reqHeaders).catch(() => []);
+  await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+  let collectionsData: any[] = [];
+  try {
+    const rawCollections = await CollectionService.getCollections(false);
+    collectionsData = JSON.parse(JSON.stringify(rawCollections));
+  } catch (err) {
+    console.error("Failed to load collections:", err);
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -19,7 +28,7 @@ export default async function CollectionsPage() {
         <p className="text-sm text-muted-foreground mt-1">Manage merchandising collections and campaigns</p>
       </div>
 
-      <CollectionManager initialCollections={collections} />
+      <CollectionManager initialCollections={collectionsData} />
     </div>
   );
 }

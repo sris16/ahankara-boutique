@@ -68,7 +68,7 @@ export function ShipmentCard({ shipment }: { shipment: AdminShipment; order: Adm
               {isRequestingAWB ? 'Requesting...' : 'Request AWB'}
             </Button>
           )}
-          
+
           {canCancel && (
             <Button
               onClick={() => setIsCancelDialogOpen(true)}

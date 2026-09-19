@@ -9,7 +9,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ p
   try {
     await AuthService.requireRole(req.headers, UserRole.ADMIN);
     const { productId, imageId } = await params;
-    
+
     await ProductImageService.deleteImage(productId, imageId);
     return successResponse({ message: 'Image deleted successfully' });
   } catch (error) {

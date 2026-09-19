@@ -7,7 +7,7 @@ import { handleError } from '@/utils/error-handler';
 export async function GET(req: NextRequest) {
   try {
     await AuthService.requireRole(req.headers, 'ADMIN');
-    
+
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');

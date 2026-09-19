@@ -1,5 +1,8 @@
 import React from 'react';
-import { adminApi } from '@/lib/api/admin';
+import { OrderService } from '@/server/services/order.service';
+import { AuthService } from '@/server/services/auth.service';
+import { UserRole } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -7,6 +10,10 @@ import { OrderSummaryCards } from '@/components/admin/orders/OrderSummaryCards';
 import { OrderCustomerDetails } from '@/components/admin/orders/OrderCustomerDetails';
 import { OrderItemsList } from '@/components/admin/orders/OrderItemsList';
 import { ShipmentManager } from '@/components/admin/orders/ShipmentManager';
+import { ReturnManager } from '@/components/admin/orders/ReturnManager';
+import { ExchangeManager } from '@/components/admin/orders/ExchangeManager';
+import { CancellationManager } from '@/components/admin/orders/CancellationManager';
+import { RefundManager } from '@/components/admin/orders/RefundManager';
 
 export const metadata = {
   title: 'Order Details | AHANKARA STUDIOS',
@@ -19,15 +26,71 @@ export default async function AdminOrderDetailPage({
 }) {
   const resolvedParams = await params;
   const orderId = resolvedParams.orderId;
-  
+
   const requestHeaders = await headers();
-  const cookieHeader = requestHeaders.get('cookie') ?? '';
-  
+
   try {
-    const [order, shipments] = await Promise.all([
-      adminApi.getOrderById(orderId, { Cookie: cookieHeader }),
-      adminApi.getOrderShipments(orderId, { Cookie: cookieHeader })
+    await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
+
+    const [rawOrder, rawShipments, rawReturnRequests, rawExchangeRequests, rawCancellation, rawRefunds] = await Promise.all([
+      OrderService.getAdminOrderById(orderId),
+      prisma.shipment.findMany({
+        where: { orderId },
+        include: {
+          items: {
+            include: {
+              orderItem: true
+            }
+          },
+          trackingEvents: {
+            orderBy: { eventTime: 'desc' }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.returnRequest.findMany({
+        where: { orderId },
+        include: {
+          items: {
+            include: {
+              orderItem: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      }),
+      prisma.exchangeRequest.findMany({
+        where: { orderId },
+        include: {
+          items: {
+            include: {
+              orderItem: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      }),
+      prisma.orderCancellation.findUnique({
+        where: { orderId }
+      }),
+      prisma.refund.findMany({
+        where: { orderId },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
     ]);
+
+    const order = JSON.parse(JSON.stringify(rawOrder));
+    const shipments = JSON.parse(JSON.stringify(rawShipments));
+    const returnRequests = JSON.parse(JSON.stringify(rawReturnRequests));
+    const exchangeRequests = JSON.parse(JSON.stringify(rawExchangeRequests));
+    const cancellation = JSON.parse(JSON.stringify(rawCancellation));
+    const refunds = JSON.parse(JSON.stringify(rawRefunds));
 
     return (
       <div className="space-y-6">
@@ -48,7 +111,11 @@ export default async function AdminOrderDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <OrderItemsList order={order} shipments={shipments} />
+            <CancellationManager cancellation={cancellation} orderId={orderId} />
             <ShipmentManager order={order} shipments={shipments} />
+            <ReturnManager returnRequests={returnRequests} />
+            <ExchangeManager exchangeRequests={exchangeRequests} />
+            <RefundManager refunds={refunds} />
           </div>
           <div className="space-y-6">
             <OrderCustomerDetails order={order} />

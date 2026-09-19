@@ -19,7 +19,7 @@ interface ProductTableProps {
 export function ProductTable({ initialData, meta, categories }: ProductTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -51,9 +51,10 @@ export function ProductTable({ initialData, meta, categories }: ProductTableProp
         <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              type="text" 
-              placeholder="Search products..." 
+            <Input
+              type="text"
+              placeholder="Search products..."
+              aria-label="Search products"
               className="pl-9"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -63,9 +64,10 @@ export function ProductTable({ initialData, meta, categories }: ProductTableProp
         </form>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <select 
+          <select
             className="flex h-9 w-full sm:w-36 rounded-sm border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             value={searchParams.get("status") || ""}
+            aria-label="Filter by status"
             onChange={e => handleFilter("status", e.target.value)}
           >
             <option value="">All Statuses</option>
@@ -73,10 +75,11 @@ export function ProductTable({ initialData, meta, categories }: ProductTableProp
             <option value="DRAFT">Draft</option>
             <option value="ARCHIVED">Archived</option>
           </select>
-          
-          <select 
+
+          <select
             className="flex h-9 w-full sm:w-48 rounded-sm border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             value={searchParams.get("category") || ""}
+            aria-label="Filter by category"
             onChange={e => handleFilter("category", e.target.value)}
           >
             <option value="">All Categories</option>
@@ -115,7 +118,7 @@ export function ProductTable({ initialData, meta, categories }: ProductTableProp
               <tbody className="divide-y">
                 {initialData.map((product) => {
                   const primaryImage = product.images?.find(i => i.isPrimary) || product.images?.[0];
-                  
+
                   return (
                     <tr key={product.id} className="hover:bg-muted/5 transition-colors">
                       <td className="px-4 py-3">
@@ -170,16 +173,16 @@ export function ProductTable({ initialData, meta, categories }: ProductTableProp
             Showing page {meta.page} of {meta.totalPages} ({meta.total} total items)
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               disabled={meta.page <= 1}
               onClick={() => handleFilter("page", (meta.page - 1).toString())}
             >
               Previous
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               disabled={meta.page >= meta.totalPages}
               onClick={() => handleFilter("page", (meta.page + 1).toString())}

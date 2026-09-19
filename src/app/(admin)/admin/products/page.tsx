@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
-import { adminApi } from "@/lib/api/admin";
+import { ProductService } from "@/server/services/product.service";
+import { CategoryService } from "@/server/services/category.service";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
 import { ProductTable } from "@/components/admin/products/ProductTable";
 
 export const metadata = {
@@ -9,9 +12,9 @@ export const metadata = {
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const reqHeaders = await headers();
-  const cookieHeader = reqHeaders.get('cookie') ?? '';
+  await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
   const params = await searchParams;
-  
+
   const query = {
     page: typeof params.page === 'string' ? params.page : '1',
     limit: typeof params.limit === 'string' ? params.limit : '10',
@@ -20,9 +23,22 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     categoryId: typeof params.category === 'string' ? params.category : undefined,
   };
 
-  // Safe fetch for products
-  const productsResponse = await adminApi.getProducts(query, { Cookie: cookieHeader }).catch(() => null);
-  const categories = await adminApi.getCategories({ Cookie: cookieHeader }).catch(() => []);
+  let productsData: any = { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 1 } };
+  let categoriesData: any[] = [];
+
+  try {
+    const rawProducts = await ProductService.getAdminProducts(query);
+    productsData = JSON.parse(JSON.stringify(rawProducts));
+  } catch (err) {
+    console.error("Failed to fetch products:", err);
+  }
+
+  try {
+    const rawCategories = await CategoryService.getCategories();
+    categoriesData = JSON.parse(JSON.stringify(rawCategories));
+  } catch (err) {
+    console.error("Failed to fetch categories:", err);
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -31,10 +47,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         <p className="text-sm text-muted-foreground mt-1">Manage product catalog, variants, and media</p>
       </div>
 
-      <ProductTable 
-        initialData={productsResponse?.data || []} 
-        meta={productsResponse?.meta} 
-        categories={categories}
+      <ProductTable
+        initialData={productsData.data}
+        meta={productsData.meta}
+        categories={categoriesData}
       />
     </div>
   );

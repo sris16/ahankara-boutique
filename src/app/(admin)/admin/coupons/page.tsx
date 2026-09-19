@@ -4,15 +4,28 @@ import { CouponTable } from "@/components/admin/coupons/CouponTable";
 import { Metadata } from "next";
 import { Ticket } from "lucide-react";
 
+import { prisma } from "@/lib/prisma";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
+
 export const metadata: Metadata = {
   title: "Coupons | AHANKARA STUDIOS Admin",
 };
 
 export default async function AdminCouponsPage() {
   const reqHeaders = await headers();
-  const cookieHeader = reqHeaders.get("cookie") ?? "";
+  await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
 
-  const coupons = await adminApi.getCoupons({ Cookie: cookieHeader });
+  const rawCoupons = await prisma.coupon.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      _count: {
+        select: { redemptions: true }
+      }
+    }
+  });
+
+  const coupons = JSON.parse(JSON.stringify(rawCoupons));
 
   return (
     <div className="space-y-6">

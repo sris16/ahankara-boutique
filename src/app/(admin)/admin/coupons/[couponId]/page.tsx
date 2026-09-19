@@ -6,6 +6,10 @@ import { notFound } from "next/navigation";
 import { Ticket, History } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
+import { prisma } from "@/lib/prisma";
+import { AuthService } from "@/server/services/auth.service";
+import { UserRole } from "@prisma/client";
+
 export const metadata: Metadata = {
   title: "Edit Coupon | AHANKARA STUDIOS Admin",
 };
@@ -17,12 +21,28 @@ export default async function EditCouponPage({
 }) {
   const resolvedParams = await params;
   const reqHeaders = await headers();
-  const cookieHeader = reqHeaders.get("cookie") ?? "";
 
   try {
-    const coupon = await adminApi.getCouponById(resolvedParams.couponId, {
-      Cookie: cookieHeader,
+    await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
+    const rawCoupon = await prisma.coupon.findUnique({
+      where: { id: resolvedParams.couponId },
+      include: {
+        products: true,
+        categories: true,
+        collections: true,
+        redemptions: {
+          take: 10,
+          orderBy: { redeemedAt: 'desc' }
+        }
+      }
     });
+
+    if (!rawCoupon) {
+      notFound();
+    }
+
+    const coupon = JSON.parse(JSON.stringify(rawCoupon));
 
     return (
       <div className="space-y-6 max-w-4xl">
@@ -46,7 +66,8 @@ export default async function EditCouponPage({
               </h3>
             </div>
             <ul className="divide-y divide-gray-200">
-              {coupon.redemptions.map((redemption) => (
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {coupon.redemptions.map((redemption: any) => (
                 <li key={redemption.id} className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-900 truncate">

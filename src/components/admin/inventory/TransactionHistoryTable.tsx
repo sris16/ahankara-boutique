@@ -33,7 +33,7 @@ export function TransactionHistoryTable({ productId, variantId }: Props) {
         setLoading(false);
       }
     }
-    
+
     loadTransactions();
   }, [productId, variantId, page]);
 
@@ -56,7 +56,7 @@ export function TransactionHistoryTable({ productId, variantId }: Props) {
         <h3 className="font-semibold text-gray-900">Transaction History</h3>
         {loading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-600 border-b">
@@ -80,7 +80,7 @@ export function TransactionHistoryTable({ productId, variantId }: Props) {
               transactions.map((tx) => {
                 const changeColor = tx.quantityChange > 0 ? 'text-green-600' : tx.quantityChange < 0 ? 'text-red-600' : 'text-gray-900';
                 const sign = tx.quantityChange > 0 ? '+' : '';
-                
+
                 return (
                   <tr key={tx.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
@@ -118,16 +118,16 @@ export function TransactionHistoryTable({ productId, variantId }: Props) {
             Page {page} of {totalPages}
           </p>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               disabled={page === 1 || loading}
               onClick={() => setPage(p => p - 1)}
             >
               Previous
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               disabled={page === totalPages || loading}
               onClick={() => setPage(p => p + 1)}

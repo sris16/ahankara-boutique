@@ -9,7 +9,7 @@ import { handleError } from '@/utils/error-handler';
 export async function POST(req: NextRequest) {
   try {
     await AuthService.requireRole(req.headers, 'ADMIN');
-    
+
     const body = await req.json();
     if (body.name && !body.slug) {
       body.slug = generateSlug(body.name);
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     await AuthService.requireRole(req.headers, 'ADMIN');
-    
+
     const searchParams = req.nextUrl.searchParams;
     const isTree = searchParams.get('tree') === 'true';
 

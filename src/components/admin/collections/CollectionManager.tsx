@@ -39,14 +39,14 @@ export function CollectionManager({ initialCollections }: { initialCollections: 
   const getScheduleStatus = (col: AdminCollection) => {
     if (!col.isActive) return <span className="text-destructive font-medium">Inactive</span>;
     if (!col.startsAt && !col.endsAt) return <span className="text-green-600">Always Active</span>;
-    
+
     const now = new Date();
     const start = col.startsAt ? new Date(col.startsAt) : null;
     const end = col.endsAt ? new Date(col.endsAt) : null;
 
     if (start && now < start) return <span className="text-amber-500">Scheduled</span>;
     if (end && now > end) return <span className="text-muted-foreground">Expired</span>;
-    
+
     return <span className="text-green-600">Currently Active</span>;
   };
 
@@ -123,7 +123,7 @@ export function CollectionManager({ initialCollections }: { initialCollections: 
       )}
 
       {isFormOpen && (
-        <CollectionForm 
+        <CollectionForm
           collection={editingCollection}
           onClose={() => setIsFormOpen(false)}
           onSuccess={() => {

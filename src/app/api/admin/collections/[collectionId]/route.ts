@@ -25,9 +25,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   try {
     const { collectionId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
-    
+
     const body = await req.json();
-    
+
     if (body.name && !body.slug) {
       body.slug = generateSlug(body.name);
     } else if (body.slug) {

@@ -25,9 +25,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   try {
     const { categoryId } = await params;
     await AuthService.requireRole(req.headers, 'ADMIN');
-    
+
     const body = await req.json();
-    
+
     // Auto-generate slug if name is updated but slug isn't explicitly provided
     if (body.name && !body.slug) {
       body.slug = generateSlug(body.name);

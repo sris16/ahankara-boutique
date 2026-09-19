@@ -43,7 +43,7 @@ export function CancelShipmentDialog({ shipment, onClose }: { shipment: AdminShi
           <p className="text-gray-700 text-sm mb-4">
             Are you sure you want to cancel this shipment? The provider (e.g. Shiprocket) will be notified immediately.
           </p>
-          
+
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-3 rounded text-sm mb-4">
             <strong>Important:</strong> Cancelling this shipment does not automatically cancel the parent order or refund the customer. It only cancels this physical delivery leg and releases the unfulfilled quantities back to the order.
           </div>
@@ -59,7 +59,7 @@ export function CancelShipmentDialog({ shipment, onClose }: { shipment: AdminShi
           <Button onClick={onClose} variant="outline" disabled={isSubmitting}>
             Keep Shipment
           </Button>
-          <Button 
+          <Button
             onClick={handleCancel}
             disabled={isSubmitting}
             className="bg-red-600 hover:bg-red-700 text-white"
