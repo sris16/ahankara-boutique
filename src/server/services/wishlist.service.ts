@@ -6,7 +6,12 @@ import { CartService } from './cart.service';
 export class WishlistService {
   static async getWishlist(userId: string) {
     const items = await prisma.wishlistItem.findMany({
-      where: { userId },
+      where: {
+        userId,
+        product: {
+          status: 'PUBLISHED'
+        }
+      },
       include: {
         product: {
           include: {
@@ -23,8 +28,8 @@ export class WishlistService {
     return items.map(item => {
       const p = item.product;
       const activeVariants = p.variants.filter(v => v.isActive);
-      
-      const hasAvailableStock = activeVariants.some(v => 
+
+      const hasAvailableStock = activeVariants.some(v =>
         v.inventory && (v.inventory.quantity - v.inventory.reservedQuantity > 0)
       );
 

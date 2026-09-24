@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { orderApi } from "@/lib/api/order";
+import { notFound, redirect } from "next/navigation";
+import { OrderService } from "@/server/services/order.service";
+import { AuthService } from "@/server/services/auth.service";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { TrackingModule } from "@/components/orders/TrackingModule";
 import { ChevronLeft, MapPin, Receipt, ShieldCheck, AlertTriangle, PackageOpen, RotateCcw, RefreshCw, IndianRupee } from "lucide-react";
@@ -9,6 +10,7 @@ import { OrderStatus, PaymentStatus } from "@/types/order";
 import { CancelOrderDialog } from "@/components/orders/CancelOrderDialog";
 import { ReturnItemDialog } from "@/components/orders/ReturnItemDialog";
 import { ExchangeItemDialog } from "@/components/orders/ExchangeItemDialog";
+import { OrderPaymentRetry } from "@/components/orders/OrderPaymentRetry";
 import { PostPurchaseService } from "@/server/services/post-purchase.service";
 
 export async function generateMetadata({ params }: { params: Promise<{ orderId: string }> }) {
@@ -16,6 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orderId: 
   return {
     title: `Order Details | AHANKARA STUDIOS`,
     description: `Details for order ${orderId}`,
+    robots: { index: false, follow: false }
   };
 }
 
@@ -36,21 +39,20 @@ const getPaymentStatusColor = (status: PaymentStatus) => {
 export default async function OrderDetailsPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
   const reqHeaders = await headers();
-  const cookieHeader = reqHeaders.get('cookie') ?? '';
+
+  let user;
+  try {
+    user = await AuthService.requireAuth(reqHeaders);
+  } catch (error) {
+    redirect("/login");
+  }
 
   let orderData;
-  let trackingData;
+  let trackingData = null;
 
   try {
-    const [orderRes, trackingRes] = await Promise.all([
-      orderApi.getOrderById(orderId, { Cookie: cookieHeader }),
-      orderApi.getOrderTracking(orderId, { Cookie: cookieHeader }).catch(() => null)
-    ]);
-
-    orderData = orderRes;
-    trackingData = trackingRes;
+    orderData = await OrderService.getCustomerOrderById(user.id, orderId);
   } catch (error) {
-    console.error("Failed to fetch order details", error);
     notFound();
   }
 
@@ -75,6 +77,11 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
       }
     }));
   }
+
+  const isPaymentRetryEligible =
+    orderData.status === 'PENDING_PAYMENT' &&
+    orderData.paymentStatus === 'PENDING' &&
+    new Date(orderData.reservationExpiresAt!) > new Date();
 
   return (
     <div className="space-y-8 pb-12">
@@ -102,10 +109,10 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
             {isCancellable && (
               <CancelOrderDialog orderId={orderId} />
             )}
-            <span className={`px-2.5 py-1 rounded-sm text-xs font-medium tracking-wide uppercase ${getOrderStatusColor(orderData.status)}`}>
+            <span className={`px-3 py-1 text-[10px] font-medium tracking-widest uppercase border ${getOrderStatusColor(orderData.status as OrderStatus).replace('bg-', 'bg-transparent text-').replace('/10', '')} border-current/20`}>
               {orderData.status.replace(/_/g, " ")}
             </span>
-            <span className={`px-2.5 py-1 rounded-sm text-xs font-medium tracking-wide uppercase ${getPaymentStatusColor(orderData.paymentStatus)}`}>
+            <span className={`px-3 py-1 text-[10px] font-medium tracking-widest uppercase border ${getPaymentStatusColor(orderData.paymentStatus as PaymentStatus).replace('bg-', 'bg-transparent text-').replace('/10', '')} border-current/20`}>
               {orderData.paymentStatus.replace(/_/g, " ")}
             </span>
           </div>
@@ -133,14 +140,13 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
         <div className="lg:col-span-2 space-y-8">
 
           {/* Items Section */}
-          <section className="bg-card border rounded-sm overflow-hidden">
-            <div className="p-4 md:p-6 border-b bg-muted/10 flex justify-between items-center">
-              <h3 className="font-serif text-lg flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-muted-foreground" />
+          <section className="bg-background border border-border/50 rounded-none overflow-hidden">
+            <div className="p-5 md:p-6 border-b border-border/40 flex justify-between items-center">
+              <h3 className="font-serif text-xl tracking-tight flex items-center gap-2">
                 Items Snapshot
               </h3>
             </div>
-            <div className="divide-y">
+            <div className="divide-y divide-border/40">
               {orderData.items?.map((item) => {
                 const eligibleQty = itemEligibilities.get(item.id) || 0;
                 return (
@@ -171,8 +177,8 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
                       </div>
                       {eligibleQty > 0 && orderData.status === 'DELIVERED' && (
                         <div className="flex gap-2 w-full justify-end">
-                          <ReturnItemDialog orderId={orderId} item={item} eligibleQuantity={eligibleQty} />
-                          <ExchangeItemDialog orderId={orderId} item={item} eligibleQuantity={eligibleQty} />
+                          <ReturnItemDialog orderId={orderId} item={item as any} eligibleQuantity={eligibleQty} />
+                          <ExchangeItemDialog orderId={orderId} item={item as any} eligibleQuantity={eligibleQty} />
                         </div>
                       )}
                     </div>
@@ -249,8 +255,8 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
         <div className="space-y-8">
 
           {/* Payment Summary */}
-          <section className="bg-card border rounded-sm p-6">
-            <h3 className="font-serif text-lg border-b pb-4 mb-4">Payment Summary</h3>
+          <section className="bg-background border border-border/50 rounded-none p-6">
+            <h3 className="font-serif text-xl tracking-tight border-b border-border/40 pb-4 mb-4">Payment Summary</h3>
             <div className="flex flex-col gap-3 text-sm mb-6 pb-6 border-b">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
@@ -279,9 +285,15 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
             </div>
 
             {orderData.paymentStatus === "PAID" && (
-              <div className="flex items-center gap-2 text-xs text-green-700 bg-green-500/10 p-3 rounded-sm border border-green-500/20">
+              <div className="flex items-center gap-2 text-xs text-green-700 bg-green-500/10 p-3 rounded-none border border-green-500/20">
                 <ShieldCheck className="w-4 h-4" />
                 Payment verified and secured
+              </div>
+            )}
+
+            {isPaymentRetryEligible && (
+              <div className="mt-6 pt-6 border-t border-border/40">
+                <OrderPaymentRetry orderId={orderId} />
               </div>
             )}
           </section>
@@ -314,9 +326,8 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
           )}
 
           {/* Shipping Address */}
-          <section className="bg-card border rounded-sm p-6">
-            <h3 className="font-serif text-lg flex items-center gap-2 border-b pb-4 mb-4">
-              <MapPin className="w-5 h-5 text-muted-foreground" />
+          <section className="bg-background border border-border/50 rounded-none p-6">
+            <h3 className="font-serif text-xl tracking-tight border-b border-border/40 pb-4 mb-4">
               Delivery Address
             </h3>
             {orderData.shippingAddress ? (

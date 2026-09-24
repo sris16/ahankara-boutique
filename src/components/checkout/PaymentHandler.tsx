@@ -43,11 +43,16 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
   useEffect(() => {
     if (!isScriptLoaded || isVerifying) return;
 
+    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+      console.error("Missing NEXT_PUBLIC_RAZORPAY_KEY_ID environment variable.");
+      onError("Payment configuration error. Please contact support.");
+      return;
+    }
+
     const options = {
-      // In a real app this key would come from env vars.
-      // We pass a dummy string because live payment is constrained by KYC.
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummy_key", 
-      amount: paymentAttempt.amount * 100, // Assuming backend provides amount in base units, but Razorpay wants paise. Wait, backend usually gives amount. If backend gives paise, don't multiply. 
+      // The public key used to initialize Razorpay checkout.
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      amount: paymentAttempt.amount * 100, // Assuming backend provides amount in base units, but Razorpay wants paise. Wait, backend usually gives amount. If backend gives paise, don't multiply.
       // Actually backend PaymentService passes order.totalAmount to createOrder. order.totalAmount is INR (e.g. 5000). Razorpay createOrder usually takes paise. Let's assume the providerOrder has amount in whatever unit Razorpay requires. We'll just pass what we got or let Razorpay fetch from order_id.
       currency: paymentAttempt.currency,
       name: "AHANKARA STUDIOS",
@@ -98,13 +103,21 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
   }, [isScriptLoaded, paymentAttempt, order, onSuccess, onError, onClose, isVerifying]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="flex flex-col items-center justify-center gap-4 p-8 bg-background border rounded-sm shadow-lg max-w-sm w-full text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-foreground" />
-        <h3 className="font-serif text-xl">Processing Payment</h3>
-        <p className="text-sm text-muted-foreground">
-          {isVerifying ? "Verifying your payment securely..." : "Please complete the payment in the secure window."}
-        </p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="payment-modal-title"
+      aria-describedby="payment-modal-desc"
+    >
+      <div className="flex flex-col items-center justify-center gap-5 p-8 bg-background border border-border/50 rounded-sm shadow-xl max-w-sm w-[90vw] text-center">
+        <Loader2 className="w-10 h-10 animate-spin text-foreground" aria-hidden="true" />
+        <div className="space-y-2">
+          <h3 id="payment-modal-title" className="font-serif text-2xl tracking-tight">Processing Payment</h3>
+          <p id="payment-modal-desc" className="text-sm text-muted-foreground leading-relaxed">
+            {isVerifying ? "Verifying your payment securely. Please do not close this window." : "Please complete the payment in the secure window."}
+          </p>
+        </div>
       </div>
     </div>
   );

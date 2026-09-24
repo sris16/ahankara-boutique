@@ -9,6 +9,7 @@ import { useCart } from "@/hooks/use-cart";
 interface WishlistContextType {
   wishlist: WishlistItemResponse[];
   isLoading: boolean;
+  isInitialized: boolean;
   error: Error | null;
   refreshWishlist: () => Promise<void>;
   addItem: (productId: string) => Promise<void>;
@@ -25,14 +26,16 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const { refreshCart } = useCart(); // to sync cart after move-to-cart
   const [wishlist, setWishlist] = useState<WishlistItemResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const refreshWishlist = useCallback(async () => {
     if (!user) {
       setWishlist([]);
+      setIsInitialized(true);
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const data = await wishlistApi.getWishlist();
@@ -42,6 +45,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       setError(err instanceof Error ? err : new Error("Failed to load wishlist"));
     } finally {
       setIsLoading(false);
+      setIsInitialized(true);
     }
   }, [user]);
 
@@ -54,12 +58,31 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   const addItem = async (productId: string) => {
     if (!user) return;
-    
+
+    // Optimistic update
+    const previousWishlist = [...wishlist];
+    if (!wishlist.some(item => item.productId === productId)) {
+      setWishlist(prev => [
+        {
+          id: `temp-${productId}`,
+          productId,
+          name: 'Loading...',
+          slug: '',
+          primaryImage: null,
+          effectiveStartingPrice: 0,
+          hasAvailableStock: true,
+          createdAt: new Date().toISOString()
+        },
+        ...prev
+      ]);
+    }
+
     setIsLoading(true);
     try {
       await wishlistApi.addItem(productId);
-      await refreshWishlist();
+      await refreshWishlist(); // Get the real item with correct ID and product details
     } catch (err) {
+      setWishlist(previousWishlist);
       setError(err instanceof Error ? err : new Error("Failed to add to wishlist"));
       throw err;
     } finally {
@@ -69,12 +92,23 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   const removeItem = async (wishlistItemId: string) => {
     if (!user) return;
-    
+
+    // If it's a temporary optimistic item, we can't remove it from the backend yet
+    if (wishlistItemId.startsWith('temp-')) {
+      return;
+    }
+
+    // Optimistic update
+    const previousWishlist = [...wishlist];
+    setWishlist(prev => prev.filter(item => item.id !== wishlistItemId));
+
     setIsLoading(true);
     try {
       await wishlistApi.removeItem(wishlistItemId);
-      await refreshWishlist();
+      // We don't strictly need to refresh if it succeeded, but we can do it in the background
+      refreshWishlist();
     } catch (err) {
+      setWishlist(previousWishlist);
       setError(err instanceof Error ? err : new Error("Failed to remove from wishlist"));
       throw err;
     } finally {
@@ -84,13 +118,20 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   const moveToCart = async (wishlistItemId: string, variantId: string | undefined, quantity: number) => {
     if (!user) return;
-    
+
+    if (wishlistItemId.startsWith('temp-')) return;
+
+    // Optimistic update for wishlist removal
+    const previousWishlist = [...wishlist];
+    setWishlist(prev => prev.filter(item => item.id !== wishlistItemId));
+
     setIsLoading(true);
     try {
       await wishlistApi.moveToCart(wishlistItemId, variantId, quantity);
-      await refreshWishlist();
       await refreshCart();
+      refreshWishlist(); // sync in background
     } catch (err) {
+      setWishlist(previousWishlist);
       setError(err instanceof Error ? err : new Error("Failed to move to cart"));
       throw err;
     } finally {
@@ -107,8 +148,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [wishlist]);
 
   return (
-    <WishlistContext.Provider value={{ 
-      wishlist, isLoading, error, refreshWishlist, addItem, removeItem, moveToCart, isWishlisted, getWishlistItemId 
+    <WishlistContext.Provider value={{
+      wishlist, isLoading, isInitialized, error, refreshWishlist, addItem, removeItem, moveToCart, isWishlisted, getWishlistItemId
     }}>
       {children}
     </WishlistContext.Provider>

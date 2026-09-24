@@ -18,7 +18,7 @@ export const POST = async (req: NextRequest) => {
     path === '/api/auth/sign-up/email' ||
     path === '/api/auth/email-otp/send-verification-otp' ||
     path === '/api/auth/email-otp/verify-email' ||
-    path === '/api/auth/forget-password' ||
+    path === '/api/auth/request-password-reset' ||
     path === '/api/auth/reset-password'
   ) {
     try {

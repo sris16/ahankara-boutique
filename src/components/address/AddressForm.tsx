@@ -30,6 +30,8 @@ export function AddressForm({ initialData, onSubmit, onCancel, isLoading }: Addr
     isDefaultBilling: initialData?.isDefaultBilling || false,
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -40,7 +42,12 @@ export function AddressForm({ initialData, onSubmit, onCancel, isLoading }: Addr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -114,12 +121,12 @@ export function AddressForm({ initialData, onSubmit, onCancel, isLoading }: Addr
         <Label htmlFor="isDefaultShipping" className="text-sm font-normal">Set as default shipping address</Label>
       </div>
 
-      <div className="flex justify-end gap-4 pt-4 border-t mt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+      <div className="flex justify-end gap-4 pt-6 border-t mt-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading || isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" disabled={isLoading || isSubmitting}>
+          {(isLoading || isSubmitting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {initialData ? "Save Changes" : "Save Address"}
         </Button>
       </div>

@@ -41,57 +41,57 @@ export function FilterChips({ categories, collections }: FilterChipsProps) {
   const collectionName = collectionSlug ? collections.find(c => c.slug === collectionSlug)?.name || "Unknown Collection" : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-6">
-      <span className="text-sm text-muted-foreground mr-2">Active Filters:</span>
+    <div className="flex flex-wrap items-center gap-3 mb-8">
+      <span className="text-xs uppercase tracking-widest text-muted-foreground mr-1">Active Filters:</span>
 
       {q && (
-        <span className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-1 rounded-sm">
+        <span className="inline-flex items-center gap-2 bg-brand-100 text-brand-900 border border-brand-200 text-xs font-medium px-3 py-1.5 rounded-sm transition-colors">
           Search: {q}
-          <button onClick={() => removeFilter(["q"])} className="hover:text-foreground focus:outline-none" aria-label="Remove search filter">
-            <X className="w-3 h-3" />
+          <button onClick={() => removeFilter(["q"])} className="hover:text-foreground focus:outline-none focus:ring-1 focus:ring-foreground rounded-full p-0.5" aria-label="Remove search filter">
+            <X className="w-3.5 h-3.5" />
           </button>
         </span>
       )}
 
       {categoryName && (
-        <span className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-1 rounded-sm">
+        <span className="inline-flex items-center gap-2 bg-brand-100 text-brand-900 border border-brand-200 text-xs font-medium px-3 py-1.5 rounded-sm transition-colors">
           Category: {categoryName}
-          <button onClick={() => removeFilter(["category"])} className="hover:text-foreground focus:outline-none" aria-label="Remove category filter">
-            <X className="w-3 h-3" />
+          <button onClick={() => removeFilter(["category"])} className="hover:text-foreground focus:outline-none focus:ring-1 focus:ring-foreground rounded-full p-0.5" aria-label="Remove category filter">
+            <X className="w-3.5 h-3.5" />
           </button>
         </span>
       )}
 
       {collectionName && (
-        <span className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-1 rounded-sm">
+        <span className="inline-flex items-center gap-2 bg-brand-100 text-brand-900 border border-brand-200 text-xs font-medium px-3 py-1.5 rounded-sm transition-colors">
           Collection: {collectionName}
-          <button onClick={() => removeFilter(["collection"])} className="hover:text-foreground focus:outline-none" aria-label="Remove collection filter">
-            <X className="w-3 h-3" />
+          <button onClick={() => removeFilter(["collection"])} className="hover:text-foreground focus:outline-none focus:ring-1 focus:ring-foreground rounded-full p-0.5" aria-label="Remove collection filter">
+            <X className="w-3.5 h-3.5" />
           </button>
         </span>
       )}
 
       {minPrice && (
-        <span className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-1 rounded-sm">
+        <span className="inline-flex items-center gap-2 bg-brand-100 text-brand-900 border border-brand-200 text-xs font-medium px-3 py-1.5 rounded-sm transition-colors">
           Min: {formatPrice(parseInt(minPrice, 10))}
-          <button onClick={() => removeFilter(["minPrice"])} className="hover:text-foreground focus:outline-none" aria-label="Remove minimum price filter">
-            <X className="w-3 h-3" />
+          <button onClick={() => removeFilter(["minPrice"])} className="hover:text-foreground focus:outline-none focus:ring-1 focus:ring-foreground rounded-full p-0.5" aria-label="Remove minimum price filter">
+            <X className="w-3.5 h-3.5" />
           </button>
         </span>
       )}
 
       {maxPrice && (
-        <span className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground text-xs font-medium px-2.5 py-1 rounded-sm">
+        <span className="inline-flex items-center gap-2 bg-brand-100 text-brand-900 border border-brand-200 text-xs font-medium px-3 py-1.5 rounded-sm transition-colors">
           Max: {formatPrice(parseInt(maxPrice, 10))}
-          <button onClick={() => removeFilter(["maxPrice"])} className="hover:text-foreground focus:outline-none" aria-label="Remove maximum price filter">
-            <X className="w-3 h-3" />
+          <button onClick={() => removeFilter(["maxPrice"])} className="hover:text-foreground focus:outline-none focus:ring-1 focus:ring-foreground rounded-full p-0.5" aria-label="Remove maximum price filter">
+            <X className="w-3.5 h-3.5" />
           </button>
         </span>
       )}
 
       <button
         onClick={clearAll}
-        className="text-xs text-muted-foreground hover:text-foreground hover:underline ml-2 focus:outline-none"
+        className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground border-b border-transparent hover:border-foreground transition-all ml-2 focus:outline-none focus:ring-1 focus:ring-foreground p-0.5"
       >
         Clear All Filters
       </button>

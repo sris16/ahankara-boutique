@@ -103,27 +103,33 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
     <div className="flex flex-col gap-8">
       {/* Search */}
       <div>
-        <h3 className="font-medium text-sm tracking-widest uppercase mb-4">Search</h3>
+        <h3 className="font-serif text-lg md:text-xl tracking-tight mb-4">Search</h3>
         <form onSubmit={(e) => { handleSearch(e); if (isMobile) setIsOpen(false); }} className="relative">
+          <label htmlFor="search-input" className="sr-only">Search pieces</label>
           <input
+            id="search-input"
             type="text"
             placeholder="Search pieces..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground"
+            className="w-full pl-9 pr-4 py-2.5 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
+            aria-label="Search pieces"
           />
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
           <button type="submit" className="hidden">Submit</button>
         </form>
       </div>
 
       {/* Sort */}
       <div>
-        <h3 className="font-medium text-sm tracking-widest uppercase mb-4">Sort By</h3>
+        <h3 className="font-serif text-lg md:text-xl tracking-tight mb-4">Sort By</h3>
+        <label htmlFor="sort-select" className="sr-only">Sort By</label>
         <select
+          id="sort-select"
           value={initialParams.sort || "newest"}
           onChange={(e) => { updateFilters("sort", e.target.value); if (isMobile) setIsOpen(false); }}
-          className="w-full p-2 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground appearance-none"
+          className="w-full p-2.5 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground appearance-none transition-all"
+          aria-label="Sort products"
         >
           <option value="newest">Newest</option>
           <option value="price-low-high">Price: Low to High</option>
@@ -135,12 +141,13 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
       {/* Categories */}
       {categories.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm tracking-widest uppercase mb-4">Categories</h3>
-          <ul className="space-y-2">
+          <h3 className="font-serif text-lg md:text-xl tracking-tight mb-4">Categories</h3>
+          <ul className="space-y-3">
             <li>
               <button
                 onClick={() => { updateFilters("category", ""); if (isMobile) setIsOpen(false); }}
-                className={`text-sm hover:underline ${!initialParams.category ? "font-medium underline" : "text-muted-foreground"}`}
+                className={`text-sm hover:text-foreground transition-colors ${!initialParams.category ? "font-medium text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`}
+                aria-pressed={!initialParams.category}
               >
                 All Categories
               </button>
@@ -149,7 +156,8 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
               <li key={cat.id}>
                 <button
                   onClick={() => { updateFilters("category", cat.id); if (isMobile) setIsOpen(false); }}
-                  className={`text-sm hover:underline ${initialParams.category === cat.id ? "font-medium underline" : "text-muted-foreground"}`}
+                  className={`text-sm hover:text-foreground transition-colors ${initialParams.category === cat.id ? "font-medium text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`}
+                  aria-pressed={initialParams.category === cat.id}
                 >
                   {cat.name}
                 </button>
@@ -162,12 +170,13 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
       {/* Collections */}
       {collections.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm tracking-widest uppercase mb-4">Collections</h3>
-          <ul className="space-y-2">
+          <h3 className="font-serif text-lg md:text-xl tracking-tight mb-4">Collections</h3>
+          <ul className="space-y-3">
             <li>
               <button
                 onClick={() => { updateFilters("collection", ""); if (isMobile) setIsOpen(false); }}
-                className={`text-sm hover:underline ${!initialParams.collection ? "font-medium underline" : "text-muted-foreground"}`}
+                className={`text-sm hover:text-foreground transition-colors ${!initialParams.collection ? "font-medium text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`}
+                aria-pressed={!initialParams.collection}
               >
                 All Collections
               </button>
@@ -176,7 +185,8 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
               <li key={col.id}>
                 <button
                   onClick={() => { updateFilters("collection", col.slug); if (isMobile) setIsOpen(false); }}
-                  className={`text-sm hover:underline ${initialParams.collection === col.slug ? "font-medium underline" : "text-muted-foreground"}`}
+                  className={`text-sm hover:text-foreground transition-colors ${initialParams.collection === col.slug ? "font-medium text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`}
+                  aria-pressed={initialParams.collection === col.slug}
                 >
                   {col.name}
                 </button>
@@ -188,12 +198,14 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
 
       {/* Price Range */}
       <div>
-        <h3 className="font-medium text-sm tracking-widest uppercase mb-4">Price Range</h3>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <h3 className="font-serif text-lg md:text-xl tracking-tight mb-4">Price Range</h3>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <span className="absolute left-2 top-2 text-sm text-muted-foreground">₹</span>
+              <label htmlFor="min-price" className="sr-only">Minimum Price</label>
+              <span className="absolute left-3 top-2.5 text-sm text-muted-foreground" aria-hidden="true">₹</span>
               <input
+                id="min-price"
                 type="number"
                 min="0"
                 placeholder="Min"
@@ -202,13 +214,16 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
                   setMinPriceInput(e.target.value);
                   setPriceError("");
                 }}
-                className="w-full pl-6 pr-2 py-2 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground"
+                className="w-full pl-7 pr-3 py-2.5 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
+                aria-label="Minimum price in rupees"
               />
             </div>
-            <span className="text-muted-foreground">-</span>
+            <span className="text-muted-foreground" aria-hidden="true">-</span>
             <div className="relative flex-1">
-              <span className="absolute left-2 top-2 text-sm text-muted-foreground">₹</span>
+              <label htmlFor="max-price" className="sr-only">Maximum Price</label>
+              <span className="absolute left-3 top-2.5 text-sm text-muted-foreground" aria-hidden="true">₹</span>
               <input
+                id="max-price"
                 type="number"
                 min="0"
                 placeholder="Max"
@@ -217,21 +232,22 @@ export function CatalogFilters({ categories, collections, initialParams }: Catal
                   setMaxPriceInput(e.target.value);
                   setPriceError("");
                 }}
-                className="w-full pl-6 pr-2 py-2 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground"
+                className="w-full pl-7 pr-3 py-2.5 border rounded-sm bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-foreground transition-all"
+                aria-label="Maximum price in rupees"
               />
             </div>
           </div>
           {priceError && (
-            <p className="text-xs text-destructive mt-1">{priceError}</p>
+            <p className="text-xs text-destructive" role="alert">{priceError}</p>
           )}
           <button
             onClick={() => {
               handlePriceApply();
               if (isMobile && !priceError) {
-                // We don't automatically close on apply, but we could.
+                // Optional mobile behavior
               }
             }}
-            className="w-full py-2 bg-secondary text-foreground text-sm font-medium tracking-widest uppercase mt-2 rounded-sm hover:bg-secondary/80 transition-colors"
+            className="w-full py-3 bg-brand-100 text-brand-900 border border-brand-200 text-xs font-medium tracking-[0.2em] uppercase mt-2 hover:bg-brand-200 transition-colors"
           >
             Apply Price
           </button>

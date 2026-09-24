@@ -25,7 +25,7 @@ export function ProductForm({ productId, basePrice, compareAtPrice, variants, ha
   const [selectedColor, setSelectedColor] = useState<string | null>(colors.length === 1 ? colors[0] : null);
   const [selectedSize, setSelectedSize] = useState<string | null>(sizes.length === 1 ? sizes[0] : null);
 
-  const { addItem: addCartItem } = useCart();
+  const { addItem: addCartItem, openCart } = useCart();
   const { addItem: addWishlistItem, removeItem: removeWishlistItem, isWishlisted, getWishlistItemId } = useWishlist();
   const { user } = useAuth();
   const router = useRouter();
@@ -88,8 +88,9 @@ export function ProductForm({ productId, basePrice, compareAtPrice, variants, ha
     try {
       await addCartItem(selectedVariant.id, 1);
       setCartSuccess(true);
+      openCart();
       setTimeout(() => setCartSuccess(false), 3000); // clear success msg
-    } catch (err) {
+    } catch {
       // The error is already caught/handled by context, we just stop loading
       alert("Failed to add to cart. Please try again.");
     } finally {
@@ -151,12 +152,14 @@ export function ProductForm({ productId, basePrice, compareAtPrice, variants, ha
                     type="button"
                     onClick={() => setSelectedColor(color)}
                     disabled={!available}
+                    aria-pressed={selectedColor === color}
+                    aria-label={`Color ${color}${!available ? ' (Unavailable)' : ''}`}
                     className={cn(
-                      "px-4 py-2 border rounded-sm text-sm transition-all",
+                      "px-4 py-2 border rounded-sm text-sm transition-colors",
                       selectedColor === color 
                         ? "border-foreground bg-foreground text-background" 
                         : "border-input hover:border-foreground",
-                      !available && "opacity-50 cursor-not-allowed line-through hover:border-input"
+                      !available && "opacity-50 cursor-not-allowed line-through hover:border-input text-muted-foreground"
                     )}
                   >
                     {color}
@@ -183,12 +186,14 @@ export function ProductForm({ productId, basePrice, compareAtPrice, variants, ha
                     type="button"
                     onClick={() => setSelectedSize(size)}
                     disabled={!available}
+                    aria-pressed={selectedSize === size}
+                    aria-label={`Size ${size}${!available ? ' (Unavailable)' : ''}`}
                     className={cn(
-                      "min-w-12 px-4 py-2 border rounded-sm text-sm transition-all text-center",
+                      "min-w-[3rem] px-4 py-2 border rounded-sm text-sm transition-colors text-center",
                       selectedSize === size 
                         ? "border-foreground bg-foreground text-background" 
                         : "border-input hover:border-foreground",
-                      !available && "opacity-50 cursor-not-allowed hover:border-input"
+                      !available && "opacity-50 cursor-not-allowed hover:border-input text-muted-foreground"
                     )}
                   >
                     {size}

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function SignupPage() {
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,22 +72,22 @@ export default function SignupPage() {
 
   return (
     <>
-      <div className="text-center mb-6">
-        <h1 className="text-xl font-semibold">Create Account</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Join us to explore the premium fashion collection.
+      <div className="text-center mb-10">
+        <h1 className="font-serif text-3xl tracking-tight mb-3">Create Account</h1>
+        <p className="text-sm text-muted-foreground uppercase tracking-widest">
+          Join us to explore the premium fashion collection
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+          <div className="p-4 text-sm text-destructive border border-destructive/20 bg-destructive/5 rounded-none" role="alert">
             {error}
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
+        <div className="space-y-3">
+          <Label htmlFor="name" className="text-xs uppercase tracking-widest text-muted-foreground">Full Name</Label>
           <Input
             id="name"
             type="text"
@@ -95,11 +97,12 @@ export default function SignupPage() {
             disabled={loading}
             required
             autoComplete="name"
+            className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 focus-visible:ring-0 focus-visible:border-foreground"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="space-y-3">
+          <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">Email Address</Label>
           <Input
             id="email"
             type="email"
@@ -109,23 +112,36 @@ export default function SignupPage() {
             disabled={loading}
             required
             autoComplete="email"
+            className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 focus-visible:ring-0 focus-visible:border-foreground"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            required
-            autoComplete="new-password"
-          />
+        <div className="space-y-3">
+          <Label htmlFor="password" className="text-xs uppercase tracking-widest text-muted-foreground">Password</Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+              autoComplete="new-password"
+              className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 pr-10 focus-visible:ring-0 focus-visible:border-foreground"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full rounded-none uppercase tracking-widest text-xs h-12 mt-4" disabled={loading}>
           {loading ? (
             <>
               <Spinner size="sm" className="mr-2" /> Creating account...
@@ -136,10 +152,10 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      <div className="mt-6 text-center text-sm">
+      <div className="mt-8 text-center text-xs uppercase tracking-widest">
         <p className="text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary font-medium hover:underline">
+          <Link href="/login" className="text-foreground hover:text-muted-foreground transition-colors ml-2 underline underline-offset-4">
             Sign In
           </Link>
         </p>

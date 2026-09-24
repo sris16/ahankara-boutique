@@ -27,17 +27,19 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
   }
 
+  const isFormData = customConfig.body instanceof FormData;
+
   const config: RequestInit = {
     ...customConfig,
     // Ensures cookie-based session info is sent to the backend
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...headers,
     },
   };
 
-  if (config.body && typeof config.body === "object") {
+  if (!isFormData && config.body && typeof config.body === "object") {
     config.body = JSON.stringify(config.body);
   }
 

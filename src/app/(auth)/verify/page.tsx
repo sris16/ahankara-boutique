@@ -92,26 +92,26 @@ export default function VerifyOTPPage() {
 
   return (
     <>
-      <div className="text-center mb-6">
-        <h1 className="text-xl font-semibold">Verify Identity</h1>
-        <p className="text-sm text-muted-foreground mt-2">
+      <div className="text-center mb-10">
+        <h1 className="font-serif text-3xl tracking-tight mb-3">Verify Identity</h1>
+        <p className="text-sm text-muted-foreground uppercase tracking-widest">
           {otpSent
-            ? `We've sent a 6-digit code to ${email}`
-            : "Sign in with a one-time passcode."}
+            ? `Code sent to ${email}`
+            : "Sign in with a passcode"}
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {error && (
-          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+          <div className="p-4 text-sm text-destructive border border-destructive/20 bg-destructive/5 rounded-none" role="alert">
             {error}
           </div>
         )}
 
         {!otpSent ? (
-          <form onSubmit={handleRequestOTP} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+          <form onSubmit={handleRequestOTP} className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -120,35 +120,36 @@ export default function VerifyOTPPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
                 required
+                className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 focus-visible:ring-0 focus-visible:border-foreground"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full rounded-none uppercase tracking-widest text-xs h-12 mt-4" disabled={loading}>
               {loading ? (
                 <>
-                  <Spinner size="sm" className="mr-2" /> Sending Code...
+                  <Spinner size="sm" className="mr-2" /> Sending...
                 </>
               ) : (
-                "Send Verification Code"
+                "Send Code"
               )}
             </Button>
           </form>
         ) : (
-          <form onSubmit={handleVerifyOTP} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="otp">Verification Code</Label>
+          <form onSubmit={handleVerifyOTP} className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="otp" className="text-xs uppercase tracking-widest text-muted-foreground block text-center">Verification Code</Label>
               <Input
                 id="otp"
                 type="text"
-                placeholder="123456"
+                placeholder="------"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 disabled={loading}
                 required
                 maxLength={6}
-                className="text-center text-lg tracking-widest"
+                className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 text-center text-3xl tracking-[0.5em] h-16 focus-visible:ring-0 focus-visible:border-foreground font-mono"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full rounded-none uppercase tracking-widest text-xs h-12 mt-4" disabled={loading}>
               {loading ? (
                 <>
                   <Spinner size="sm" className="mr-2" /> Verifying...
@@ -158,12 +159,12 @@ export default function VerifyOTPPage() {
               )}
             </Button>
             
-            <div className="text-center">
+            <div className="text-center mt-6">
                <button 
                   type="button" 
                   onClick={handleRequestOTP} 
                   disabled={loading}
-                  className="text-sm text-primary hover:underline"
+                  className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
                >
                   Resend Code
                </button>

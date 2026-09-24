@@ -13,6 +13,7 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   // Razorpay
   RAZORPAY_KEY_ID: z.string().default('rzp_test_placeholder'),
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().min(1, 'NEXT_PUBLIC_RAZORPAY_KEY_ID is required'),
   RAZORPAY_KEY_SECRET: z.string().default('placeholder_secret'),
   RAZORPAY_WEBHOOK_SECRET: z.string().default('placeholder_webhook'),
   // Shiprocket

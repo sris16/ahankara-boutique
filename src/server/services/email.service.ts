@@ -57,4 +57,48 @@ export class EmailService {
       return false;
     }
   }
+
+  /**
+   * Send a password reset email via Resend
+   */
+  static async sendPasswordResetEmail({ email, url }: { email: string; url: string }): Promise<boolean> {
+    const subject = `Reset Your Ahankara Studios Password`;
+    const html = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #eaeaea; borderRadius: 8px;">
+        <h2 style="color: #1a1a1a; margin-top: 0;">Ahankara Studios</h2>
+        <p style="color: #4a4a4a; font-size: 15px;">We received a request to reset your password. Click the button below to choose a new one:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${url}" style="background-color: #111827; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-weight: 500; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">Reset Password</a>
+        </div>
+        <p style="color: #71717a; font-size: 13px; line-height: 1.5;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+        <p style="color: #71717a; font-size: 11px; margin-top: 30px; word-break: break-all;">If the button doesn't work, copy and paste this link into your browser:<br/>${url}</p>
+      </div>
+    `;
+
+    logger.info(`Sending password reset email to ${email}`);
+
+    if (!resendClient) {
+      logger.info(`[DEV EMAIL MOCK] Password reset email delivery unavailable in development for ${email}. URL: ${url}`);
+      return true;
+    }
+
+    try {
+      const { error } = await resendClient.emails.send({
+        from: env.AUTH_EMAIL_FROM,
+        to: [email],
+        subject,
+        html,
+      });
+
+      if (error) {
+        logger.error(`Failed to send password reset email via Resend: ${error.message}`);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      logger.error('Error executing Resend email send for password reset', { error: err });
+      return false;
+    }
+  }
 }

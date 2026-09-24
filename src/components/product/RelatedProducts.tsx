@@ -1,5 +1,4 @@
-import { apiClient } from "@/lib/api/client";
-import { ProductListResponse } from "@/types/catalog";
+import { ProductService } from "@/server/services/product.service";
 import { ProductCard } from "@/components/catalog/ProductCard";
 
 interface RelatedProductsProps {
@@ -13,13 +12,10 @@ export async function RelatedProducts({ categoryId, currentProductId }: RelatedP
   let products: ProductSummary[] = [];
 
   try {
-    const res = await apiClient.get<ProductListResponse>("/api/products", {
-      params: {
-        categoryId,
-        limit: 5, // Fetch 5 to ensure we have 4 after filtering current product
-      },
-      // Using Next.js cache for server components
-      next: { revalidate: 3600 }
+    const res = await ProductService.getPublicProducts({
+      categoryId,
+      limit: 5, // Fetch 5 to ensure we have 4 after filtering current product
+      page: 1
     });
 
     if (res && res.data) {
@@ -28,7 +24,7 @@ export async function RelatedProducts({ categoryId, currentProductId }: RelatedP
         .filter((p) => p.id !== currentProductId)
         .slice(0, 4);
     }
-  } catch (error) {
+  } catch {
     // Graceful failure - do not crash the PDP
     return null;
   }

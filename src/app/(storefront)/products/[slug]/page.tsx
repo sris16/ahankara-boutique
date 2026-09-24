@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { env } from "@/utils/env";
 
-import { apiClient } from "@/lib/api/client";
+import { ProductService } from "@/server/services/product.service";
 import { ProductDetail } from "@/types/catalog";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductForm } from "@/components/product/ProductForm";
@@ -21,10 +21,9 @@ interface ProductPageProps {
   }>;
 }
 
-async function getProduct(slug: string) {
+async function getProduct(slug: string): Promise<ProductDetail | null> {
   try {
-    const res = await apiClient.get<ProductDetail>(`/api/products/${slug}`);
-    return res;
+    return await ProductService.getProductBySlug(slug, true) as unknown as ProductDetail;
   } catch (error) {
     return null;
   }
@@ -80,7 +79,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
         <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
         <ChevronRight className="w-4 h-4" />
-        <Link href={`/products?category=${product.categoryId}`} className="hover:text-foreground transition-colors">
+        <Link href={`/categories/${product.category.slug}`} className="hover:text-foreground transition-colors">
           {product.category.name}
         </Link>
         <ChevronRight className="w-4 h-4" />

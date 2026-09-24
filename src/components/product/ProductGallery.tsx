@@ -45,13 +45,13 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               key={image.id}
               onClick={() => setActiveIndex(index)}
               className={cn(
-                "relative aspect-[3/4] w-16 md:w-full shrink-0 overflow-hidden transition-all border-2 rounded-sm",
-                index === activeIndex 
-                  ? "border-foreground opacity-100" 
-                  : "border-transparent opacity-60 hover:opacity-100 hover:border-muted-foreground/30"
+                "relative aspect-[3/4] w-16 md:w-full shrink-0 overflow-hidden transition-opacity duration-300 rounded-sm",
+                index === activeIndex
+                  ? "ring-1 ring-foreground ring-offset-1 opacity-100"
+                  : "opacity-50 hover:opacity-100"
               )}
-              aria-label={`View image ${index + 1}`}
-              aria-pressed={index === activeIndex}
+              aria-label={`View image ${index + 1} of ${images.length}: ${image.altText || productName}`}
+              aria-current={index === activeIndex ? "true" : undefined}
             >
               <Image
                 src={image.secureUrl}

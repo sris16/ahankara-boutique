@@ -6,14 +6,16 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
-      <div className="mb-8 text-center">
-        <Link href="/" className="font-serif text-2xl tracking-widest font-semibold hover:text-muted-foreground transition-colors">
-          AHANKARA STUDIOS
-        </Link>
-      </div>
-      <div className="w-full max-w-md bg-background rounded-lg shadow-sm border p-6 sm:p-8">
-        {children}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-12 md:py-24">
+      <div className="w-full max-w-md mx-auto">
+        <div className="mb-12 text-center">
+          <Link href="/" className="font-serif text-2xl tracking-[0.2em] font-semibold hover:opacity-80 transition-opacity uppercase">
+            AHANKARA STUDIOS
+          </Link>
+        </div>
+        <div className="bg-background">
+          {children}
+        </div>
       </div>
     </div>
   );
