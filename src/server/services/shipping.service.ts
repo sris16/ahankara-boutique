@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { ShipmentStatus, ShippingProvider, FulfillmentStatus, OrderStatus, Shipment } from '@prisma/client';
-import { ValidationError, ConflictError } from '@/utils/errors';
+import { ValidationError, ConflictError, AppError } from '@/utils/errors';
 import { ShippingProviderAdapter, NormalizedTrackingEvent } from './shipping/providers/shipping-provider.interface';
 import { MockShippingProvider } from './shipping/providers/mock-shipping.provider';
 import { ShiprocketShippingProvider } from './shipping/providers/shiprocket.provider';
@@ -17,6 +17,102 @@ export class ShippingService {
     }
   }
 
+  public static async getRatesForCheckout(
+    addressId: string,
+    userId: string,
+    totalWeightInGrams: number,
+    discountedSubtotal: number
+  ): Promise<{ shippingAmount: number, isServiceable: boolean, estimatedDeliveryAt?: Date | null }> {
+    const address = await prisma.address.findFirst({
+      where: { id: addressId, userId }
+    });
+
+    if (!address) {
+      throw new ValidationError('Shipping address not found or unauthorized');
+    }
+
+    const config = await prisma.shippingConfiguration.findUnique({
+      where: { id: 'default' }
+    });
+
+    if (!config) {
+      throw new AppError('Shipping configuration is missing', 500, 'SERVER_CONFIGURATION_ERROR');
+    }
+
+    if (config.freeShippingThreshold !== null && discountedSubtotal >= config.freeShippingThreshold) {
+      return { shippingAmount: 0, isServiceable: true, estimatedDeliveryAt: null };
+    }
+
+    if (config.mode === 'FLAT_RATE') {
+      return { shippingAmount: config.flatRateAmount, isServiceable: true, estimatedDeliveryAt: null };
+    }
+
+    if (config.mode === 'LIVE_RATES') {
+      const adapter = this.getProviderAdapter(config.defaultProvider);
+      try {
+        const quote = await adapter.getRates({
+          destinationPostalCode: address.postalCode,
+          totalWeightInGrams,
+          orderSubtotal: discountedSubtotal,
+        });
+
+        if (!quote.isServiceable || quote.cost === null) {
+          return { shippingAmount: 0, isServiceable: false, estimatedDeliveryAt: null };
+        }
+
+        return { shippingAmount: quote.cost, isServiceable: true, estimatedDeliveryAt: quote.estimatedDeliveryAt };
+      } catch (error) {
+        console.error('Provider getRates failed:', error);
+        throw new AppError('Failed to fetch live shipping rates', 502, 'PROVIDER_API_ERROR');
+      }
+    }
+
+    return { shippingAmount: 0, isServiceable: true, estimatedDeliveryAt: null };
+  }
+
+  public static async getRatesByPostalCode(
+    postalCode: string,
+    totalWeightInGrams: number,
+    subtotal: number
+  ): Promise<{ shippingAmount: number, isServiceable: boolean, estimatedDeliveryAt?: Date | null }> {
+    const config = await prisma.shippingConfiguration.findUnique({
+      where: { id: 'default' }
+    });
+
+    if (!config) {
+      throw new AppError('Shipping configuration is missing', 500, 'SERVER_CONFIGURATION_ERROR');
+    }
+
+    if (config.freeShippingThreshold !== null && subtotal >= config.freeShippingThreshold) {
+      return { shippingAmount: 0, isServiceable: true, estimatedDeliveryAt: null };
+    }
+
+    if (config.mode === 'FLAT_RATE') {
+      return { shippingAmount: config.flatRateAmount, isServiceable: true, estimatedDeliveryAt: null };
+    }
+
+    if (config.mode === 'LIVE_RATES') {
+      const adapter = this.getProviderAdapter(config.defaultProvider);
+      try {
+        const quote = await adapter.getRates({
+          destinationPostalCode: postalCode,
+          totalWeightInGrams,
+          orderSubtotal: subtotal,
+        });
+
+        if (!quote.isServiceable || quote.cost === null) {
+          return { shippingAmount: 0, isServiceable: false, estimatedDeliveryAt: null };
+        }
+
+        return { shippingAmount: quote.cost, isServiceable: true, estimatedDeliveryAt: quote.estimatedDeliveryAt };
+      } catch (error) {
+        console.error('Provider getRates failed:', error);
+        throw new AppError('Failed to fetch live shipping rates', 502, 'PROVIDER_API_ERROR');
+      }
+    }
+
+    return { shippingAmount: 0, isServiceable: true, estimatedDeliveryAt: null };
+  }
   /**
    * Evaluates if a given shipment status transition is logically valid.
    */

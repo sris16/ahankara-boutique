@@ -57,7 +57,7 @@ export function OrderPaymentRetry({ orderId }: OrderPaymentRetryProps) {
       // 3. Open Razorpay Checkout
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: paymentAttempt.amount * 100, // assuming backend is INR, Razorpay wants paise. If backend is paise, remove *100. The checkout uses *100.
+        amount: paymentAttempt.amount, // paymentAttempt.amount is already in Paise
         currency: paymentAttempt.currency,
         name: "AHANKARA STUDIOS",
         description: `Order Payment Retry`,

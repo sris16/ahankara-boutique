@@ -38,6 +38,19 @@ export interface AssignAWBResponse {
   trackingUrl?: string;
 }
 
+export interface GetShippingRatesRequest {
+  destinationPostalCode: string;
+  totalWeightInGrams: number;
+  orderSubtotal: number;
+}
+
+export interface ShippingRateQuote {
+  provider: ShippingProvider;
+  isServiceable: boolean;
+  cost: number | null;
+  estimatedDeliveryAt: Date | null;
+}
+
 export interface ShippingProviderAdapter {
   get providerType(): ShippingProvider;
 
@@ -48,4 +61,6 @@ export interface ShippingProviderAdapter {
   assignAWB(providerShipmentId: string, options?: AssignAWBRequest): Promise<AssignAWBResponse>;
 
   getTracking(providerShipmentId: string, awb: string | null): Promise<NormalizedTrackingEvent[]>;
+
+  getRates(request: GetShippingRatesRequest): Promise<ShippingRateQuote>;
 }

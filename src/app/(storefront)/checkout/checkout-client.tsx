@@ -41,9 +41,11 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
     pricingInfo,
     appliedCoupon,
     couponError,
+    error: pricingError,
     applyCoupon,
     clearCoupon,
-    isProcessing: couponProcessing,
+    updatePricing,
+    isProcessing: pricingProcessing,
   } = useCheckout();
 
   const [selectedShippingId, setSelectedShippingId] = useState<string | null>(null);
@@ -68,6 +70,13 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
       setTimeout(() => setSelectedShippingId(defaultShipping.id), 0);
     }
   }, [addresses, selectedShippingId]);
+
+  // Fetch updated pricing whenever the selected shipping address changes
+  useEffect(() => {
+    if (selectedShippingId) {
+      updatePricing(selectedShippingId, appliedCoupon || undefined).catch(console.error);
+    }
+  }, [selectedShippingId, appliedCoupon, updatePricing]);
 
   const handleAddressSubmit = async (data: CreateAddressInput) => {
     try {
@@ -158,6 +167,7 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
   const displayShipping = activePricing?.shippingAmount ?? 0;
   const displayTax = activePricing?.taxAmount ?? 0;
   const displayTotal = activePricing?.totalAmount ?? cart.subtotal;
+  const displayEstimatedDelivery = activePricing?.estimatedDeliveryAt;
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -183,6 +193,12 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
       {checkoutError && (
         <div className="bg-destructive/10 text-destructive p-4 rounded-sm mb-8 border border-destructive/20 text-sm" role="alert">
           {checkoutError}
+        </div>
+      )}
+
+      {pricingError && !checkoutError && (
+        <div className="bg-destructive/10 text-destructive p-4 rounded-sm mb-8 border border-destructive/20 text-sm" role="alert">
+          {pricingError}
         </div>
       )}
 
@@ -309,8 +325,8 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
                       className="uppercase placeholder:normal-case w-full"
                     />
                   </div>
-                  <Button type="submit" variant="secondary" disabled={!couponCode.trim() || couponProcessing}>
-                    {couponProcessing ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Applying coupon..." /> : "Apply"}
+                  <Button type="submit" variant="secondary" disabled={!couponCode.trim() || pricingProcessing}>
+                    {pricingProcessing ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Applying coupon..." /> : "Apply"}
                   </Button>
                 </form>
               )}
@@ -333,7 +349,24 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>{displayShipping === 0 ? "Free" : formatPrice(displayShipping)}</span>
+                <div className="flex flex-col items-end">
+                  <span>
+                    {pricingProcessing ? (
+                      <Loader2 className="w-4 h-4 animate-spin inline" />
+                    ) : pricingError ? (
+                      <span className="text-destructive">Unavailable</span>
+                    ) : displayShipping === 0 ? (
+                      "Free"
+                    ) : (
+                      formatPrice(displayShipping)
+                    )}
+                  </span>
+                  {!pricingProcessing && displayEstimatedDelivery && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      Est. {new Date(displayEstimatedDelivery).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {displayTax > 0 && (
@@ -353,7 +386,7 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
               className="w-full uppercase tracking-widest h-14 transition-all"
               size="lg"
               onClick={handleCheckoutSubmit}
-              disabled={isSubmitting || hasUnavailableItems || !selectedShippingId}
+              disabled={isSubmitting || hasUnavailableItems || !selectedShippingId || pricingProcessing || !!pricingError}
             >
               {isSubmitting ? (
                 <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Processing Securely...</>

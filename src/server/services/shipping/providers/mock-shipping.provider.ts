@@ -1,5 +1,5 @@
 import { ShippingProvider, ShipmentStatus } from '@prisma/client';
-import { AssignAWBRequest, AssignAWBResponse, CreateProviderShipmentRequest, CreateProviderShipmentResponse, NormalizedTrackingEvent, ShippingProviderAdapter } from './shipping-provider.interface';
+import { AssignAWBRequest, AssignAWBResponse, CreateProviderShipmentRequest, CreateProviderShipmentResponse, NormalizedTrackingEvent, ShippingProviderAdapter, GetShippingRatesRequest, ShippingRateQuote } from './shipping-provider.interface';
 
 export class MockShippingProvider implements ShippingProviderAdapter {
   get providerType(): ShippingProvider {
@@ -29,7 +29,7 @@ export class MockShippingProvider implements ShippingProviderAdapter {
     };
   }
 
-  async getTracking(providerShipmentId: string, awb: string | null = null): Promise<NormalizedTrackingEvent[]> {
+  async getTracking(providerShipmentId: string, _awb: string | null = null): Promise<NormalizedTrackingEvent[]> {
     // In a real provider, we would fetch from the provider API.
     // For MOCK, we just return a simulated history based on time.
     const now = new Date();
@@ -47,5 +47,22 @@ export class MockShippingProvider implements ShippingProviderAdapter {
         eventTime: new Date(now.getTime() - 50000),
       }
     ];
+  }
+
+  async getRates(request: GetShippingRatesRequest): Promise<ShippingRateQuote> {
+    if (request.destinationPostalCode.endsWith('000')) {
+      return {
+        provider: ShippingProvider.MOCK,
+        isServiceable: false,
+        cost: null,
+        estimatedDeliveryAt: null,
+      };
+    }
+    return {
+      provider: ShippingProvider.MOCK,
+      isServiceable: true,
+      cost: 5000, // 50 INR mock
+      estimatedDeliveryAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+    };
   }
 }

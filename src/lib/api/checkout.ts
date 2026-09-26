@@ -14,6 +14,13 @@ export const checkoutApi = {
     return apiClient.post('/api/me/cart/coupon/validate', { code });
   },
 
+  getCheckoutPricing: async (addressId?: string, couponCode?: string): Promise<CouponValidationResponse> => {
+    const params = new URLSearchParams();
+    if (addressId) params.append('addressId', addressId);
+    if (couponCode) params.append('couponCode', couponCode);
+    return apiClient.get(`/api/me/checkout/pricing?${params.toString()}`);
+  },
+
   createOrder: async (data: CheckoutRequest, idempotencyKey: string): Promise<Order> => {
     return apiClient.post('/api/me/checkout', data, {
       headers: {

@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
+import { DeliveryChecker } from "./DeliveryChecker";
 
 interface ProductFormProps {
   productId: string;
@@ -223,6 +224,8 @@ export function ProductForm({ productId, basePrice, compareAtPrice, variants, ha
       {!hasAvailableStock && variants.length === 0 && (
         <div className="text-sm text-destructive font-medium">Out of stock</div>
       )}
+
+      <DeliveryChecker productId={productId} variantId={selectedVariant?.id} />
 
       {/* Actions */}
       <div className="flex gap-4">

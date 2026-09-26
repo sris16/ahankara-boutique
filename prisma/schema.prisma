@@ -984,3 +984,14 @@ model Refund {
   @@index([idempotencyKey])
   @@map("refunds")
 }
+
+model ShippingConfiguration {
+  id                    String           @id @default("default")
+  mode                  String // "FLAT_RATE" | "LIVE_RATES"
+  flatRateAmount        Int // in paise
+  freeShippingThreshold Int? // in paise
+  defaultProvider       ShippingProvider @default(SHIPROCKET)
+  updatedAt             DateTime         @updatedAt
+
+  @@map("shipping_configuration")
+}

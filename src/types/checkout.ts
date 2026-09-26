@@ -8,6 +8,7 @@ export interface CouponValidationResponse {
   shippingAmount: number;
   taxAmount: number;
   totalAmount: number;
+  estimatedDeliveryAt?: string | null;
   coupon: {
     id: string;
     code: string;

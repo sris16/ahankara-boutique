@@ -6,6 +6,8 @@ import {
   NormalizedTrackingEvent,
   AssignAWBRequest,
   AssignAWBResponse,
+  GetShippingRatesRequest,
+  ShippingRateQuote
 } from './shipping-provider.interface';
 import { env } from '@/utils/env';
 import { ValidationError, AppError } from '@/utils/errors';
@@ -332,5 +334,81 @@ export class ShiprocketShippingProvider implements ShippingProviderAdapter {
     if (text.includes('PICKED UP')) return ShipmentStatus.PICKED_UP;
     if (text.includes('CANCELLED')) return ShipmentStatus.CANCELLED;
     return ShipmentStatus.PENDING;
+  }
+
+  public async getRates(request: GetShippingRatesRequest): Promise<ShippingRateQuote> {
+    const pickupLocation = env.SHIPROCKET_PICKUP_LOCATION;
+    if (!pickupLocation) {
+      throw new AppError('SHIPROCKET_PICKUP_LOCATION is missing', 500, 'PROVIDER_CONFIG_ERROR');
+    }
+
+    const authToken = await this.getValidToken();
+
+    // Use /v1/external/courier/serviceability/
+    // https://apidocs.shiprocket.in/#851f0cda-8bba-4e94-a957-a36c6ad5d886
+    const payload = {
+      pickup_postcode: pickupLocation,
+      delivery_postcode: request.destinationPostalCode,
+      weight: request.totalWeightInGrams / 1000,
+      cod: 0,
+      declared_value: request.orderSubtotal / 100
+    };
+
+    const query = new URLSearchParams(payload as unknown as Record<string, string>).toString();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/courier/serviceability/?${query}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        }
+      });
+
+      if (!response.ok) {
+        // If 404, it might mean unserviceable.
+        if (response.status === 404) {
+          return {
+            provider: ShippingProvider.SHIPROCKET,
+            isServiceable: false,
+            cost: null,
+            estimatedDeliveryAt: null
+          };
+        }
+        throw new AppError(`Shiprocket Serviceability Failed (HTTP ${response.status})`, 502, 'PROVIDER_API_ERROR');
+      }
+
+      const data = await response.json();
+
+      if (data.status === 404 || !data.data || !data.data.available_courier_companies || data.data.available_courier_companies.length === 0) {
+        return {
+          provider: ShippingProvider.SHIPROCKET,
+          isServiceable: false,
+          cost: null,
+          estimatedDeliveryAt: null
+        };
+      }
+
+      // Find the cheapest standard courier
+      let cheapestCost = Infinity;
+      let etd: string | null = null;
+      for (const courier of data.data.available_courier_companies) {
+        if (courier.rate < cheapestCost) {
+          cheapestCost = courier.rate;
+          etd = courier.etd;
+        }
+      }
+
+      return {
+        provider: ShippingProvider.SHIPROCKET,
+        isServiceable: true,
+        cost: Math.round(cheapestCost * 100), // convert to paise
+        estimatedDeliveryAt: etd ? new Date(etd) : null
+      };
+
+    } catch (e: unknown) {
+      if (e instanceof AppError) throw e;
+      throw new AppError(`Shiprocket integration failed: ${e instanceof Error ? e.message : 'Unknown error'}`, 502, 'PROVIDER_API_ERROR');
+    }
   }
 }

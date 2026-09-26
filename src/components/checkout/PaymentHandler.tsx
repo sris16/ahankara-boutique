@@ -52,8 +52,7 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
     const options = {
       // The public key used to initialize Razorpay checkout.
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: paymentAttempt.amount * 100, // Assuming backend provides amount in base units, but Razorpay wants paise. Wait, backend usually gives amount. If backend gives paise, don't multiply.
-      // Actually backend PaymentService passes order.totalAmount to createOrder. order.totalAmount is INR (e.g. 5000). Razorpay createOrder usually takes paise. Let's assume the providerOrder has amount in whatever unit Razorpay requires. We'll just pass what we got or let Razorpay fetch from order_id.
+      amount: paymentAttempt.amount, // paymentAttempt.amount is already in Paise
       currency: paymentAttempt.currency,
       name: "AHANKARA STUDIOS",
       description: `Order ${order.orderNumber}`,

@@ -1,26 +1,42 @@
 import { z } from 'zod';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Helper to enforce production strings without breaking local dev defaults
+const prodRequired = (devDefault: string) =>
+  isProduction ? z.string().min(1) : z.string().default(devDefault);
+
+const prodOptional = () =>
+  isProduction ? z.string().min(1) : z.string().optional();
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.string().url(),
-  BETTER_AUTH_SECRET: z.string().min(16).default('ahankara_boutique_v3_super_secret_key_32bytes'),
+
+  // Auth
+  BETTER_AUTH_SECRET: prodRequired('ahankara_boutique_v3_super_secret_key_32bytes'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
-  RESEND_API_KEY: z.string().optional(),
+
+  // Resend
+  RESEND_API_KEY: prodOptional(),
   AUTH_EMAIL_FROM: z.string().default('Ahankara Studios <onboarding@resend.dev>'),
+
   // Cloudinary
-  CLOUDINARY_CLOUD_NAME: z.string().optional(),
-  CLOUDINARY_API_KEY: z.string().optional(),
-  CLOUDINARY_API_SECRET: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: prodOptional(),
+  CLOUDINARY_API_KEY: prodOptional(),
+  CLOUDINARY_API_SECRET: prodOptional(),
+
   // Razorpay
-  RAZORPAY_KEY_ID: z.string().default('rzp_test_placeholder'),
+  RAZORPAY_KEY_ID: prodRequired('rzp_test_placeholder'),
   NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().min(1, 'NEXT_PUBLIC_RAZORPAY_KEY_ID is required'),
-  RAZORPAY_KEY_SECRET: z.string().default('placeholder_secret'),
-  RAZORPAY_WEBHOOK_SECRET: z.string().default('placeholder_webhook'),
+  RAZORPAY_KEY_SECRET: prodRequired('placeholder_secret'),
+  RAZORPAY_WEBHOOK_SECRET: prodRequired('placeholder_webhook'),
+
   // Shiprocket
-  SHIPROCKET_EMAIL: z.string().optional(),
-  SHIPROCKET_PASSWORD: z.string().optional(),
+  SHIPROCKET_EMAIL: prodOptional(),
+  SHIPROCKET_PASSWORD: prodOptional(),
   SHIPROCKET_PICKUP_LOCATION: z.string().min(1, 'SHIPROCKET_PICKUP_LOCATION is required'),
-  SHIPROCKET_WEBHOOK_SECRET: z.string().optional(),
+  SHIPROCKET_WEBHOOK_SECRET: prodOptional(),
 });
 
 export const env = (() => {

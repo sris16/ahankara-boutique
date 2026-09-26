@@ -1,13 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { ValidationError } from '@/utils/errors';
 import { CouponType } from '@prisma/client';
+import { ShippingService } from './shipping.service';
 
 export class PricingService {
   /**
    * Calculates the authoritative checkout pricing for a user's cart,
-   * optionally applying a coupon code.
+   * optionally applying a coupon code and dynamically looking up shipping rates.
    */
-  static async calculateCheckoutPricing(userId: string, couponCode?: string | null) {
+  static async calculateCheckoutPricing(userId: string, couponCode?: string | null, shippingAddressId?: string | null) {
     const cart = await prisma.cart.findUnique({
       where: { userId },
       include: {
@@ -32,9 +33,13 @@ export class PricingService {
     }
 
     let subtotal = 0;
+    let totalWeightInGrams = 0;
     cart.items.forEach(item => {
       const price = item.variant.price ?? item.variant.product.basePrice;
       subtotal += price * item.quantity;
+      if (item.variant.weightInGrams) {
+        totalWeightInGrams += item.variant.weightInGrams * item.quantity;
+      }
     });
 
     let discountAmount = 0;
@@ -141,10 +146,26 @@ export class PricingService {
     }
 
     const discountedSubtotal = subtotal - discountAmount;
-    
-    // Future placeholders
-    const shippingAmount = 0;
-    const taxAmount = 0;
+
+    let shippingAmount = 0;
+    let estimatedDeliveryAt: string | null = null;
+    if (shippingAddressId) {
+      const shippingResult = await ShippingService.getRatesForCheckout(
+        shippingAddressId,
+        userId,
+        totalWeightInGrams,
+        discountedSubtotal
+      );
+
+      if (!shippingResult.isServiceable) {
+        throw new ValidationError('The selected address is not serviceable.');
+      }
+
+      shippingAmount = shippingResult.shippingAmount;
+      estimatedDeliveryAt = shippingResult.estimatedDeliveryAt?.toISOString() || null;
+    }
+
+    const taxAmount = 0; // Tax is currently hardcoded to 0
     const totalAmount = discountedSubtotal + shippingAmount + taxAmount;
 
     return {
@@ -155,6 +176,7 @@ export class PricingService {
       shippingAmount,
       taxAmount,
       totalAmount,
+      estimatedDeliveryAt,
       coupon: appliedCoupon
     };
   }

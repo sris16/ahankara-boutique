@@ -100,10 +100,33 @@ export class PaymentService {
 
     // Verify cryptographic signature
     const isValid = RazorpayService.verifyCheckoutSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
-    
+
     if (!isValid) {
       // Signature is invalid. Don't mark as paid.
       throw new ValidationError('Invalid payment signature');
+    }
+
+    // Verify external payment integrity directly from Razorpay
+    const razorpayPayment = await RazorpayService.fetchPayment(razorpayPaymentId);
+    if (!razorpayPayment) {
+      throw new ValidationError('Failed to fetch external payment verification');
+    }
+
+    if (razorpayPayment.order_id !== razorpayOrderId) {
+      throw new ValidationError('Payment does not belong to the correct order');
+    }
+
+    // Both local order.totalAmount and Razorpay amount are in Paise
+    if (Number(razorpayPayment.amount) !== order.totalAmount) {
+      throw new ValidationError('Payment amount mismatch');
+    }
+
+    if (razorpayPayment.currency !== order.currency) {
+      throw new ValidationError('Payment currency mismatch');
+    }
+
+    if (razorpayPayment.status !== 'captured') {
+      throw new ValidationError('Payment is not captured');
     }
 
     // Mark signature verified and attempt finalization
@@ -153,7 +176,7 @@ export class PaymentService {
       }
 
       // 3. Normal finalization
-      // Ensure amounts match via Razorpay API (or trust signature since we validated signature earlier, 
+      // Ensure amounts match via Razorpay API (or trust signature since we validated signature earlier,
       // but double check amounts locally against DB)
       const payment = (order as unknown as OrderWithRelations).payments.find(p => p.id === paymentId);
       if (!payment || payment.amount !== order.totalAmount || payment.currency !== order.currency) {
@@ -228,7 +251,7 @@ export class PaymentService {
       if (couponLimitExceededAtFinalization && confirmedOrder.status === 'CONFIRMED') {
          confirmedOrder = await tx.order.update({
            where: { id: order.id },
-           data: { status: 'PAYMENT_REVIEW' } 
+           data: { status: 'PAYMENT_REVIEW' }
          });
       }
 
@@ -238,7 +261,7 @@ export class PaymentService {
       if (cart) {
         const purchasedVariantIds = (order as unknown as OrderWithRelations).items.map(i => i.variantId).filter(Boolean) as string[];
         const itemsToRemove = cart.items.filter(ci => purchasedVariantIds.includes(ci.variantId));
-        
+
         for (const cartItem of itemsToRemove) {
           await tx.cartItem.delete({ where: { id: cartItem.id } });
         }
@@ -254,10 +277,10 @@ export class PaymentService {
     }
 
     const payload = JSON.parse(rawBody);
-    const eventId = payload.headers && payload.headers['x-razorpay-event-id'] 
-      ? payload.headers['x-razorpay-event-id'] 
+    const eventId = payload.headers && payload.headers['x-razorpay-event-id']
+      ? payload.headers['x-razorpay-event-id']
       : (payload.contains && payload.contains[0] ? `evt_${payload.created_at}_${payload.event}` : null);
-      
+
     // Better safe fallback for event id:
     const safeEventId = eventId || `webhook_${crypto.randomUUID()}`;
     if (!safeEventId) return; // technically always true, but keeps logic structure intact
@@ -297,6 +320,21 @@ export class PaymentService {
     }
 
     if (payload.event === 'payment.captured') {
+      // Both webhook amount and local payment.amount are in Paise
+      if (Number(paymentEntity.amount) !== payment.amount) {
+        console.warn(`Webhook amount mismatch for Razorpay Order ID: ${providerOrderId}`);
+        return;
+      }
+
+      if (paymentEntity.currency !== payment.currency) {
+         console.warn(`Webhook currency mismatch for Razorpay Order ID: ${providerOrderId}`);
+         return;
+      }
+
+      if (paymentEntity.status !== 'captured') {
+         return;
+      }
+
       await this.finalizeSuccessfulPayment(payment.orderId, payment.id, providerOrderId, providerPaymentId);
     } else if (payload.event === 'payment.failed') {
       await prisma.payment.update({

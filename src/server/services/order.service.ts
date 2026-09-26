@@ -50,7 +50,7 @@ export class OrderService {
       }
     }
 
-    const pricing = await PricingService.calculateCheckoutPricing(userId, validated.couponCode);
+    const pricing = await PricingService.calculateCheckoutPricing(userId, validated.couponCode, validated.shippingAddressId);
 
     // 3. Validate Addresses
     const shippingAddress = await prisma.address.findFirst({
