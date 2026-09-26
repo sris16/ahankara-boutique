@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { NotFoundError, ValidationError } from '@/utils/errors';
+import { NotFoundError, ValidationError, UnauthorizedError } from '@/utils/errors';
 import { checkoutSchema } from '../validators/checkout.validator';
 import { CartService } from './cart.service';
 import { InventoryService } from './inventory.service';
@@ -341,5 +341,66 @@ export class OrderService {
     }
 
     return order;
+  }
+
+  static async getCustomerOrderTracking(userId: string, orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        shipments: {
+          include: {
+            items: {
+              include: {
+                orderItem: {
+                  select: { productName: true, sku: true, quantity: true }
+                }
+              }
+            },
+            trackingEvents: {
+              orderBy: { eventTime: 'desc' },
+              select: { status: true, message: true, location: true, eventTime: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    if (order.userId !== userId) {
+      throw new UnauthorizedError('Not authorized to view tracking for this order');
+    }
+
+    // Expose only safe public tracking data
+    const trackingResponse: import('@/types/order').OrderTrackingResponse = {
+      orderNumber: order.orderNumber,
+      fulfillmentStatus: order.fulfillmentStatus as import('@/types/order').FulfillmentStatus,
+      shipments: order.shipments.map(shipment => ({
+        id: shipment.id,
+        status: shipment.status as import('@/types/order').ShipmentStatus,
+        courierName: shipment.courierName,
+        trackingNumber: shipment.trackingNumber,
+        trackingUrl: shipment.trackingUrl,
+        estimatedDeliveryAt: shipment.estimatedDeliveryAt?.toISOString() || null,
+        shippedAt: shipment.shippedAt?.toISOString() || null,
+        deliveredAt: shipment.deliveredAt?.toISOString() || null,
+        items: shipment.items.map(item => ({
+          productName: item.orderItem.productName,
+          sku: item.orderItem.sku,
+          quantity: item.quantity
+        })),
+        trackingHistory: shipment.trackingEvents.map(event => ({
+          status: event.status as import('@/types/order').ShipmentStatus,
+          message: event.message || '',
+          location: event.location,
+          eventTime: event.eventTime.toISOString()
+        }))
+      }))
+    };
+
+    return trackingResponse;
   }
 }

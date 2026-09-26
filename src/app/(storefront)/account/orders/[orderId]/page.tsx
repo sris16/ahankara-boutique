@@ -52,6 +52,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
 
   try {
     orderData = await OrderService.getCustomerOrderById(user.id, orderId);
+    trackingData = await OrderService.getCustomerOrderTracking(user.id, orderId);
   } catch (error) {
     notFound();
   }
