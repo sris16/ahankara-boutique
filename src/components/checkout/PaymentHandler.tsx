@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { checkoutApi } from "@/lib/api/checkout";
 import { PaymentAttemptResponse, Order } from "@/types/checkout";
@@ -23,6 +23,9 @@ declare global {
 export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onClose }: PaymentHandlerProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  
+  // Track initialization to prevent duplicate Razorpay opens on React re-renders
+  const initializedOrderIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const loadRazorpay = async () => {
@@ -41,7 +44,10 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
   }, [onError]);
 
   useEffect(() => {
-    if (!isScriptLoaded || isVerifying) return;
+    if (!isScriptLoaded) return;
+    
+    // Prevent duplicate initialization for the same payment attempt
+    if (initializedOrderIdRef.current === paymentAttempt.providerOrderId) return;
 
     if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
       console.error("Missing NEXT_PUBLIC_RAZORPAY_KEY_ID environment variable.");
@@ -90,6 +96,7 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
     };
 
     try {
+      initializedOrderIdRef.current = paymentAttempt.providerOrderId;
       const rzp = new window.Razorpay(options);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rzp.on('payment.failed', function (response: any){
@@ -97,9 +104,10 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
       });
       rzp.open();
     } catch (err: unknown) {
+      initializedOrderIdRef.current = null;
       onError("Payment initialization failed");
     }
-  }, [isScriptLoaded, paymentAttempt, order, onSuccess, onError, onClose, isVerifying]);
+  }, [isScriptLoaded, paymentAttempt, order, onSuccess, onError, onClose]);
 
   return (
     <div
