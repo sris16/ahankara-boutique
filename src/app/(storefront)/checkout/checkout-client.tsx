@@ -14,10 +14,24 @@ import { AddressForm } from "@/components/address/AddressForm";
 import { PaymentHandler } from "@/components/checkout/PaymentHandler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ShieldCheck, Tag } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
+import {
+  Loader2,
+  ShieldCheck,
+  Tag,
+  ArrowRight,
+  Truck,
+  User,
+  ShoppingBag,
+  AlertTriangle,
+  ArrowLeft,
+  X,
+} from "lucide-react";
 import { Order, PaymentAttemptResponse, CouponValidationResponse } from "@/types/checkout";
 import { CreateAddressInput, Address } from "@/types/address";
 import { CartResponse } from "@/types/cart";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CheckoutClientProps {
   initialCart: CartResponse;
@@ -25,16 +39,19 @@ interface CheckoutClientProps {
   initialAddresses: Address[];
 }
 
-export default function CheckoutClient({ initialCart, initialPricing, initialAddresses }: CheckoutClientProps) {
+export default function CheckoutClient({
+  initialCart,
+  initialPricing,
+  initialAddresses,
+}: CheckoutClientProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  // We still use these context providers to handle create/update actions
-  // But we use the initial data for the first render to prevent SSR waterfalls
   const { cart: contextCart } = useCart();
   const { addresses: contextAddresses, createAddress } = useAddress();
 
   const cart = contextCart || initialCart;
-  // If context hasn't loaded addresses, use initial. If it has, use context (so it updates if user adds one)
   const addresses = contextAddresses.length > 0 ? contextAddresses : initialAddresses;
 
   const {
@@ -53,7 +70,6 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
   const [isBillingSame, setIsBillingSame] = useState(true);
 
   const [showAddressForm, setShowAddressForm] = useState(false);
-
   const [couponCode, setCouponCode] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +82,7 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
   // Default address selection logic
   useEffect(() => {
     if (!selectedShippingId && addresses.length > 0) {
-      const defaultShipping = addresses.find(a => a.isDefaultShipping) || addresses[0];
+      const defaultShipping = addresses.find((a) => a.isDefaultShipping) || addresses[0];
       setTimeout(() => setSelectedShippingId(defaultShipping.id), 0);
     }
   }, [addresses, selectedShippingId]);
@@ -83,57 +99,115 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
       const newAddress = await createAddress(data);
       setSelectedShippingId(newAddress.id);
       setShowAddressForm(false);
+      toast({
+        variant: "success",
+        title: "Address Saved",
+        description: "Your atelier delivery destination has been recorded.",
+      });
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message || "Failed to save address");
+      toast({
+        variant: "destructive",
+        title: "Failed to Save Address",
+        description: error.message || "Please verify your input and try again.",
+      });
     }
   };
 
   const handleCouponSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!couponCode.trim()) return;
-    await applyCoupon(couponCode.trim());
+    try {
+      await applyCoupon(couponCode.trim());
+      toast({
+        variant: "success",
+        title: "Privilege Code Applied",
+        description: `Code ${couponCode.toUpperCase().trim()} applied to checkout.`,
+      });
+      setCouponCode("");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast({
+        variant: "destructive",
+        title: "Invalid Code",
+        description: error.message || "Failed to apply privilege code.",
+      });
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    clearCoupon();
+    toast({
+      variant: "default",
+      title: "Code Removed",
+      description: "Privilege code removed from your order.",
+    });
   };
 
   const handleCheckoutSubmit = async () => {
     if (!selectedShippingId) {
-      setCheckoutError("Please select a shipping address.");
+      setCheckoutError("Please choose a delivery address to proceed.");
+      toast({
+        variant: "warning",
+        title: "Address Required",
+        description: "Please select or add a shipping destination.",
+      });
       return;
     }
 
     setIsSubmitting(true);
     setCheckoutError(null);
 
-    // Idempotency key for this submission attempt
     const idempotencyKey = crypto.randomUUID();
 
     try {
       // 1. Create the Order securely via the backend
-      const order = await checkoutApi.createOrder({
-        shippingAddressId: selectedShippingId,
-        billingAddressId: isBillingSame ? selectedShippingId : (selectedBillingId || selectedShippingId),
-        couponCode: appliedCoupon || undefined,
-      }, idempotencyKey);
+      const order = await checkoutApi.createOrder(
+        {
+          shippingAddressId: selectedShippingId,
+          billingAddressId: isBillingSame
+            ? selectedShippingId
+            : selectedBillingId || selectedShippingId,
+          couponCode: appliedCoupon || undefined,
+        },
+        idempotencyKey
+      );
 
       setPendingOrder(order);
 
       // 2. Create the Payment Attempt
       const payment = await checkoutApi.createPaymentAttempt(order.id);
       setPaymentAttempt(payment);
-
     } catch (err: unknown) {
       const error = err as Error;
-      setCheckoutError(error.message || "Failed to process checkout. Please try again.");
+      const msg = error.message || "Failed to process checkout. Please try again.";
+      setCheckoutError(msg);
+      toast({
+        variant: "destructive",
+        title: "Checkout Error",
+        description: msg,
+      });
       setIsSubmitting(false);
     }
   };
 
   const handlePaymentSuccess = (orderId: string) => {
+    toast({
+      variant: "success",
+      title: "Order Confirmed",
+      description: "Your creation has been reserved. Generating receipt...",
+    });
     router.replace(`/order-confirmation/${orderId}`);
   };
 
   const handlePaymentError = (errorMsg: string) => {
-    setCheckoutError(`Payment failed: ${errorMsg}`);
+    const fullMsg = `Payment failed: ${errorMsg}`;
+    setCheckoutError(fullMsg);
+    toast({
+      variant: "destructive",
+      title: "Payment Authorization Failed",
+      description: errorMsg || "Your card was not charged. Please try again.",
+    });
     setIsSubmitting(false);
     setPaymentAttempt(null);
   };
@@ -145,22 +219,27 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center text-center min-h-[50vh]">
-        <h1 className="font-serif text-3xl mb-4">Your bag is empty</h1>
-        <p className="text-muted-foreground mb-8">You need items in your bag to checkout.</p>
-        <Button asChild size="lg">
-          <Link href="/products">Continue Shopping</Link>
-        </Button>
+      <div className="container mx-auto px-4 py-24 min-h-[60vh] flex items-center justify-center">
+        <EmptyState
+          icon={ShoppingBag}
+          title="Your shopping bag is empty"
+          description="You need selections in your bag before proceeding with checkout."
+          action={{
+            label: "Explore Collection",
+            href: "/products",
+          }}
+        />
       </div>
     );
   }
 
-  const hasUnavailableItems = cart.items.some(i => i.availability.stockStatus !== 'IN_STOCK' && i.availability.stockStatus !== 'LOW_STOCK');
+  const hasUnavailableItems = cart.items.some(
+    (i) =>
+      i.availability.stockStatus !== "IN_STOCK" &&
+      i.availability.stockStatus !== "LOW_STOCK"
+  );
 
   // Authoritative Pricing Selection
-  // If pricingInfo exists (from coupon API), use it.
-  // Otherwise, fallback to initialPricing from SSR.
-  // If neither, fallback to cart values (though initialPricing should always exist if cart > 0).
   const activePricing = pricingInfo || initialPricing;
   const displaySubtotal = activePricing?.subtotal ?? cart.subtotal;
   const displayDiscount = activePricing?.discountAmount ?? 0;
@@ -169,48 +248,108 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
   const displayTotal = activePricing?.totalAmount ?? cart.subtotal;
   const displayEstimatedDelivery = activePricing?.estimatedDeliveryAt;
 
+  const isCheckoutDisabled =
+    isSubmitting ||
+    hasUnavailableItems ||
+    !selectedShippingId ||
+    pricingProcessing ||
+    Boolean(pricingError);
+
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
-      {/* Accessibility live region for screen readers to announce async state changes */}
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 pb-28 lg:pb-16">
+      {/* Screen reader live notification */}
       <div aria-live="polite" className="sr-only">
         {isSubmitting ? "Processing checkout securely..." : ""}
         {checkoutError ? `Error: ${checkoutError}` : ""}
       </div>
 
-      <h1 className="font-serif text-3xl mb-8 tracking-tight">Checkout</h1>
+      {/* Editorial Breadcrumb / Header */}
+      <div className="mb-10 pb-6 border-b border-border/60 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <Link
+            href="/cart"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors mb-2 font-medium"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to Bag</span>
+          </Link>
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-foreground">
+            Atelier Checkout
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+          <ShieldCheck className="w-4 h-4 text-accent" />
+          <span>Encrypted 256-Bit SSL Checkout</span>
+        </div>
+      </div>
 
+      {/* Out of stock alert banner */}
       {hasUnavailableItems && (
-        <div className="bg-destructive/10 text-destructive p-4 rounded-sm mb-8 border border-destructive/20 text-sm" role="alert">
-          <strong>Action Required:</strong> One or more items in your cart are no longer available in the requested quantity. Please review your cart before checking out.
-          <div className="mt-3">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/cart">Return to Cart</Link>
-            </Button>
+        <div
+          className="bg-destructive/10 text-destructive p-5 rounded-xs mb-8 border border-destructive/20 text-sm flex items-start gap-3.5"
+          role="alert"
+        >
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <strong className="font-semibold block mb-1">Attention Required</strong>
+            <p className="text-xs leading-relaxed opacity-90">
+              One or more pieces in your selection are no longer available in the requested quantity. Please review your bag before placing your order.
+            </p>
+            <div className="mt-3">
+              <Button asChild variant="outline" size="sm" className="h-9 text-xs uppercase tracking-wider">
+                <Link href="/cart">Review Shopping Bag</Link>
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Checkout error banner */}
       {checkoutError && (
-        <div className="bg-destructive/10 text-destructive p-4 rounded-sm mb-8 border border-destructive/20 text-sm" role="alert">
-          {checkoutError}
+        <div
+          className="bg-destructive/10 text-destructive p-4 rounded-xs mb-8 border border-destructive/20 text-xs sm:text-sm font-medium flex items-center gap-2"
+          role="alert"
+        >
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{checkoutError}</span>
         </div>
       )}
 
-      {pricingError && !checkoutError && (
-        <div className="bg-destructive/10 text-destructive p-4 rounded-sm mb-8 border border-destructive/20 text-sm" role="alert">
-          {pricingError}
-        </div>
-      )}
+      {/* Main 2-Column Responsive Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+        {/* Left Column: Form & Address Details */}
+        <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-10">
+          {/* Step 1: Client Account Info */}
+          <section className="bg-surface p-6 sm:p-7 rounded-xs border border-border/70 shadow-subtle">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-foreground flex items-center gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-mono">
+                  1
+                </span>
+                <span>Client Identification</span>
+              </h2>
+              <span className="text-[11px] font-mono uppercase tracking-wider text-success flex items-center gap-1 font-medium">
+                Verified
+              </span>
+            </div>
+            <div className="flex items-center gap-3.5 p-3.5 rounded-xs bg-surface-muted/50 border border-border/40 text-xs">
+              <div className="w-9 h-9 rounded-full bg-surface border border-border/80 flex items-center justify-center text-foreground shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-foreground truncate">{user?.name || "Atelier Guest"}</p>
+                <p className="font-mono text-muted-foreground text-[11px] truncate">{user?.email}</p>
+              </div>
+            </div>
+          </section>
 
-      <div className="flex flex-col lg:flex-row gap-12">
-        {/* Left Column: Details */}
-        <div className="flex-1 flex flex-col gap-10">
-
-          {/* Shipping Address */}
-          <section aria-labelledby="shipping-heading">
-            <h2 id="shipping-heading" className="text-lg font-medium tracking-wide uppercase mb-6 flex items-center gap-2">
-              <span className="bg-foreground text-background w-6 h-6 rounded-full flex items-center justify-center text-xs" aria-hidden="true">1</span>
-              Shipping Address
+          {/* Step 2: Shipping Destination */}
+          <section className="bg-surface p-6 sm:p-7 rounded-xs border border-border/70 shadow-subtle">
+            <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-foreground mb-6 flex items-center gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-mono">
+                2
+              </span>
+              <span>Delivery Destination</span>
             </h2>
 
             {showAddressForm ? (
@@ -228,177 +367,288 @@ export default function CheckoutClient({ initialCart, initialPricing, initialAdd
             )}
           </section>
 
-          {/* Billing Address */}
-          <section className="border-t pt-10" aria-labelledby="billing-heading">
-             <h2 id="billing-heading" className="text-lg font-medium tracking-wide uppercase mb-6 flex items-center gap-2">
-              <span className="bg-foreground text-background w-6 h-6 rounded-full flex items-center justify-center text-xs" aria-hidden="true">2</span>
-              Billing Address
+          {/* Step 3: Billing Address */}
+          <section className="bg-surface p-6 sm:p-7 rounded-xs border border-border/70 shadow-subtle">
+            <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-foreground mb-5 flex items-center gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-mono">
+                3
+              </span>
+              <span>Billing Address</span>
             </h2>
 
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2.5 p-3.5 rounded-xs bg-surface-muted/40 border border-border/40 mb-4">
               <input
                 type="checkbox"
                 id="sameAsShipping"
                 checked={isBillingSame}
                 onChange={(e) => setIsBillingSame(e.target.checked)}
-                className="rounded border-input text-foreground focus:ring-foreground cursor-pointer"
+                className="h-4 w-4 rounded-xs border-border/80 text-primary focus:ring-primary cursor-pointer"
               />
-              <label htmlFor="sameAsShipping" className="text-sm cursor-pointer select-none">
-                Same as shipping address
+              <label htmlFor="sameAsShipping" className="text-xs text-foreground font-normal cursor-pointer select-none">
+                Billing address matches delivery destination
               </label>
             </div>
 
             {!isBillingSame && (
-              <AddressSelector
-                addresses={addresses}
-                selectedId={selectedBillingId}
-                onSelect={setSelectedBillingId}
-                onAddNew={() => setShowAddressForm(true)}
-              />
+              <div className="pt-2">
+                <AddressSelector
+                  addresses={addresses}
+                  selectedId={selectedBillingId}
+                  onSelect={setSelectedBillingId}
+                  onAddNew={() => setShowAddressForm(true)}
+                />
+              </div>
             )}
           </section>
 
+          {/* Step 4: Shipping Method */}
+          <section className="bg-surface p-6 sm:p-7 rounded-xs border border-border/70 shadow-subtle">
+            <h2 className="text-xs font-semibold tracking-[0.2em] uppercase text-foreground mb-5 flex items-center gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-mono">
+                4
+              </span>
+              <span>Delivery Method</span>
+            </h2>
+
+            <div className="p-4 rounded-xs border border-primary/40 bg-surface shadow-xs flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xs bg-surface-muted flex items-center justify-center text-primary shrink-0">
+                  <Truck className="w-5 h-5 stroke-[1.5]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-serif text-sm text-foreground font-medium">
+                      Complimentary Insured Courier Dispatch
+                    </span>
+                    <span className="text-[9px] uppercase tracking-widest bg-success/10 text-success px-1.5 py-0.5 rounded-xs font-mono font-semibold">
+                      Free
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {displayEstimatedDelivery ? (
+                      <>
+                        Estimated delivery by{" "}
+                        <strong className="text-foreground">
+                          {new Date(displayEstimatedDelivery).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </strong>
+                      </>
+                    ) : (
+                      "Dispatches within 24–48 hours in luxury archival packaging."
+                    )}
+                  </p>
+                </div>
+              </div>
+              <span className="font-mono text-xs uppercase tracking-wider text-success font-semibold shrink-0">
+                ₹0
+              </span>
+            </div>
+          </section>
         </div>
 
-        {/* Right Column: Summary */}
-        <div className="w-full lg:w-[420px] shrink-0">
-          <div className="bg-muted/10 rounded-sm p-6 lg:sticky lg:top-24 border">
-            <h2 className="font-serif text-xl mb-6 border-b pb-4">Order Summary</h2>
+        {/* Right Column: Sticky Order Summary */}
+        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-28">
+          <div className="bg-surface rounded-xs p-6 md:p-8 border border-border/70 shadow-subtle">
+            <div className="flex items-baseline justify-between mb-6 pb-4 border-b border-border/50">
+              <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-wide text-foreground">
+                Order Review
+              </h2>
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                ({cart.itemCount} {cart.itemCount === 1 ? "Piece" : "Pieces"})
+              </span>
+            </div>
 
-            {/* Items */}
-            <div className="flex flex-col gap-4 mb-6 border-b pb-6">
+            {/* Line Item Previews */}
+            <div className="flex flex-col divide-y divide-border/40 max-h-[300px] overflow-y-auto pr-1 mb-6 border-b border-border/50 pb-6">
               {cart.items.map((item) => (
-                <div key={item.cartItemId} className="flex gap-4">
-                  <div className="relative w-16 aspect-[3/4] bg-muted/20 rounded-sm overflow-hidden shrink-0">
+                <div key={item.cartItemId} className="flex gap-3.5 py-3 first:pt-0 last:pb-0">
+                  <div className="relative w-14 aspect-[3/4] bg-surface-muted rounded-xs overflow-hidden shrink-0 border border-border/30">
                     {item.product.image ? (
                       <Image
                         src={item.product.image}
                         alt={item.product.name}
                         fill
                         className="object-cover"
-                        sizes="64px"
+                        sizes="56px"
                       />
                     ) : (
-                      <div className="w-full h-full bg-muted/30" aria-hidden="true" />
+                      <div className="w-full h-full flex items-center justify-center text-[8px] font-serif text-muted-foreground">
+                        AHANKARA
+                      </div>
                     )}
                   </div>
-                  <div className="flex flex-col justify-center flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {item.variant.color && <span>{item.variant.color}</span>}
-                      {item.variant.size && <span> | {item.variant.size}</span>}
-                    </p>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
-                      <span className="text-sm font-medium">{formatPrice(item.pricing.lineTotal)}</span>
+                  <div className="flex flex-col justify-between flex-1 min-w-0">
+                    <div>
+                      <p className="text-xs font-serif font-normal text-foreground truncate">{item.product.name}</p>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                        {item.variant.color && <span>{item.variant.color}</span>}
+                        {item.variant.size && <span>• {item.variant.size}</span>}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center text-xs mt-1">
+                      <span className="text-[11px] text-muted-foreground font-mono">Qty: {item.quantity}</span>
+                      <span className="font-mono font-medium text-foreground">{formatPrice(item.pricing.lineTotal)}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Coupons */}
-            <div className="mb-6 border-b pb-6">
+            {/* Coupon Application */}
+            <div className="mb-6 pb-6 border-b border-border/50">
               {appliedCoupon ? (
-                <div className="flex items-center justify-between bg-green-500/10 text-green-700 dark:text-green-400 p-3 rounded-sm text-sm border border-green-500/20">
+                <div className="flex items-center justify-between p-3 rounded-xs bg-brand-50/60 border border-brand-200/80 text-xs">
                   <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4" />
-                    <span className="font-medium tracking-wide uppercase">{appliedCoupon}</span>
+                    <Tag className="h-3.5 w-3.5 text-accent" />
+                    <span className="font-mono font-semibold text-foreground uppercase">{appliedCoupon}</span>
+                    {displayDiscount > 0 && (
+                      <span className="text-muted-foreground font-mono">(-{formatPrice(displayDiscount)})</span>
+                    )}
                   </div>
                   <button
-                    onClick={clearCoupon}
-                    className="text-xs underline underline-offset-2 hover:text-foreground transition-colors"
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
                     aria-label={`Remove coupon ${appliedCoupon}`}
                   >
-                    Remove
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleCouponSubmit} className="flex gap-2">
-                  <div className="flex-1">
-                    <label htmlFor="couponCode" className="sr-only">Discount Code</label>
-                    <Input
-                      id="couponCode"
-                      placeholder="Gift card or discount code"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      className="uppercase placeholder:normal-case w-full"
-                    />
-                  </div>
-                  <Button type="submit" variant="secondary" disabled={!couponCode.trim() || pricingProcessing}>
-                    {pricingProcessing ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Applying coupon..." /> : "Apply"}
+                  <Input
+                    placeholder="Privilege or promo code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    className="h-10 text-xs uppercase placeholder:normal-case font-mono"
+                    disabled={pricingProcessing}
+                    aria-label="Gift card or discount code"
+                  />
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    disabled={!couponCode.trim() || pricingProcessing}
+                    className="h-10 px-4 shrink-0 uppercase tracking-widest text-[11px]"
+                  >
+                    {pricingProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
                   </Button>
                 </form>
               )}
               {couponError && <p className="text-xs text-destructive mt-2" role="alert">{couponError}</p>}
             </div>
 
-            {/* Totals */}
-            <div className="flex flex-col gap-3 text-sm mb-6 border-b pb-6">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatPrice(displaySubtotal)}</span>
+            {/* Totals Breakdown */}
+            <div className="flex flex-col gap-3 text-sm mb-6 border-b border-border/50 pb-6">
+              <div className="flex justify-between items-center text-muted-foreground">
+                <span>Subtotal</span>
+                <span className="font-mono text-foreground">{formatPrice(displaySubtotal)}</span>
               </div>
 
               {displayDiscount > 0 && (
-                <div className="flex justify-between text-green-600 dark:text-green-400">
-                  <span>Discount</span>
-                  <span>-{formatPrice(displayDiscount)}</span>
+                <div className="flex justify-between items-center text-accent">
+                  <span className="flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5" />
+                    <span>Privilege Discount</span>
+                  </span>
+                  <span className="font-mono font-medium">-{formatPrice(displayDiscount)}</span>
                 </div>
               )}
 
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <div className="flex flex-col items-end">
-                  <span>
-                    {pricingProcessing ? (
-                      <Loader2 className="w-4 h-4 animate-spin inline" />
-                    ) : pricingError ? (
-                      <span className="text-destructive">Unavailable</span>
-                    ) : displayShipping === 0 ? (
-                      "Free"
-                    ) : (
-                      formatPrice(displayShipping)
-                    )}
-                  </span>
-                  {!pricingProcessing && displayEstimatedDelivery && (
-                    <span className="text-xs text-muted-foreground mt-1">
-                      Est. {new Date(displayEstimatedDelivery).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  )}
-                </div>
+              <div className="flex justify-between items-center text-muted-foreground">
+                <span>Insured Courier Dispatch</span>
+                <span className="text-xs uppercase tracking-wider text-success font-medium">
+                  {displayShipping === 0 ? "Complimentary" : formatPrice(displayShipping)}
+                </span>
               </div>
 
-              {displayTax > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Taxes</span>
-                  <span>{formatPrice(displayTax)}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center text-muted-foreground">
+                <span>Statutory GST</span>
+                <span className="text-xs text-muted-foreground/80">
+                  {displayTax > 0 ? formatPrice(displayTax) : "Included in retail value"}
+                </span>
+              </div>
             </div>
 
-            <div className="flex justify-between items-end mb-8">
-              <span className="font-medium text-lg tracking-tight">Total</span>
-              <span className="font-medium text-2xl tracking-tight">{formatPrice(displayTotal)}</span>
+            {/* Final Payable */}
+            <div className="flex justify-between items-baseline mb-7" aria-live="polite">
+              <span className="text-sm font-medium tracking-wide uppercase text-foreground">
+                Payable Total
+              </span>
+              <div className="text-right">
+                <span className="font-mono text-2xl sm:text-3xl font-medium tracking-tight text-foreground block">
+                  {formatPrice(displayTotal)}
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Secure Razorpay Payment
+                </span>
+              </div>
             </div>
 
+            {/* Desktop Place Order CTA */}
             <Button
-              className="w-full uppercase tracking-widest h-14 transition-all"
+              className="w-full h-14 uppercase tracking-[0.25em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-subtle rounded-xs"
               size="lg"
               onClick={handleCheckoutSubmit}
-              disabled={isSubmitting || hasUnavailableItems || !selectedShippingId || pricingProcessing || !!pricingError}
+              disabled={isCheckoutDisabled}
             >
               {isSubmitting ? (
-                <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Processing Securely...</>
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Authorizing Checkout...</span>
+                </>
               ) : (
-                <><ShieldCheck className="w-5 h-5 mr-2" /> Place Order</>
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Place Order & Pay</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
             </Button>
 
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              By placing your order, you agree to our Terms of Service and Privacy Policy.
+            <p className="text-[11px] text-muted-foreground text-center mt-4 leading-relaxed">
+              By authorizing, you agree to AHANKARA STUDIOS{" "}
+              <Link href="/terms-of-service" className="underline underline-offset-2 hover:text-foreground">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-foreground">
+                Privacy Policy
+              </Link>.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Payment Bar */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border/80 px-4 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] shadow-elevated lg:hidden">
+        <div className="flex items-center justify-between gap-4 max-w-md mx-auto">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+              Total Payable
+            </span>
+            <span className="font-mono text-lg font-semibold tracking-tight text-foreground">
+              {formatPrice(displayTotal)}
+            </span>
+          </div>
+
+          <Button
+            onClick={handleCheckoutSubmit}
+            disabled={isCheckoutDisabled}
+            className="flex-1 h-12 uppercase tracking-[0.2em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xs flex items-center justify-center gap-2 cursor-pointer shadow-subtle"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Place Order</span>
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

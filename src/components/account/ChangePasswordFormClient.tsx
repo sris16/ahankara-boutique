@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { Eye, EyeOff, ShieldCheck, AlertCircle, Check } from "lucide-react";
 
 export function ChangePasswordFormClient() {
+  const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -23,7 +24,7 @@ export function ChangePasswordFormClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError("Please fill in all fields.");
+      setError("Please fill in all security fields.");
       return;
     }
 
@@ -39,23 +40,32 @@ export function ChangePasswordFormClient() {
 
     setLoading(true);
     setError(null);
-    setSuccess(false);
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: changeError } = await (authClient as any).changePassword({
         newPassword,
         currentPassword,
-        revokeOtherSessions: true, // Optional security best practice
+        revokeOtherSessions: true,
       });
 
       if (changeError) {
-        setError(changeError.message || "Failed to change password. Please verify your current password.");
+        const msg = changeError.message || "Failed to change password. Please verify your current password.";
+        setError(msg);
+        toast({
+          variant: "destructive",
+          title: "Update Failed",
+          description: msg,
+        });
         setLoading(false);
         return;
       }
 
-      setSuccess(true);
+      toast({
+        title: "Password Updated",
+        description: "Your security credentials have been updated successfully.",
+      });
+
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -68,28 +78,34 @@ export function ChangePasswordFormClient() {
   };
 
   return (
-    <div className="space-y-6 pt-10 border-t border-border mt-10">
-      <div>
-        <h3 className="font-serif text-2xl tracking-tight mb-2">Security</h3>
-        <p className="text-sm text-muted-foreground">Change your password to keep your account secure.</p>
+    <div className="bg-background border border-border/80 rounded-xs p-6 sm:p-8 shadow-xs max-w-2xl">
+      <div className="mb-6 pb-4 border-b border-border/60 flex items-center justify-between">
+        <div>
+          <h3 className="font-serif text-lg tracking-tight text-foreground">Security Credentials</h3>
+          <p className="text-xs text-muted-foreground font-mono">Update your account password</p>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-primary/5 border border-border/80 flex items-center justify-center">
+          <ShieldCheck className="w-4 h-4 text-accent" />
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
-        {error && (
-          <div className="p-4 text-sm text-destructive border border-destructive/20 bg-destructive/5 rounded-none" role="alert">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div
+          className="p-3.5 text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-xs flex items-start gap-2.5 mb-6 animate-in fade-in duration-200"
+          role="alert"
+          aria-live="assertive"
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{error}</span>
+        </div>
+      )}
 
-        {success && (
-          <div className="p-4 text-sm text-green-600 dark:text-green-400 border border-green-500/20 bg-green-500/5 rounded-none flex items-center" role="alert">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Password changed successfully.
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <Label htmlFor="currentPassword" className="text-xs uppercase tracking-widest text-muted-foreground">Current Password</Label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Current Password */}
+        <div className="space-y-1.5">
+          <Label htmlFor="currentPassword" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+            Current Password
+          </Label>
           <div className="relative">
             <Input
               id="currentPassword"
@@ -99,22 +115,26 @@ export function ChangePasswordFormClient() {
               disabled={loading}
               required
               autoComplete="current-password"
-              className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 pr-10 focus-visible:ring-0 focus-visible:border-foreground"
+              placeholder="••••••••"
+              className="h-11 rounded-xs pr-12"
             />
             <button
               type="button"
               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
               disabled={loading}
-              className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-              aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer rounded-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+              aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
             >
               {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="newPassword" className="text-xs uppercase tracking-widest text-muted-foreground">New Password</Label>
+        {/* New Password */}
+        <div className="space-y-1.5">
+          <Label htmlFor="newPassword" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+            New Password
+          </Label>
           <div className="relative">
             <Input
               id="newPassword"
@@ -125,23 +145,32 @@ export function ChangePasswordFormClient() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 pr-10 focus-visible:ring-0 focus-visible:border-foreground"
+              placeholder="••••••••"
+              className="h-11 rounded-xs pr-12"
             />
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
               disabled={loading}
-              className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-              aria-label={showNewPassword ? "Hide password" : "Show password"}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 cursor-pointer rounded-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+              aria-label={showNewPassword ? "Hide new password" : "Show new password"}
             >
               {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Minimum 8 characters</p>
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-1">
+            <Check className={`w-3 h-3 ${newPassword.length >= 8 ? "text-accent" : "text-muted-foreground/40"}`} />
+            <span className={newPassword.length >= 8 ? "text-foreground font-medium" : "text-muted-foreground/70"}>
+              Minimum 8 characters
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="confirmNewPassword" className="text-xs uppercase tracking-widest text-muted-foreground">Confirm New Password</Label>
+        {/* Confirm New Password */}
+        <div className="space-y-1.5">
+          <Label htmlFor="confirmNewPassword" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+            Confirm New Password
+          </Label>
           <Input
             id="confirmNewPassword"
             type={showNewPassword ? "text" : "password"}
@@ -151,20 +180,28 @@ export function ChangePasswordFormClient() {
             required
             minLength={8}
             autoComplete="new-password"
-            className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 focus-visible:ring-0 focus-visible:border-foreground"
+            placeholder="••••••••"
+            className="h-11 rounded-xs"
           />
         </div>
 
-        <Button type="submit" className="w-full sm:w-auto rounded-none uppercase tracking-widest text-xs h-12 px-8" disabled={loading}>
-          {loading ? (
-            <>
-              <Spinner size="sm" className="mr-2" /> Saving...
-            </>
-          ) : (
-            "Change Password"
-          )}
-        </Button>
+        <div className="pt-4 border-t border-border/60 flex justify-end">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="rounded-xs h-11 px-8 uppercase tracking-[0.2em] text-xs font-medium"
+          >
+            {loading ? (
+              <>
+                <Spinner size="sm" className="mr-2" /> Updating...
+              </>
+            ) : (
+              "Update Password"
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   );
 }
+

@@ -1,24 +1,31 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
-import { ProductListResponse } from "@/types/catalog";
+import { PaginationMeta } from "@/types/catalog";
+import { cn } from "@/lib/utils";
 
 type SearchParamsObject = {
   [key: string]: string | undefined;
 };
 
 interface CatalogPaginationProps {
-  meta: ProductListResponse["meta"];
+  meta: PaginationMeta;
   searchParams: SearchParamsObject;
+  className?: string;
 }
 
-export function CatalogPagination({ meta, searchParams }: CatalogPaginationProps) {
+export function CatalogPagination({ meta, searchParams, className }: CatalogPaginationProps) {
   const currentPage = meta.page;
   const totalPages = meta.totalPages;
 
   if (totalPages <= 1) return null;
 
   const buildPageUrl = (page: number) => {
-    const params = new URLSearchParams(searchParams as Record<string, string>);
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (v !== undefined) {
+        params.set(k, v);
+      }
+    });
     params.set("page", page.toString());
     return `/products?${params.toString()}`;
   };
@@ -37,7 +44,6 @@ export function CatalogPagination({ meta, searchParams }: CatalogPaginationProps
       let startPage = Math.max(2, currentPage - 1);
       let endPage = Math.min(totalPages - 1, currentPage + 1);
 
-      // Adjust window if at the edges
       if (currentPage <= 2) {
         endPage = 3;
       }
@@ -64,62 +70,89 @@ export function CatalogPagination({ meta, searchParams }: CatalogPaginationProps
   };
 
   return (
-    <nav className="flex items-center gap-1" aria-label="Pagination">
-      {currentPage > 1 ? (
-        <Link
-          href={buildPageUrl(currentPage - 1)}
-          className="p-2 border rounded-sm hover:bg-muted transition-colors"
-          aria-label="Previous Page"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Link>
-      ) : (
-        <div className="p-2 border rounded-sm opacity-50 cursor-not-allowed" aria-hidden="true">
-          <ChevronLeft className="w-4 h-4" />
-        </div>
-      )}
-
-      <div className="flex items-center gap-1 mx-2">
-        {getPageNumbers().map((page, index) => {
-          if (page === "ellipsis") {
-            return (
-              <div key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
-                <MoreHorizontal className="w-4 h-4" />
-              </div>
-            );
-          }
-
-          const isActive = page === currentPage;
-          return (
-            <Link
-              key={page}
-              href={buildPageUrl(page)}
-              aria-current={isActive ? "page" : undefined}
-              className={`min-w-[32px] h-8 flex items-center justify-center rounded-sm text-sm border transition-colors ${
-                isActive
-                  ? "bg-foreground text-background font-medium border-foreground"
-                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {page}
-            </Link>
-          );
-        })}
+    <nav
+      className={cn("flex flex-col sm:flex-row items-center justify-between gap-4 w-full pt-8 pb-4 border-t border-border/50", className)}
+      aria-label="Catalog Pagination"
+    >
+      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-light select-none">
+        Page <span className="font-medium text-foreground">{currentPage}</span> of{" "}
+        <span className="font-medium text-foreground">{totalPages}</span> ({meta.total} pieces total)
       </div>
 
-      {currentPage < totalPages ? (
-        <Link
-          href={buildPageUrl(currentPage + 1)}
-          className="p-2 border rounded-sm hover:bg-muted transition-colors"
-          aria-label="Next Page"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-      ) : (
-        <div className="p-2 border rounded-sm opacity-50 cursor-not-allowed" aria-hidden="true">
-          <ChevronRight className="w-4 h-4" />
+      <div className="flex items-center gap-1.5">
+        {/* Previous Page */}
+        {currentPage > 1 ? (
+          <Link
+            href={buildPageUrl(currentPage - 1)}
+            scroll={false}
+            className="w-9 h-9 flex items-center justify-center rounded-xs border border-border/60 bg-surface/40 hover:bg-surface hover:border-border text-foreground transition-colors cursor-pointer"
+            aria-label="Previous Page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Link>
+        ) : (
+          <div
+            className="w-9 h-9 flex items-center justify-center rounded-xs border border-border/30 bg-surface/20 text-muted-foreground/40 cursor-not-allowed select-none"
+            aria-hidden="true"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </div>
+        )}
+
+        {/* Numbered Pages */}
+        <div className="flex items-center gap-1">
+          {getPageNumbers().map((page, index) => {
+            if (page === "ellipsis") {
+              return (
+                <div
+                  key={`ellipsis-${index}`}
+                  className="w-7 h-9 flex items-center justify-center text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <MoreHorizontal className="w-3.5 h-3.5" />
+                </div>
+              );
+            }
+
+            const isActive = page === currentPage;
+            return (
+              <Link
+                key={page}
+                href={buildPageUrl(page)}
+                scroll={false}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xs text-xs tracking-wider transition-colors duration-200 select-none",
+                  isActive
+                    ? "bg-foreground text-background font-medium shadow-xs pointer-events-none"
+                    : "border border-border/60 bg-surface/30 hover:bg-surface hover:border-border text-muted-foreground hover:text-foreground cursor-pointer"
+                )}
+              >
+                {page}
+              </Link>
+            );
+          })}
         </div>
-      )}
+
+        {/* Next Page */}
+        {currentPage < totalPages ? (
+          <Link
+            href={buildPageUrl(currentPage + 1)}
+            scroll={false}
+            className="w-9 h-9 flex items-center justify-center rounded-xs border border-border/60 bg-surface/40 hover:bg-surface hover:border-border text-foreground transition-colors cursor-pointer"
+            aria-label="Next Page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        ) : (
+          <div
+            className="w-9 h-9 flex items-center justify-center rounded-xs border border-border/30 bg-surface/20 text-muted-foreground/40 cursor-not-allowed select-none"
+            aria-hidden="true"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

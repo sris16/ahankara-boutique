@@ -1,18 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #fbfaf9;
-  --color-brand-100: #f5f3f0;
-  --color-brand-200: #eae5df;
-  --color-brand-300: #dbd2c8;
-  --color-brand-400: #c7b8aa;
-  --color-brand-500: #b59f8e;
-  --color-brand-600: #a58876;
-  --color-brand-700: #8a6c5b;
-  --color-brand-800: #71584c;
-  --color-brand-900: #5c4940;
-  --color-brand-950: #312621;
+  /* AHANKARA STUDIOS Official Brand Palette Tokens */
+  --color-brand-sand: #EEE1D8;
+  --color-brand-porcelain: #FAF7F4;
+  --color-brand-linen: #E8E0D8;
+  --color-brand-linen-muted: #F2ECE6;
+  --color-brand-linen-dark: #C4B7AA;
 
+  --color-brand-espresso: #2C1810;
+  --color-brand-umber: #613010;
+  --color-brand-obsidian: #17120F;
+
+  --color-brand-terracotta: #C84A00;
+  --color-brand-terracotta-muted: #F8EDE6;
+  --color-brand-terracotta-dark: #A33C00;
+
+  /* Neutral scale for fine grayscale adjustment */
   --color-neutral-50: #fafafa;
   --color-neutral-100: #f5f5f5;
   --color-neutral-200: #e5e5e5;
@@ -24,36 +28,78 @@
   --color-neutral-800: #262626;
   --color-neutral-900: #171717;
   --color-neutral-950: #0a0a0a;
+
+  /* Elevation Shadows */
+  --shadow-subtle: 0 1px 3px 0 rgba(23, 18, 15, 0.04), 0 1px 2px -1px rgba(23, 18, 15, 0.04);
+  --shadow-medium: 0 4px 12px -2px rgba(23, 18, 15, 0.06), 0 2px 6px -2px rgba(23, 18, 15, 0.04);
+  --shadow-elevated: 0 12px 32px -4px rgba(23, 18, 15, 0.09), 0 4px 12px -2px rgba(23, 18, 15, 0.04);
 }
 
 :root {
-  --background: var(--color-brand-50);
-  --foreground: var(--color-neutral-950);
-  
-  --muted: var(--color-brand-100);
-  --muted-foreground: var(--color-neutral-600);
-  
-  --primary: var(--color-neutral-950);
-  --primary-foreground: var(--color-brand-50);
-  
-  --secondary: var(--color-brand-200);
-  --secondary-foreground: var(--color-neutral-950);
-  
-  --accent: var(--color-brand-100);
-  --accent-foreground: var(--color-neutral-950);
-  
-  --border: var(--color-brand-200);
-  --input: var(--color-brand-200);
-  --ring: var(--color-neutral-950);
+  /* Surface & Base Canvas */
+  --background: var(--color-brand-porcelain);
+  --foreground: var(--color-brand-obsidian);
 
-  /* Destructive/Error states */
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
+  --surface: #FFFFFF;
+  --surface-muted: #F4EFEB;
+  --surface-elevated: #FFFFFF;
+
+  /* Muted Text & Backdrops */
+  --muted: #EFE8E1;
+  --muted-foreground: #6B5E57;
+
+  /* Primary Interactive: Deep Obsidian Espresso (Classic Luxury, High-Contrast) */
+  --primary: var(--color-brand-obsidian);
+  --primary-foreground: var(--color-brand-porcelain);
+
+  /* Secondary: Soft Warm Linen */
+  --secondary: #EFE8E1;
+  --secondary-foreground: var(--color-brand-obsidian);
+
+  /* Accent: Official Logo Terracotta Dot (Reserved for Accents, Badges & Highlights) */
+  --accent: var(--color-brand-terracotta);
+  --accent-foreground: #FFFFFF;
+  --accent-muted: var(--color-brand-terracotta-muted);
+
+  /* Borders & Dividers */
+  --border: var(--color-brand-linen);
+  --border-subtle: var(--color-brand-linen-muted);
+  --border-strong: var(--color-brand-linen-dark);
+  --input: var(--color-brand-linen);
+  --ring: var(--color-brand-obsidian);
+
+  /* Semantic Feedback States */
+  --destructive: #B83227;
+  --destructive-foreground: #FAF7F4;
+  --success: #2A5A3B;
+  --success-foreground: #FAF7F4;
+  --warning: #996300;
+  --warning-foreground: #FAF7F4;
+
+  /* Fluid Spacing Scale */
+  --space-page-x: clamp(1rem, 4vw, 3.5rem);
+  --space-section: clamp(3rem, 7vw, 6.5rem);
+  --space-card-gap: clamp(1rem, 2.5vw, 2rem);
+
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-standard: 350ms;
+  --duration-slow: 500ms;
+  --duration-cinematic: 800ms;
+  --ease-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-luxury: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @theme inline {
+  /* Semantic Color Utilities */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-elevated: var(--surface-elevated);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-primary: var(--primary);
@@ -62,43 +108,30 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-muted: var(--accent-muted);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* Fonts */
   --font-sans: var(--font-inter);
   --font-serif: var(--font-playfair);
-  
-  --radius-sm: 0.125rem;
-  --radius-md: 0.25rem;
+
+  /* Refined, Minimal Radius Scale */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
-}
-
-/* Dark mode overrides (optional for future, but good to have a foundation) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--color-neutral-950);
-    --foreground: var(--color-brand-50);
-    
-    --muted: var(--color-neutral-900);
-    --muted-foreground: var(--color-neutral-400);
-    
-    --primary: var(--color-brand-50);
-    --primary-foreground: var(--color-neutral-950);
-    
-    --secondary: var(--color-neutral-800);
-    --secondary-foreground: var(--color-brand-50);
-    
-    --accent: var(--color-neutral-800);
-    --accent-foreground: var(--color-brand-50);
-    
-    --border: var(--color-neutral-800);
-    --input: var(--color-neutral-800);
-    --ring: var(--color-brand-50);
-  }
+  --radius-full: 9999px;
 }
 
 @layer base {
@@ -106,7 +139,7 @@
     border-color: var(--border);
     outline-color: var(--ring);
   }
-  
+
   body {
     background-color: var(--background);
     color: var(--foreground);
@@ -114,15 +147,53 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-serif), serif;
     font-weight: 400;
+    letter-spacing: -0.01em;
   }
-  
-  /* Focus visible accessibility */
+
+  /* Accessible Focus Ring */
   *:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+
+  /* Accessibility: Reduced-Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .hover-lift {
+    transition: transform 0.4s var(--ease-spring), box-shadow 0.4s var(--ease-spring);
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+  }
+  .active-tactile {
+    transition: transform 0.15s var(--ease-spring);
+  }
+  .active-tactile:active {
+    transform: scale(0.98);
+  }
+  .tap-target-44 {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
   }
 }

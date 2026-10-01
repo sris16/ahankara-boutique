@@ -17,7 +17,7 @@ export default async function AddressesPage() {
   try {
     user = await AuthService.requireAuth(reqHeaders);
   } catch {
-    redirect("/login");
+    redirect("/login?callbackUrl=/account/addresses");
   }
 
   // Fetch addresses securely on the server

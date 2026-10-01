@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { checkoutApi } from "@/lib/api/checkout";
 import { PaymentAttemptResponse, Order } from "@/types/checkout";
 
@@ -20,10 +20,16 @@ declare global {
   }
 }
 
-export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onClose }: PaymentHandlerProps) {
+export function PaymentHandler({
+  order,
+  paymentAttempt,
+  onSuccess,
+  onError,
+  onClose,
+}: PaymentHandlerProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  
+
   // Track initialization to prevent duplicate Razorpay opens on React re-renders
   const initializedOrderIdRef = useRef<string | null>(null);
 
@@ -45,7 +51,7 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
 
   useEffect(() => {
     if (!isScriptLoaded) return;
-    
+
     // Prevent duplicate initialization for the same payment attempt
     if (initializedOrderIdRef.current === paymentAttempt.providerOrderId) return;
 
@@ -56,9 +62,8 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
     }
 
     const options = {
-      // The public key used to initialize Razorpay checkout.
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: paymentAttempt.amount, // paymentAttempt.amount is already in Paise
+      amount: paymentAttempt.amount, // in Paise
       currency: paymentAttempt.currency,
       name: "AHANKARA STUDIOS",
       description: `Order ${order.orderNumber}`,
@@ -70,11 +75,14 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
           await checkoutApi.verifyPayment(order.id, {
             razorpayOrderId: response.razorpay_order_id,
             razorpayPaymentId: response.razorpay_payment_id,
-            razorpaySignature: response.razorpay_signature
+            razorpaySignature: response.razorpay_signature,
           });
           onSuccess(order.id);
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : "Payment verification failed. Your payment is under review.";
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Payment verification failed. Your payment is under review.";
           onError(msg);
         } finally {
           setIsVerifying(false);
@@ -85,25 +93,24 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
         contact: order.shippingAddress.phone,
       },
       theme: {
-        color: "#000000"
+        color: "#181411", // Deep obsidian espresso
       },
       modal: {
-        ondismiss: function() {
-          // User closed the modal
+        ondismiss: function () {
           onClose();
-        }
-      }
+        },
+      },
     };
 
     try {
       initializedOrderIdRef.current = paymentAttempt.providerOrderId;
       const rzp = new window.Razorpay(options);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      rzp.on('payment.failed', function (response: any){
+      rzp.on("payment.failed", function (response: any) {
         onError(response.error.description || "Payment failed");
       });
       rzp.open();
-    } catch (err: unknown) {
+    } catch {
       initializedOrderIdRef.current = null;
       onError("Payment initialization failed");
     }
@@ -111,19 +118,44 @@ export function PaymentHandler({ order, paymentAttempt, onSuccess, onError, onCl
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md transition-opacity duration-300 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="payment-modal-title"
       aria-describedby="payment-modal-desc"
     >
-      <div className="flex flex-col items-center justify-center gap-5 p-8 bg-background border border-border/50 rounded-sm shadow-xl max-w-sm w-[90vw] text-center">
-        <Loader2 className="w-10 h-10 animate-spin text-foreground" aria-hidden="true" />
-        <div className="space-y-2">
-          <h3 id="payment-modal-title" className="font-serif text-2xl tracking-tight">Processing Payment</h3>
-          <p id="payment-modal-desc" className="text-sm text-muted-foreground leading-relaxed">
-            {isVerifying ? "Verifying your payment securely. Please do not close this window." : "Please complete the payment in the secure window."}
+      <div className="flex flex-col items-center justify-center gap-6 p-8 sm:p-10 bg-surface border border-border/80 rounded-xs shadow-elevated max-w-md w-full text-center relative overflow-hidden">
+        {/* Subtle accent hairline */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-accent/50 via-primary to-accent/50" />
+
+        <div className="w-16 h-16 rounded-full bg-surface-muted flex items-center justify-center relative">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" aria-hidden="true" />
+          <Lock className="w-4 h-4 text-accent absolute" />
+        </div>
+
+        <div className="space-y-2.5">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-accent font-semibold">
+            Razorpay Secure Gateway
+          </span>
+          <h3
+            id="payment-modal-title"
+            className="font-serif text-2xl font-normal tracking-tight text-foreground"
+          >
+            {isVerifying ? "Verifying Transaction" : "Awaiting Authorization"}
+          </h3>
+          <p
+            id="payment-modal-desc"
+            className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto"
+          >
+            {isVerifying
+              ? "Confirming bank verification and updating your order. Please do not refresh or close this browser window."
+              : "Complete the transaction in the secure Razorpay payment window to reserve your handcrafted selection."}
           </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground w-full">
+          <ShieldCheck className="w-4 h-4 text-accent" />
+          <span>256-Bit Bank Level Encryption Verified</span>
         </div>
       </div>
     </div>

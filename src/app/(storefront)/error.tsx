@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 
 export default function StorefrontError({
   error,
@@ -11,24 +11,20 @@ export default function StorefrontError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service in production
     console.error("Storefront Error:", error);
   }, [error]);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] bg-background px-4 text-center">
-      <h1 className="font-serif text-3xl md:text-4xl tracking-tight mb-4">Something went wrong</h1>
-      <p className="text-muted-foreground mb-10 max-w-md">
-        We apologize for the inconvenience. Please try again or return to the homepage.
-      </p>
-      <div className="flex gap-4">
-        <Button onClick={() => reset()} variant="outline" className="uppercase tracking-widest text-xs">
-          Try Again
-        </Button>
-        <Button asChild className="uppercase tracking-widest text-xs">
-          <a href="/">Return Home</a>
-        </Button>
-      </div>
+    <div className="flex-1 flex items-center justify-center min-h-[70vh] bg-background px-4 py-16">
+      <ErrorState
+        title="Atelier Interruption"
+        message="An unexpected discrepancy occurred while processing this experience. Our engineers have been alerted. Please retry or return to the salon."
+        onRetry={() => reset()}
+        retryLabel="Retry Experience"
+        homeHref="/"
+        homeLabel="Return to Salon"
+        className="max-w-lg border-destructive/30"
+      />
     </div>
   );
 }

@@ -4,14 +4,14 @@ import { CartService } from "@/server/services/cart.service";
 import { CartClient } from "./cart-client";
 
 export const metadata = {
-  title: "Your Cart | AHANKARA STUDIOS",
-  description: "View your cart.",
-  robots: "noindex, nofollow"
+  title: "Shopping Bag | AHANKARA STUDIOS",
+  description: "Review and complete your selection of handcrafted atelier pieces.",
+  robots: "noindex, nofollow",
 };
 
 export default async function CartPage() {
   const session = await auth.api.getSession({
-    headers: await headers()
+    headers: await headers(),
   });
 
   let initialCart = null;

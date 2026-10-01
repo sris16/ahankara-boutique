@@ -19,10 +19,17 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { WishlistProvider } from "@/hooks/use-wishlist";
 import { AddressProvider } from "@/hooks/use-address";
+import { ToastProvider } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
-  title: "AHANKARA STUDIOS",
-  description: "Premium Fashion Studio",
+  title: {
+    default: "AHANKARA STUDIOS",
+    template: "%s | AHANKARA STUDIOS",
+  },
+  description: "AHANKARA STUDIOS — Contemporary Luxury & Fashion Studio",
+  icons: {
+    icon: "/images/brand/ahankara-studios-logo.jpg",
+  },
 };
 
 export default function RootLayout({
@@ -44,11 +51,13 @@ export default function RootLayout({
           <CartProvider>
             <WishlistProvider>
               <AddressProvider>
-                <div className="flex min-h-screen flex-col selection:bg-primary selection:text-primary-foreground">
-                  <main className="flex-1 min-h-screen">
-                    {children}
-                  </main>
-                </div>
+                <ToastProvider>
+                  <div className="flex min-h-screen flex-col selection:bg-primary selection:text-primary-foreground">
+                    <main className="flex-1 min-h-screen">
+                      {children}
+                    </main>
+                  </div>
+                </ToastProvider>
               </AddressProvider>
             </WishlistProvider>
           </CartProvider>

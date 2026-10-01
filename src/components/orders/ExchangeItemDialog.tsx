@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { orderApi } from "@/lib/api/order";
 import { apiClient } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { OrderItem } from "@/types/order";
+import { ProductVariantDetail } from "@/types/catalog";
 
 interface ExchangeItemDialogProps {
   orderId: string;
@@ -22,21 +29,22 @@ export function ExchangeItemDialog({ orderId, item, eligibleQuantity }: Exchange
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
-  const [variants, setVariants] = useState<any[]>([]);
+  const [variants, setVariants] = useState<ProductVariantDetail[]>([]);
   const router = useRouter();
+  const { toast } = useToast();
 
   if (eligibleQuantity <= 0) return null;
 
   const fetchVariants = async () => {
     setIsLoadingVariants(true);
     try {
-      const res = await apiClient.get<{ data: any }>(`/api/products/${item.productSlug}`);
+      const res = await apiClient.get<{ data: { variants?: ProductVariantDetail[] } }>(`/api/products/${item.productSlug}`);
       if (res.data && res.data.variants) {
-        // Filter out the exact same variant they ordered
-        const availableVariants = res.data.variants.filter((v: any) => v.id !== item.variantId && v.isActive);
+        // Filter out the exact same variant they ordered, keep available active variants
+        const availableVariants = res.data.variants.filter((v: ProductVariantDetail) => v.id !== item.variantId && v.available);
         setVariants(availableVariants);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to load variants", err);
     } finally {
       setIsLoadingVariants(false);
@@ -70,10 +78,21 @@ export function ExchangeItemDialog({ orderId, item, eligibleQuantity }: Exchange
         items: [{ orderItemId: item.id, quantity, replacementVariantId }],
         reason,
       });
+      toast({
+        title: "Exchange Request Submitted",
+        description: `Your exchange request for ${item.productName} has been submitted.`,
+        variant: "default",
+      });
       handleClose();
       router.refresh();
-    } catch (err: any) {
-      setError(err?.message || "Failed to submit exchange request. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit exchange request. Please try again.";
+      setError(message);
+      toast({
+        title: "Exchange Request Failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -81,105 +100,132 @@ export function ExchangeItemDialog({ orderId, item, eligibleQuantity }: Exchange
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={handleOpen}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleOpen}
+        className="text-xs uppercase tracking-wider gap-1.5"
+      >
+        <RefreshCw className="w-3 h-3 text-muted-foreground" />
         Exchange
       </Button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="bg-card w-full max-w-md rounded-sm border shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="font-serif text-xl">Exchange Item</h2>
-              <button onClick={handleClose} className="text-muted-foreground hover:text-foreground">
-                <X className="w-5 h-5" />
-              </button>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exchange Item</DialogTitle>
+            <DialogDescription>
+              Select an alternate size or color for your piece.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            {/* Returning item summary */}
+            <div className="bg-surface/80 p-3 rounded-sm border border-border/60 text-xs">
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Returning Item</p>
+              <p className="font-medium text-foreground">{item.productName}</p>
+              <div className="text-muted-foreground mt-0.5 flex gap-2">
+                {item.color && <span>Color: {item.color}</span>}
+                {item.color && item.size && <span>•</span>}
+                {item.size && <span>Size: {item.size}</span>}
+                <span>•</span>
+                <span>Eligible: {eligibleQuantity}</span>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 md:p-6 overflow-y-auto space-y-5">
-
-              <div className="bg-muted/10 p-3 rounded-sm border text-sm">
-                <p className="font-medium text-xs text-muted-foreground uppercase mb-1">Returning</p>
-                <p className="font-medium">{item.productName}</p>
-                <div className="text-xs text-muted-foreground mt-1 flex gap-2">
-                  {item.color && <span>{item.color}</span>}
-                  {item.color && item.size && <span>|</span>}
-                  {item.size && <span>{item.size}</span>}
-                </div>
+            {error && (
+              <div className="bg-destructive/10 text-destructive text-xs p-3 rounded-sm flex items-start gap-2 border border-destructive/20">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <p>{error}</p>
               </div>
+            )}
 
-              {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-sm flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <p>{error}</p>
+            {eligibleQuantity > 1 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="exchange-quantity" className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Quantity to Exchange
+                </Label>
+                <Select
+                  id="exchange-quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className="text-sm"
+                >
+                  {Array.from({ length: eligibleQuantity }).map((_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="replacement-variant" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Replacement Size / Color
+              </Label>
+              {isLoadingVariants ? (
+                <div className="p-3 border border-border/60 rounded-sm flex items-center justify-center text-muted-foreground text-xs gap-2">
+                  <Spinner size="sm" />
+                  Loading available variants...
                 </div>
+              ) : variants.length === 0 ? (
+                <div className="p-3 border border-border/60 rounded-sm bg-muted/20 text-muted-foreground text-xs">
+                  No other active variants are currently in stock for exchange.
+                </div>
+              ) : (
+                <Select
+                  id="replacement-variant"
+                  value={replacementVariantId}
+                  onChange={(e) => setReplacementVariantId(e.target.value)}
+                  className="text-sm"
+                  required
+                >
+                  <option value="">Select a replacement</option>
+                  {variants.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.size || 'Default Size'} {v.color ? `— ${v.color}` : ''}
+                    </option>
+                  ))}
+                </Select>
               )}
+            </div>
 
-              {eligibleQuantity > 1 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Quantity to Exchange</label>
-                  <select
-                    className="w-full p-2 text-sm border rounded-sm bg-background focus:outline-none focus:border-foreground"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                  >
-                    {Array.from({ length: eligibleQuantity }).map((_, i) => (
-                      <option key={i + 1} value={i + 1}>{i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+            <div className="space-y-1.5">
+              <Label htmlFor="exchange-reason" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Reason for Exchange (Optional)
+              </Label>
+              <Textarea
+                id="exchange-reason"
+                placeholder="Let us know what prompted the exchange (e.g., fit, styling)..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="text-sm"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Replacement Size / Color</label>
-                {isLoadingVariants ? (
-                  <div className="p-3 border rounded-sm flex items-center justify-center text-muted-foreground text-sm">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Loading available variants...
-                  </div>
-                ) : variants.length === 0 ? (
-                  <div className="p-3 border rounded-sm bg-destructive/10 text-destructive text-sm">
-                    No other variants available for exchange.
-                  </div>
-                ) : (
-                  <select
-                    className="w-full p-2 text-sm border rounded-sm bg-background focus:outline-none focus:border-foreground"
-                    value={replacementVariantId}
-                    onChange={(e) => setReplacementVariantId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select a replacement</option>
-                    {variants.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.size || 'Default Size'} {v.color ? ` - ${v.color}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Reason for Exchange (Optional)</label>
-                <textarea
-                  className="w-full p-2 text-sm border rounded-sm bg-background focus:outline-none focus:border-foreground min-h-[80px]"
-                  placeholder="Tell us why you are exchanging..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-              </div>
-
-              <div className="pt-4 flex gap-3 justify-end border-t mt-6">
-                <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting || variants.length === 0}>
-                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Submit Exchange Request
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="text-xs uppercase tracking-wider"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting || variants.length === 0}
+                className="text-xs uppercase tracking-wider gap-2"
+              >
+                {isSubmitting && <Spinner size="sm" />}
+                Submit Exchange
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -5,13 +5,15 @@ import { OrderService } from "@/server/services/order.service";
 import { AuthService } from "@/server/services/auth.service";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { TrackingModule } from "@/components/orders/TrackingModule";
-import { ChevronLeft, MapPin, Receipt, ShieldCheck, AlertTriangle, PackageOpen, RotateCcw, RefreshCw, IndianRupee } from "lucide-react";
-import { OrderStatus, PaymentStatus } from "@/types/order";
+import { ChevronLeft, ShieldCheck, AlertTriangle, PackageOpen, RotateCcw, RefreshCw, IndianRupee } from "lucide-react";
+import { OrderStatus, PaymentStatus, OrderItem } from "@/types/order";
 import { CancelOrderDialog } from "@/components/orders/CancelOrderDialog";
 import { ReturnItemDialog } from "@/components/orders/ReturnItemDialog";
 import { ExchangeItemDialog } from "@/components/orders/ExchangeItemDialog";
+import { OrderInvoiceDialog } from "@/components/orders/OrderInvoiceDialog";
 import { OrderPaymentRetry } from "@/components/orders/OrderPaymentRetry";
 import { PostPurchaseService } from "@/server/services/post-purchase.service";
+import { Badge } from "@/components/ui/badge";
 
 export async function generateMetadata({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
@@ -22,18 +24,19 @@ export async function generateMetadata({ params }: { params: Promise<{ orderId: 
   };
 }
 
-const getOrderStatusColor = (status: OrderStatus) => {
-  if (status === "CANCELLED" || status === "EXPIRED") return "bg-muted text-muted-foreground";
-  if (status === "DELIVERED") return "bg-green-500/10 text-green-700 dark:text-green-400";
-  if (status === "SHIPPED") return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
-  return "bg-foreground/10 text-foreground";
+const getOrderStatusBadgeVariant = (status: OrderStatus): "default" | "success" | "destructive" | "warning" => {
+  if (status === "CANCELLED" || status === "EXPIRED") return "destructive";
+  if (status === "DELIVERED") return "success";
+  if (status === "SHIPPED") return "default";
+  if (status === "PENDING_PAYMENT" || status === "PAYMENT_REVIEW") return "warning";
+  return "default";
 };
 
-const getPaymentStatusColor = (status: PaymentStatus) => {
-  if (status === "PAID") return "bg-green-500/10 text-green-700 dark:text-green-400";
-  if (status === "FAILED") return "bg-destructive/10 text-destructive";
-  if (status === "REFUNDED" || status === "PARTIALLY_REFUNDED") return "bg-amber-500/10 text-amber-700 dark:text-amber-400";
-  return "bg-amber-500/10 text-amber-700 dark:text-amber-400"; // PENDING
+const getPaymentStatusBadgeVariant = (status: PaymentStatus): "default" | "success" | "destructive" | "warning" => {
+  if (status === "PAID") return "success";
+  if (status === "FAILED") return "destructive";
+  if (status === "REFUNDED" || status === "PARTIALLY_REFUNDED") return "warning";
+  return "warning"; // PENDING
 };
 
 export default async function OrderDetailsPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -43,7 +46,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
   let user;
   try {
     user = await AuthService.requireAuth(reqHeaders);
-  } catch (error) {
+  } catch {
     redirect("/login");
   }
 
@@ -53,7 +56,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
   try {
     orderData = await OrderService.getCustomerOrderById(user.id, orderId);
     trackingData = await OrderService.getCustomerOrderTracking(user.id, orderId);
-  } catch (error) {
+  } catch {
     notFound();
   }
 
@@ -65,15 +68,14 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
     !['PARTIALLY_FULFILLED', 'FULFILLED', 'DELIVERED'].includes(orderData.fulfillmentStatus) &&
     !orderData.cancellation;
 
-  // We only fetch item eligibility if the order might be eligible for return/exchange (e.g. DELIVERED)
-  // Or simply fetch for all items to be safe, it's server-side so it's fast.
+  // We fetch item eligibility server-side
   const itemEligibilities = new Map<string, number>();
   if (orderData.items) {
     await Promise.all(orderData.items.map(async (item) => {
       try {
         const eligibility = await PostPurchaseService.getItemEligibility(item.id);
         itemEligibilities.set(item.id, eligibility.remainingEligibleQuantity);
-      } catch (e) {
+      } catch {
         itemEligibilities.set(item.id, 0);
       }
     }));
@@ -82,7 +84,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
   const isPaymentRetryEligible =
     orderData.status === 'PENDING_PAYMENT' &&
     orderData.paymentStatus === 'PENDING' &&
-    new Date(orderData.reservationExpiresAt!) > new Date();
+    Boolean(orderData.reservationExpiresAt && new Date(orderData.reservationExpiresAt) > new Date());
 
   return (
     <div className="space-y-8 pb-12">
@@ -90,32 +92,35 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
       <div>
         <Link
           href="/account/orders"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="inline-flex items-center text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
-          <ChevronLeft className="w-4 h-4 mr-1" />
+          <ChevronLeft className="w-3.5 h-3.5 mr-1" />
           Back to Orders
         </Link>
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border/40">
           <div>
-            <h2 className="font-serif text-3xl tracking-tight mb-2 flex items-center gap-3">
-              Order {orderData.orderNumber}
-            </h2>
-            <p className="text-muted-foreground text-sm">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <h2 className="font-serif text-3xl tracking-tight">
+                Order #{orderData.orderNumber}
+              </h2>
+              <Badge variant={getOrderStatusBadgeVariant(orderData.status as OrderStatus)} size="sm">
+                {orderData.status.replace(/_/g, " ")}
+              </Badge>
+              <Badge variant={getPaymentStatusBadgeVariant(orderData.paymentStatus as PaymentStatus)} size="sm">
+                Payment: {orderData.paymentStatus.replace(/_/g, " ")}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground text-xs">
               Placed on {formatDate(orderData.createdAt)}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
+            <OrderInvoiceDialog order={orderData} />
             {isCancellable && (
               <CancelOrderDialog orderId={orderId} />
             )}
-            <span className={`px-3 py-1 text-[10px] font-medium tracking-widest uppercase border ${getOrderStatusColor(orderData.status as OrderStatus).replace('bg-', 'bg-transparent text-').replace('/10', '')} border-current/20`}>
-              {orderData.status.replace(/_/g, " ")}
-            </span>
-            <span className={`px-3 py-1 text-[10px] font-medium tracking-widest uppercase border ${getPaymentStatusColor(orderData.paymentStatus as PaymentStatus).replace('bg-', 'bg-transparent text-').replace('/10', '')} border-current/20`}>
-              {orderData.paymentStatus.replace(/_/g, " ")}
-            </span>
           </div>
         </div>
       </div>
@@ -124,12 +129,12 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-sm flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-medium">Cancellation {orderData.cancellation.status}</h4>
-            <p className="text-sm mt-1">
+            <h4 className="font-medium text-sm">Cancellation {orderData.cancellation.status}</h4>
+            <p className="text-xs mt-1">
               This order was cancelled by {orderData.cancellation.initiator.toLowerCase()} on {formatDate(orderData.cancellation.createdAt)}.
             </p>
             {orderData.cancellation.reason && (
-              <p className="text-sm mt-1 font-medium">Reason: {orderData.cancellation.reason}</p>
+              <p className="text-xs mt-1 font-medium">Reason: {orderData.cancellation.reason}</p>
             )}
           </div>
         </div>
@@ -144,8 +149,11 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
           <section className="bg-background border border-border/50 rounded-none overflow-hidden">
             <div className="p-5 md:p-6 border-b border-border/40 flex justify-between items-center">
               <h3 className="font-serif text-xl tracking-tight flex items-center gap-2">
-                Items Snapshot
+                Curated Pieces Snapshot
               </h3>
+              <span className="text-xs text-muted-foreground">
+                {orderData.items?.length || 0} {orderData.items?.length === 1 ? "item" : "items"}
+              </span>
             </div>
             <div className="divide-y divide-border/40">
               {orderData.items?.map((item) => {
@@ -153,8 +161,8 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
                 return (
                   <div key={item.id} className="p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
                     <div className="flex gap-4 flex-1">
-                      <div className="w-20 aspect-[3/4] bg-muted/20 rounded-sm border shrink-0 flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground uppercase">{item.productName.substring(0, 3)}</span>
+                      <div className="w-20 aspect-[3/4] bg-muted/20 rounded-sm border border-border/50 shrink-0 flex items-center justify-center">
+                        <span className="text-xs font-mono font-medium text-muted-foreground uppercase">{item.productName.substring(0, 3)}</span>
                       </div>
 
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -174,12 +182,12 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
                       <div className="flex flex-col items-start md:items-end w-full">
                         <span className="font-medium text-sm md:text-base">{formatPrice(item.unitPrice)}</span>
                         <span className="text-xs text-muted-foreground mt-1">Qty: {item.quantity}</span>
-                        <span className="font-medium text-sm mt-3">{formatPrice(item.lineTotal)}</span>
+                        <span className="font-medium text-sm mt-2">{formatPrice(item.lineTotal)}</span>
                       </div>
                       {eligibleQty > 0 && orderData.status === 'DELIVERED' && (
-                        <div className="flex gap-2 w-full justify-end">
-                          <ReturnItemDialog orderId={orderId} item={item as any} eligibleQuantity={eligibleQty} />
-                          <ExchangeItemDialog orderId={orderId} item={item as any} eligibleQuantity={eligibleQty} />
+                        <div className="flex gap-2 w-full justify-end mt-2">
+                          <ReturnItemDialog orderId={orderId} item={item as unknown as OrderItem} eligibleQuantity={eligibleQty} />
+                          <ExchangeItemDialog orderId={orderId} item={item as unknown as OrderItem} eligibleQuantity={eligibleQty} />
                         </div>
                       )}
                     </div>
@@ -192,55 +200,59 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
           {/* Tracking Module */}
           {trackingData && (
             <section>
-              <TrackingModule trackingData={trackingData} />
+              <TrackingModule
+                trackingData={trackingData}
+                orderStatus={orderData.status as OrderStatus}
+                orderCreatedAt={orderData.createdAt}
+              />
             </section>
           )}
 
           {/* Returns and Exchanges */}
           {((orderData.returnRequests?.length ?? 0) > 0 || (orderData.exchangeRequests?.length ?? 0) > 0) && (
-            <section className="bg-card border rounded-sm p-6">
-              <h3 className="font-serif text-lg border-b pb-4 mb-4 flex items-center gap-2">
+            <section className="bg-background border border-border/50 rounded-none p-6">
+              <h3 className="font-serif text-xl tracking-tight border-b border-border/40 pb-4 mb-4 flex items-center gap-2">
                 <PackageOpen className="w-5 h-5 text-muted-foreground" />
                 Returns & Exchanges
               </h3>
               <div className="space-y-4">
-                {orderData.returnRequests?.map((req: any) => (
-                  <div key={req.id} className="p-4 border rounded-sm bg-muted/5 flex items-start gap-4">
-                    <RotateCcw className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                {orderData.returnRequests?.map((req) => (
+                  <div key={req.id} className="p-4 border border-border/60 rounded-sm bg-muted/5 flex items-start gap-4">
+                    <RotateCcw className="w-5 h-5 mt-0.5 text-muted-foreground shrink-0" />
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium">Return Request</p>
-                          <p className="text-xs text-muted-foreground mt-1">Requested on {formatDate(req.createdAt)}</p>
+                          <p className="font-medium text-sm">Return Request</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Requested on {formatDate(req.createdAt)}</p>
                         </div>
-                        <span className="px-2 py-1 text-xs font-medium uppercase bg-foreground/10 rounded-sm">
+                        <Badge variant="outline" size="sm">
                           {req.status.replace(/_/g, " ")}
-                        </span>
+                        </Badge>
                       </div>
-                      {req.items?.map((item: any) => (
-                        <p key={item.id} className="text-sm mt-2 text-muted-foreground">
-                          {item.quantity}x Item (Reason: {item.reason.replace(/_/g, " ")})
+                      {req.items?.map((returnItem) => (
+                        <p key={returnItem.id} className="text-xs mt-2 text-muted-foreground">
+                          {returnItem.quantity}x Item (Reason: {returnItem.reason ? returnItem.reason.replace(/_/g, " ") : "Not specified"})
                         </p>
                       ))}
                     </div>
                   </div>
                 ))}
-                {orderData.exchangeRequests?.map((req: any) => (
-                  <div key={req.id} className="p-4 border rounded-sm bg-muted/5 flex items-start gap-4">
-                    <RefreshCw className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                {orderData.exchangeRequests?.map((req) => (
+                  <div key={req.id} className="p-4 border border-border/60 rounded-sm bg-muted/5 flex items-start gap-4">
+                    <RefreshCw className="w-5 h-5 mt-0.5 text-muted-foreground shrink-0" />
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium">Exchange Request</p>
-                          <p className="text-xs text-muted-foreground mt-1">Requested on {formatDate(req.createdAt)}</p>
+                          <p className="font-medium text-sm">Exchange Request</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Requested on {formatDate(req.createdAt)}</p>
                         </div>
-                        <span className="px-2 py-1 text-xs font-medium uppercase bg-foreground/10 rounded-sm">
+                        <Badge variant="outline" size="sm">
                           {req.status.replace(/_/g, " ")}
-                        </span>
+                        </Badge>
                       </div>
-                      {req.items?.map((item: any) => (
-                        <p key={item.id} className="text-sm mt-2 text-muted-foreground">
-                          {item.quantity}x exchanged for {item.replacementVariantId}
+                      {req.items?.map((exchangeItem) => (
+                        <p key={exchangeItem.id} className="text-xs mt-2 text-muted-foreground">
+                          {exchangeItem.quantity}x exchanged for variant ID {exchangeItem.replacementVariantId}
                         </p>
                       ))}
                     </div>
@@ -258,7 +270,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
           {/* Payment Summary */}
           <section className="bg-background border border-border/50 rounded-none p-6">
             <h3 className="font-serif text-xl tracking-tight border-b border-border/40 pb-4 mb-4">Payment Summary</h3>
-            <div className="flex flex-col gap-3 text-sm mb-6 pb-6 border-b">
+            <div className="flex flex-col gap-3 text-sm mb-6 pb-6 border-b border-border/40">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
                 <span>{formatPrice(orderData.subtotal)}</span>
@@ -271,24 +283,24 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
               )}
               <div className="flex justify-between text-muted-foreground">
                 <span>Shipping</span>
-                <span>{orderData.shippingAmount === 0 ? "Free" : formatPrice(orderData.shippingAmount)}</span>
+                <span>{orderData.shippingAmount === 0 ? "Complimentary" : formatPrice(orderData.shippingAmount)}</span>
               </div>
               {orderData.taxAmount > 0 && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Taxes</span>
+                  <span>Taxes (Included)</span>
                   <span>{formatPrice(orderData.taxAmount)}</span>
                 </div>
               )}
             </div>
             <div className="flex justify-between items-end mb-6">
-              <span className="font-medium text-lg">Total</span>
-              <span className="font-medium text-2xl tracking-tight">{formatPrice(orderData.totalAmount)}</span>
+              <span className="font-medium text-base">Total</span>
+              <span className="font-medium text-2xl tracking-tight font-serif">{formatPrice(orderData.totalAmount)}</span>
             </div>
 
             {orderData.paymentStatus === "PAID" && (
-              <div className="flex items-center gap-2 text-xs text-green-700 bg-green-500/10 p-3 rounded-none border border-green-500/20">
-                <ShieldCheck className="w-4 h-4" />
-                Payment verified and secured
+              <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-500/10 p-3 rounded-none border border-green-500/20">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                Payment authorized & verified
               </div>
             )}
 
@@ -301,25 +313,24 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
 
           {/* Refunds */}
           {(orderData.refunds?.length ?? 0) > 0 && (
-            <section className="bg-card border rounded-sm p-6">
-              <h3 className="font-serif text-lg flex items-center gap-2 border-b pb-4 mb-4">
+            <section className="bg-background border border-border/50 rounded-none p-6">
+              <h3 className="font-serif text-xl tracking-tight flex items-center gap-2 border-b border-border/40 pb-4 mb-4">
                 <IndianRupee className="w-5 h-5 text-muted-foreground" />
                 Refunds
               </h3>
               <div className="space-y-3">
-                {orderData.refunds?.map((refund: any) => (
-                  <div key={refund.id} className="flex justify-between items-center text-sm p-3 border rounded-sm">
+                {orderData.refunds?.map((refund) => (
+                  <div key={refund.id} className="flex justify-between items-center text-sm p-3 border border-border/50 rounded-sm">
                     <div>
                       <p className="font-medium">{formatPrice(refund.amount)}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{formatDate(refund.createdAt)}</p>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium uppercase rounded-sm ${
-                      refund.status === 'SUCCEEDED' ? 'bg-green-500/10 text-green-700' :
-                      refund.status === 'FAILED' ? 'bg-destructive/10 text-destructive' :
-                      'bg-amber-500/10 text-amber-700'
-                    }`}>
+                    <Badge
+                      variant={refund.status === 'SUCCEEDED' ? 'success' : refund.status === 'FAILED' ? 'destructive' : 'warning'}
+                      size="sm"
+                    >
                       {refund.status}
-                    </span>
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -332,16 +343,16 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
               Delivery Address
             </h3>
             {orderData.shippingAddress ? (
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p className="font-medium text-foreground mb-2">{orderData.shippingAddress.name}</p>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground text-sm mb-2">{orderData.shippingAddress.name}</p>
                 <p>{orderData.shippingAddress.line1}</p>
                 {orderData.shippingAddress.line2 && <p>{orderData.shippingAddress.line2}</p>}
                 <p>{orderData.shippingAddress.city}, {orderData.shippingAddress.state} {orderData.shippingAddress.postalCode}</p>
                 <p>{orderData.shippingAddress.country}</p>
-                <p className="pt-2">Phone: {orderData.shippingAddress.phone}</p>
+                <p className="pt-2 text-foreground font-medium">Phone: {orderData.shippingAddress.phone}</p>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic">No shipping address recorded.</p>
+              <p className="text-xs text-muted-foreground italic">No shipping address recorded.</p>
             )}
           </section>
 

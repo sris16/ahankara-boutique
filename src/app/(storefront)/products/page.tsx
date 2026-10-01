@@ -1,18 +1,15 @@
 import { Suspense } from "react";
-import { Collection, ProductSummary } from "@/types/catalog";
+import { Metadata } from "next";
+import { ProductSummary, CategoryTree, Collection } from "@/types/catalog";
 import { ProductCard, ProductCardSkeleton } from "@/components/catalog/ProductCard";
 import { CatalogFilters } from "@/components/catalog/CatalogFilters";
 import { FilterChips } from "@/components/catalog/FilterChips";
 import { CatalogPagination } from "@/components/catalog/CatalogPagination";
-import { Metadata } from "next";
+import { CatalogSortSelect } from "@/components/catalog/CatalogSortSelect";
+import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import { ProductService } from "@/server/services/product.service";
 import { CategoryService } from "@/server/services/category.service";
 import { CollectionService } from "@/server/services/collection.service";
-
-export const metadata: Metadata = {
-  title: "Catalog | AHANKARA STUDIOS",
-  description: "Discover our premium collection of fashion pieces.",
-};
 
 type SearchParamsObject = {
   q?: string;
@@ -26,6 +23,36 @@ type SearchParamsObject = {
 
 interface ProductsPageProps {
   searchParams: Promise<SearchParamsObject>;
+}
+
+export async function generateMetadata({ searchParams }: ProductsPageProps): Promise<Metadata> {
+  const params = await searchParams;
+
+  if (params.q) {
+    return {
+      title: `Search: "${params.q}" | AHANKARA STUDIOS`,
+      description: `Explore search results for "${params.q}" across our luxury atelier collections.`,
+    };
+  }
+
+  if (params.collection) {
+    return {
+      title: `Collection | AHANKARA STUDIOS`,
+      description: "Discover curated seasonal edits and atelier collection releases.",
+    };
+  }
+
+  if (params.category) {
+    return {
+      title: `Collection | AHANKARA STUDIOS`,
+      description: "Discover our bespoke Indian luxury fashion silhouettes.",
+    };
+  }
+
+  return {
+    title: "Atelier Catalog | AHANKARA STUDIOS",
+    description: "Discover our premium collection of contemporary luxury fashion pieces.",
+  };
 }
 
 async function getCatalogData(params: SearchParamsObject) {
@@ -44,14 +71,18 @@ async function getCatalogData(params: SearchParamsObject) {
         maxPrice: !isNaN(maxPrice as number) ? maxPrice : undefined,
         limit: 12,
       }).catch(() => null),
-      CategoryService.getCategoryTree(true).catch(() => []),
-      CollectionService.getCollections(true).catch(() => []), // true for active only
+      CategoryService.getCategoryTree(true).catch(() => [] as CategoryTree[]),
+      CollectionService.getCollections(true).catch(() => [] as Collection[]),
     ]);
 
     return { productsResponse, categoriesTree, collections };
   } catch (error) {
     console.error("Failed to fetch catalog data", error);
-    return { productsResponse: null, categoriesTree: [], collections: [] };
+    return {
+      productsResponse: null,
+      categoriesTree: [] as CategoryTree[],
+      collections: [] as Collection[],
+    };
   }
 }
 
@@ -59,61 +90,140 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const params = await searchParams;
   const { productsResponse, categoriesTree, collections } = await getCatalogData(params);
 
+  // Active collection or category contextual details
+  const activeCollectionObj = params.collection
+    ? collections.find((col) => col.slug === params.collection)
+    : null;
+
+  const activeCategoryObj = params.category
+    ? categoriesTree.find((cat) => cat.id === params.category)
+    : null;
+
+  const hasActiveFilters = Boolean(
+    params.q || params.category || params.collection || params.minPrice || params.maxPrice
+  );
+
+  const pageTitle = params.q
+    ? `Search: "${params.q}"`
+    : activeCollectionObj
+    ? activeCollectionObj.name
+    : activeCategoryObj
+    ? activeCategoryObj.name
+    : "All Creations";
+
+  const pageDescription = activeCollectionObj?.description
+    ? activeCollectionObj.description
+    : activeCategoryObj?.description
+    ? activeCategoryObj.description
+    : "Meticulously crafted contemporary Indian silhouettes, tailored for discerning wardrobes.";
+
+  const totalResults = productsResponse?.meta?.total ?? 0;
+  const currentCount = productsResponse?.data?.length ?? 0;
+
   return (
-    <div className="container mx-auto px-4 py-8 md:py-16 flex flex-col md:flex-row gap-8 lg:gap-12 min-h-[70vh]">
-      {/* Desktop Sidebar / Mobile Drawer included inside CatalogFilters */}
-      <aside className="w-full md:w-64 shrink-0">
-        <CatalogFilters
-          categories={categoriesTree}
-          collections={collections}
-          initialParams={params}
-        />
-      </aside>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Editorial Header Section */}
+      <section className="border-b border-border/40 bg-surface/30 pt-8 pb-10 md:pt-12 md:pb-14">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent font-medium select-none block mb-2.5">
+              AHANKARA STUDIOS / ATELIER DISCOVERY
+            </span>
 
-      <main className="flex-1 min-w-0">
-        <FilterChips categories={categoriesTree} collections={collections} />
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1] mb-3">
+              {pageTitle}
+            </h1>
 
-        <div className="flex flex-col gap-2 mb-10">
-          <h1 className="font-serif text-3xl md:text-5xl tracking-tight text-foreground">
-            {params.q ? `Search: ${params.q}` : "All Pieces"}
-          </h1>
-          {productsResponse?.meta && (
-            <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] mt-2">
-              Showing {productsResponse.data.length} of {productsResponse.meta.total} results
+            <p className="text-muted-foreground text-sm sm:text-base font-light leading-relaxed max-w-2xl">
+              {pageDescription}
             </p>
-          )}
+          </div>
+        </div>
+      </section>
+
+      {/* Main Catalog Section */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+        {/* Sticky / Inline Controls Toolbar */}
+        <div className="flex items-center justify-between gap-4 pb-6 mb-2 border-b border-border/40">
+          {/* Left: Mobile Filter Trigger / Desktop Pieces Count */}
+          <div className="flex items-center gap-3">
+            <div className="lg:hidden">
+              <CatalogFilters
+                categories={categoriesTree}
+                collections={collections}
+                initialParams={params}
+              />
+            </div>
+            <p className="hidden lg:block text-xs uppercase tracking-[0.2em] text-muted-foreground font-light">
+              Showing <span className="font-medium text-foreground">{currentCount}</span> of{" "}
+              <span className="font-medium text-foreground">{totalResults}</span> pieces
+            </p>
+          </div>
+
+          {/* Right: Luxury Sort Selector */}
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-block text-xs uppercase tracking-widest text-muted-foreground font-light">
+              Sort:
+            </span>
+            <CatalogSortSelect currentSort={params.sort} />
+          </div>
         </div>
 
-        <Suspense fallback={
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-12">
-            {Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+        {/* 2-Column Layout: Sidebar + Product Grid */}
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 pt-4">
+          {/* Desktop Filter Sidebar */}
+          <div className="w-64 xl:w-72 shrink-0 hidden lg:block">
+            <CatalogFilters
+              categories={categoriesTree}
+              collections={collections}
+              initialParams={params}
+            />
           </div>
-        }>
-          {!productsResponse || productsResponse.data.length === 0 ? (
-            <div className="py-32 text-center bg-brand-50 border border-brand-200/50 flex flex-col items-center justify-center">
-              <h3 className="font-serif text-2xl mb-4 text-foreground">No pieces found</h3>
-              <p className="text-muted-foreground font-light max-w-md">
-                We couldn&apos;t find anything matching your search or filters. Try exploring different collections or categories.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-12">
-                {productsResponse.data.map((product) => (
-                  <ProductCard key={product.id} product={product as unknown as ProductSummary} />
-                ))}
-              </div>
 
-              {/* Pagination */}
-              {productsResponse.meta.totalPages > 1 && (
-                <div className="flex justify-center items-center mt-20 pt-10 border-t border-brand-200/50">
-                  <CatalogPagination meta={productsResponse.meta} searchParams={params} />
+          {/* Product Listing Main Column */}
+          <main className="flex-1 min-w-0" id="catalog-products-main">
+            {/* Active Filter Chips */}
+            <FilterChips categories={categoriesTree} collections={collections} />
+
+            <Suspense
+              fallback={
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-x-3.5 gap-y-8 sm:gap-x-5 sm:gap-y-10 lg:gap-x-6 lg:gap-y-12">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
+                </div>
+              }
+            >
+              {!productsResponse || productsResponse.data.length === 0 ? (
+                <CatalogEmptyState
+                  searchQuery={params.q}
+                  hasActiveFilters={hasActiveFilters}
+                />
+              ) : (
+                <div className="space-y-12">
+                  {/* Responsive Luxury Product Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-x-3.5 gap-y-8 sm:gap-x-5 sm:gap-y-10 lg:gap-x-6 lg:gap-y-12">
+                    {productsResponse.data.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product as unknown as ProductSummary}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Editorial Pagination */}
+                  {productsResponse.meta.totalPages > 1 && (
+                    <CatalogPagination
+                      meta={productsResponse.meta}
+                      searchParams={params}
+                    />
+                  )}
                 </div>
               )}
-            </>
-          )}
-        </Suspense>
-      </main>
+            </Suspense>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

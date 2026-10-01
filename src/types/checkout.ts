@@ -1,4 +1,3 @@
-import { CartResponse } from './cart';
 
 export interface CouponValidationResponse {
   subtotal: number;

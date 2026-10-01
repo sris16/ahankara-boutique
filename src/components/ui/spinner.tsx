@@ -8,17 +8,21 @@ export interface SpinnerProps extends React.SVGProps<SVGSVGElement> {
 
 export function Spinner({ className, size = "default", ...props }: SpinnerProps) {
   return (
-    <Loader2
-      className={cn(
-        "animate-spin text-muted-foreground",
-        {
-          "h-4 w-4": size === "sm",
-          "h-6 w-6": size === "default",
-          "h-8 w-8": size === "lg",
-        },
-        className
-      )}
-      {...props}
-    />
+    <span role="status" className="inline-flex items-center justify-center">
+      <Loader2
+        className={cn(
+          "animate-spin text-muted-foreground",
+          {
+            "h-4 w-4": size === "sm",
+            "h-6 w-6": size === "default",
+            "h-8 w-8": size === "lg",
+          },
+          className
+        )}
+        aria-hidden="true"
+        {...props}
+      />
+      <span className="sr-only">Loading...</span>
+    </span>
   )
 }

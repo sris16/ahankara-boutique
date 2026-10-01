@@ -4,79 +4,120 @@ import Link from "next/link";
 import Image from "next/image";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { formatPrice } from "@/lib/utils";
-import { Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Heart, Sparkles } from "lucide-react";
 import { WishlistItemResponse } from "@/types/wishlist";
 import { WishlistRemoveButton, WishlistMoveToCartButton } from "./wishlist-controls";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Badge } from "@/components/ui/badge";
 
-export function WishlistClient({ initialWishlist }: { initialWishlist: WishlistItemResponse[] }) {
+export function WishlistClient({
+  initialWishlist,
+}: {
+  initialWishlist: WishlistItemResponse[];
+}) {
   const { wishlist: contextWishlist, isInitialized } = useWishlist();
 
-  // Use server-rendered data initially. Once client context loads, it takes over.
-  // This allows optimistic updates to reflect instantly, and avoids initial loading spinners.
+  // Use server-rendered data initially, then client context takes over
   const displayList = isInitialized ? contextWishlist : initialWishlist;
 
   if (displayList.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center text-center min-h-[50vh]">
-        <Heart className="w-12 h-12 text-muted-foreground mb-6 stroke-[1.5]" />
-        <h1 className="font-serif text-3xl md:text-4xl mb-4 tracking-tight uppercase">Your Wishlist</h1>
-        <p className="text-muted-foreground mb-8 text-sm uppercase tracking-widest">Pieces you love will appear here.</p>
-        <Button asChild size="lg" className="rounded-none uppercase tracking-widest text-xs px-8 h-12">
-          <Link href="/products">Explore the collection</Link>
-        </Button>
+      <div className="container mx-auto px-4 py-24 min-h-[60vh] flex items-center justify-center">
+        <EmptyState
+          icon={Heart}
+          title="Your wishlist is empty"
+          description="Save your favorite handcrafted creations to review, compare, or acquire later."
+          action={{
+            label: "Explore Collection",
+            href: "/products",
+          }}
+        />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 md:py-16 min-h-[60vh]">
-      <div className="mb-12 text-center">
-        <h1 className="font-serif text-3xl md:text-4xl mb-3 tracking-tight uppercase">Wishlist</h1>
-        <p className="text-muted-foreground text-sm uppercase tracking-widest">Your saved pieces</p>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 min-h-[60vh]">
+      {/* Editorial Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-6 border-b border-border/60">
+        <div>
+          <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-medium block mb-2">
+            Curated Wardrobe
+          </span>
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-foreground">
+            Saved Pieces
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
+          <span>
+            {displayList.length} {displayList.length === 1 ? "Piece Saved" : "Pieces Saved"}
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-x-8 md:gap-y-12">
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-10">
         {displayList.map((item) => (
           <div key={item.id} className="flex flex-col group relative">
-            <Link href={`/products/${item.slug}`} className="relative aspect-[3/4] bg-muted/10 overflow-hidden rounded-sm mb-4">
-              {item.primaryImage ? (
-                <Image
-                  src={item.primaryImage}
-                  alt={item.name}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground uppercase tracking-widest">No Image</div>
-              )}
+            {/* Image Card */}
+            <div className="relative aspect-[3/4] bg-surface-muted overflow-hidden rounded-xs border border-border/40 mb-3.5">
+              <Link href={`/products/${item.slug}`} className="block w-full h-full">
+                {item.primaryImage ? (
+                  <Image
+                    src={item.primaryImage}
+                    alt={item.name}
+                    fill
+                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-b from-surface-muted to-brand-50/40 select-none">
+                    <span className="font-serif text-[11px] uppercase tracking-[0.25em] text-muted-foreground/80 font-medium text-center">
+                      AHANKARA
+                    </span>
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60 mt-0.5">
+                      Atelier Piece
+                    </span>
+                  </div>
+                )}
+              </Link>
 
-              <WishlistRemoveButton wishlistItemId={item.id} productName={item.name} />
-
+              {/* Status Badges */}
               {!item.hasAvailableStock && (
-                <div className="absolute top-2 left-2 bg-background/90 text-foreground text-[10px] font-medium tracking-widest uppercase px-2 py-1 rounded-sm">
-                  Out of Stock
+                <div className="absolute top-2.5 left-2.5 z-10">
+                  <Badge variant="secondary" className="text-[10px] uppercase tracking-widest px-2 py-0.5 bg-background/90 backdrop-blur-sm shadow-xs">
+                    Sold Out
+                  </Badge>
                 </div>
               )}
-            </Link>
 
-            <div className="flex flex-col gap-1">
-              <h3 className="font-serif text-sm tracking-wide leading-tight group-hover:text-muted-foreground transition-colors">
-                <Link href={`/products/${item.slug}`}>
-                  {item.name}
-                </Link>
-              </h3>
-              <div className="flex items-center gap-2 mt-1 text-sm font-medium">
-                {formatPrice(item.effectiveStartingPrice)}
-              </div>
+              {/* Quick Remove Button */}
+              <WishlistRemoveButton wishlistItemId={item.id} productName={item.name} />
             </div>
 
-            <WishlistMoveToCartButton
-              wishlistItemId={item.id}
-              slug={item.slug}
-              hasAvailableStock={item.hasAvailableStock}
-            />
+            {/* Product Meta */}
+            <div className="flex flex-col flex-1 justify-between">
+              <div>
+                <h2 className="font-serif text-sm tracking-wide leading-snug group-hover:text-accent transition-colors">
+                  <Link href={`/products/${item.slug}`} className="line-clamp-1">
+                    {item.name}
+                  </Link>
+                </h2>
+                <div className="flex items-baseline gap-2 mt-1 text-sm">
+                  <span className="font-mono font-medium text-foreground tracking-tight">
+                    {formatPrice(item.effectiveStartingPrice)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Move to Bag Action */}
+              <WishlistMoveToCartButton
+                wishlistItemId={item.id}
+                slug={item.slug}
+                hasAvailableStock={item.hasAvailableStock}
+              />
+            </div>
           </div>
         ))}
       </div>

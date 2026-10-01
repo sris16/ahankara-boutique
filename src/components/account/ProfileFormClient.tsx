@@ -4,12 +4,17 @@ import { useState } from "react";
 import { accountApi, UpdateProfileInput } from "@/lib/api/account";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, CheckCircle2 } from "lucide-react";
-import type { User } from "@/hooks/use-auth"; // Just using the type
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { useToast } from "@/components/ui/toast";
+import { Lock, AlertCircle } from "lucide-react";
+import type { User } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 
 export function ProfileFormClient({ initialUser }: { initialUser: User }) {
   const router = useRouter();
+  const { toast } = useToast();
+
   const [formData, setFormData] = useState<UpdateProfileInput>({
     name: initialUser?.name || "",
     phone: initialUser?.phone || "",
@@ -17,7 +22,6 @@ export function ProfileFormClient({ initialUser }: { initialUser: User }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -25,14 +29,12 @@ export function ProfileFormClient({ initialUser }: { initialUser: User }) {
       [e.target.name]: e.target.value,
     });
     setError(null);
-    setSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    setSuccess(false);
 
     try {
       await accountApi.updateProfile({
@@ -40,89 +42,111 @@ export function ProfileFormClient({ initialUser }: { initialUser: User }) {
         phone: formData.phone?.trim() || undefined,
       });
 
-      setSuccess(true);
-      router.refresh(); // re-fetch Server Component data
+      toast({
+        title: "Profile Updated",
+        description: "Your personal details have been saved.",
+      });
 
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
+      router.refresh();
     } catch (err: unknown) {
       const apiError = err as Error;
-      setError(apiError.message || "Failed to update profile. Please try again.");
+      const msg = apiError.message || "Failed to update profile. Please try again.";
+      setError(msg);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: msg,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-background border border-border/50 rounded-none p-6 md:p-8 max-w-2xl">
-      <h2 className="font-serif text-xl tracking-tight mb-8">Personal Information</h2>
+    <div className="bg-background border border-border/80 rounded-xs p-6 sm:p-8 shadow-xs max-w-2xl">
+      <div className="mb-6 pb-4 border-b border-border/60">
+        <h3 className="font-serif text-lg tracking-tight text-foreground">Personal Information</h3>
+        <p className="text-xs text-muted-foreground font-mono">Your primary couture client identity</p>
+      </div>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive p-4 rounded-none mb-6 text-sm">
-          {error}
+        <div
+          className="p-3.5 text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-xs flex items-start gap-2.5 mb-6 animate-in fade-in duration-200"
+          role="alert"
+          aria-live="assertive"
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{error}</span>
         </div>
       )}
 
-      {success && (
-        <div className="bg-green-500/10 text-green-700 dark:text-green-400 p-4 rounded-none mb-6 text-sm flex items-center gap-2" aria-live="polite">
-          <CheckCircle2 className="w-4 h-4" />
-          Profile updated successfully.
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">
-              Email Address
-            </label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          {/* Email (Read-Only) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+                Email Address
+              </Label>
+              <span className="text-[10px] font-mono text-muted-foreground/70 flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5" /> Primary Identifier
+              </span>
+            </div>
             <Input
               id="email"
               type="email"
               value={initialUser.email}
               disabled
-              className="bg-muted/50 text-muted-foreground border-border/50 rounded-none h-12"
+              className="bg-surface-muted/60 text-muted-foreground border-border/60 h-11 rounded-xs cursor-not-allowed font-mono text-xs"
             />
-            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wide">Email address cannot be changed</p>
           </div>
 
-          <div>
-            <label htmlFor="name" className="block text-xs font-medium uppercase tracking-widest mb-2">
+          {/* Full Name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
               Full Name
-            </label>
+            </Label>
             <Input
               id="name"
               name="name"
               type="text"
-              value={formData.name}
+              value={formData.name || ""}
               onChange={handleChange}
-              placeholder="e.g. Jane Doe"
-              className="rounded-none h-12"
+              placeholder="Victoria Sterling"
+              className="h-11 rounded-xs"
+              required
             />
           </div>
 
-          <div>
-            <label htmlFor="phone" className="block text-xs font-medium uppercase tracking-widest mb-2">
+          {/* Phone Number */}
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
               Phone Number
-            </label>
+            </Label>
             <Input
               id="phone"
               name="phone"
               type="tel"
-              value={formData.phone}
+              value={formData.phone || ""}
               onChange={handleChange}
-              placeholder="e.g. 9876543210"
-              className="rounded-none h-12"
+              placeholder="+91 98765 43210"
+              className="h-11 rounded-xs"
             />
+            <p className="text-[10px] text-muted-foreground/70 font-mono">
+              Used for delivery coordination and bespoke alterations
+            </p>
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border/40 flex justify-end">
-          <Button type="submit" disabled={isSubmitting} className="rounded-none h-12 px-8 uppercase tracking-widest text-xs font-medium">
+        <div className="pt-4 border-t border-border/60 flex justify-end">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-xs h-11 px-8 uppercase tracking-[0.2em] text-xs font-medium"
+          >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
+                <Spinner size="sm" className="mr-2" /> Saving Changes...
               </>
             ) : (
               "Save Changes"
@@ -133,3 +157,4 @@ export function ProfileFormClient({ initialUser }: { initialUser: User }) {
     </div>
   );
 }
+

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MailCheck, AlertCircle } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -38,8 +38,8 @@ export default function ForgotPasswordPage() {
           setLoading(false);
           return;
         }
-        // For all other errors, we swallow them and show success to prevent email enumeration.
-        console.error("Forget password error:", resetError);
+        // Protect against email enumeration
+        console.error("Forgot password notice:", resetError);
       }
 
       setSuccess(true);
@@ -53,12 +53,17 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="text-center">
-        <h1 className="font-serif text-3xl tracking-tight mb-4">Check Your Email</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-          If an account exists for this email address, you will receive a password reset link shortly.
+      <div className="text-center py-4 animate-in fade-in duration-300">
+        <div className="mx-auto w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+          <MailCheck className="w-5 h-5 text-accent" />
+        </div>
+        <h1 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground mb-3">
+          Check Your Inbox
+        </h1>
+        <p className="text-xs text-muted-foreground leading-relaxed mb-6 font-mono">
+          If an account exists for <span className="text-foreground font-medium">{email}</span>, a secure password renewal link has been dispatched.
         </p>
-        <Button asChild variant="outline" className="w-full rounded-none uppercase tracking-widest text-xs h-12">
+        <Button asChild variant="outline" className="w-full rounded-xs uppercase tracking-[0.2em] text-xs h-11">
           <Link href="/login">Return to Sign In</Link>
         </Button>
       </div>
@@ -67,39 +72,50 @@ export default function ForgotPasswordPage() {
 
   return (
     <>
-      <div className="text-center mb-10">
-        <h1 className="font-serif text-3xl tracking-tight mb-3">Forgot Password</h1>
-        <p className="text-sm text-muted-foreground uppercase tracking-widest">
-          Enter your email address and we&apos;ll send you a secure password reset link.
+      <div className="text-center mb-8">
+        <h1 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground mb-2">Password Recovery</h1>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono">
+          Receive a secure credential reset link
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-4 text-sm text-destructive border border-destructive/20 bg-destructive/5 rounded-none" role="alert" aria-live="assertive">
-            {error}
+          <div
+            className="p-3.5 text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-xs flex items-start gap-2.5 animate-in fade-in duration-200"
+            role="alert"
+            aria-live="assertive"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="leading-relaxed">{error}</span>
           </div>
         )}
 
-        <div className="space-y-3">
-          <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">Email Address</Label>
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+            Account Email Address
+          </Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="client@atelier.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
             required
             autoComplete="email"
-            className="rounded-none border-x-0 border-t-0 border-b border-border bg-transparent px-0 focus-visible:ring-0 focus-visible:border-foreground"
+            className="h-11 rounded-xs"
           />
         </div>
 
-        <Button type="submit" className="w-full rounded-none uppercase tracking-widest text-xs h-12 mt-4" disabled={loading}>
+        <Button
+          type="submit"
+          className="w-full rounded-xs uppercase tracking-[0.2em] text-xs h-11 mt-2 font-medium"
+          disabled={loading}
+        >
           {loading ? (
             <>
-              <Spinner size="sm" className="mr-2" /> Sending Link...
+              <Spinner size="sm" className="mr-2" /> Dispatching Link...
             </>
           ) : (
             "Send Reset Link"
@@ -107,12 +123,16 @@ export default function ForgotPasswordPage() {
         </Button>
       </form>
 
-      <div className="mt-8 text-center text-xs uppercase tracking-widest">
-        <Link href="/login" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-3 w-3 mr-2" />
+      <div className="mt-8 pt-6 border-t border-border/60 text-center text-xs">
+        <Link
+          href="/login"
+          className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors uppercase tracking-[0.18em] text-[11px]"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 mr-2" />
           Back to Sign In
         </Link>
       </div>
     </>
   );
 }
+

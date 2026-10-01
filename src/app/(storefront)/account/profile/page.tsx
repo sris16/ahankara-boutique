@@ -17,7 +17,7 @@ export default async function ProfilePage() {
   try {
     user = await AuthService.requireAuth(reqHeaders);
   } catch {
-    redirect("/login");
+    redirect("/login?callbackUrl=/account/profile");
   }
 
   // Map AuthenticatedUser to the expected Client User type (matching hooks/use-auth)
@@ -29,14 +29,21 @@ export default async function ProfilePage() {
     role: user.role,
     status: user.status,
     emailVerified: user.emailVerified,
-    createdAt: user.createdAt.toISOString()
+    createdAt: user.createdAt.toISOString(),
   };
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="mb-8">
-        <h2 className="font-serif text-3xl tracking-tight hidden md:block">My Profile</h2>
-        <p className="text-muted-foreground mt-2">Manage your personal information and contact details.</p>
+    <div className="space-y-8 pb-12 animate-in fade-in duration-300">
+      <div>
+        <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground font-mono block mb-1">
+          CLIENT CREDENTIALS
+        </span>
+        <h2 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground">
+          Personal Profile & Security
+        </h2>
+        <p className="text-xs text-muted-foreground font-mono mt-1">
+          Manage your contact credentials and security authentication.
+        </p>
       </div>
 
       <ProfileFormClient initialUser={clientUser} />
@@ -44,3 +51,4 @@ export default async function ProfilePage() {
     </div>
   );
 }
+

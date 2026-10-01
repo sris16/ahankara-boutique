@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { orderApi } from "@/lib/api/order";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
+import { AlertCircle, RotateCcw } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { ReturnReason, OrderItem } from "@/types/order";
 
 interface ReturnItemDialogProps {
@@ -21,6 +27,7 @@ export function ReturnItemDialog({ orderId, item, eligibleQuantity }: ReturnItem
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { toast } = useToast();
 
   if (eligibleQuantity <= 0) return null;
 
@@ -44,10 +51,21 @@ export function ReturnItemDialog({ orderId, item, eligibleQuantity }: ReturnItem
         items: [{ orderItemId: item.id, quantity, reason }],
         customerNote: note,
       });
+      toast({
+        title: "Return Request Submitted",
+        description: `Your return request for ${item.productName} has been submitted.`,
+        variant: "default",
+      });
       handleClose();
       router.refresh();
-    } catch (err: any) {
-      setError(err?.message || "Failed to submit return request. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit return request. Please try again.";
+      setError(message);
+      toast({
+        title: "Return Request Failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -64,90 +82,117 @@ export function ReturnItemDialog({ orderId, item, eligibleQuantity }: ReturnItem
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={handleOpen}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleOpen}
+        className="text-xs uppercase tracking-wider gap-1.5"
+      >
+        <RotateCcw className="w-3 h-3 text-muted-foreground" />
         Return
       </Button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="bg-card w-full max-w-md rounded-sm border shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="font-serif text-xl">Return Item</h2>
-              <button onClick={handleClose} className="text-muted-foreground hover:text-foreground">
-                <X className="w-5 h-5" />
-              </button>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Return Item</DialogTitle>
+            <DialogDescription>
+              Submit a return request for eligible items within our atelier return window.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            {/* Item summary banner */}
+            <div className="bg-surface/80 p-3 rounded-sm border border-border/60 text-xs">
+              <p className="font-medium text-foreground">{item.productName}</p>
+              <div className="text-muted-foreground mt-0.5 flex gap-2">
+                {item.color && <span>Color: {item.color}</span>}
+                {item.color && item.size && <span>•</span>}
+                {item.size && <span>Size: {item.size}</span>}
+                <span>•</span>
+                <span>Eligible: {eligibleQuantity}</span>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 md:p-6 overflow-y-auto space-y-5">
-
-              <div className="bg-muted/10 p-3 rounded-sm border text-sm">
-                <p className="font-medium">{item.productName}</p>
-                <div className="text-xs text-muted-foreground mt-1 flex gap-2">
-                  {item.color && <span>{item.color}</span>}
-                  {item.color && item.size && <span>|</span>}
-                  {item.size && <span>{item.size}</span>}
-                </div>
+            {error && (
+              <div className="bg-destructive/10 text-destructive text-xs p-3 rounded-sm flex items-start gap-2 border border-destructive/20">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <p>{error}</p>
               </div>
+            )}
 
-              {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-sm flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <p>{error}</p>
-                </div>
-              )}
-
-              {eligibleQuantity > 1 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Quantity to Return</label>
-                  <select
-                    className="w-full p-2 text-sm border rounded-sm bg-background focus:outline-none focus:border-foreground"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                  >
-                    {Array.from({ length: eligibleQuantity }).map((_, i) => (
-                      <option key={i + 1} value={i + 1}>{i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Reason for Return</label>
-                <select
-                  className="w-full p-2 text-sm border rounded-sm bg-background focus:outline-none focus:border-foreground"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value as ReturnReason)}
-                  required
+            {eligibleQuantity > 1 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="return-quantity" className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Quantity to Return
+                </Label>
+                <Select
+                  id="return-quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className="text-sm"
                 >
-                  {Object.entries(reasonLabels).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
+                  {Array.from({ length: eligibleQuantity }).map((_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
                   ))}
-                </select>
+                </Select>
               </div>
+            )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Additional Details (Optional)</label>
-                <textarea
-                  className="w-full p-2 text-sm border rounded-sm bg-background focus:outline-none focus:border-foreground min-h-[80px]"
-                  placeholder="Tell us more about the issue..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="return-reason" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Reason for Return
+              </Label>
+              <Select
+                id="return-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value as ReturnReason)}
+                className="text-sm"
+                required
+              >
+                {Object.entries(reasonLabels).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </Select>
+            </div>
 
-              <div className="pt-4 flex gap-3 justify-end border-t mt-6">
-                <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Submit Return Request
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="space-y-1.5">
+              <Label htmlFor="return-note" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Additional Details (Optional)
+              </Label>
+              <Textarea
+                id="return-note"
+                placeholder="Tell our concierge team more about the condition or issue..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="text-xs uppercase tracking-wider"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting}
+                className="text-xs uppercase tracking-wider gap-2"
+              >
+                {isSubmitting && <Spinner size="sm" />}
+                Submit Return
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
