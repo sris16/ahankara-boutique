@@ -76,7 +76,7 @@ export function MobileFilterDrawer({
           {children}
         </div>
 
-        <div className="p-4 border-t border-border/60 bg-surface/40 flex items-center gap-3">
+        <div className="p-4 pb-[max(1rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))] border-t border-border/60 bg-surface/40 flex items-center gap-3">
           {activeFilterCount > 0 && (
             <Button
               type="button"

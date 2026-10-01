@@ -149,13 +149,13 @@ export function CartItemRow({
           />
 
           {/* Actions: Save for later & Remove */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {onSaveToWishlist && (
               <button
                 type="button"
                 onClick={() => onSaveToWishlist(item.product.id, item.cartItemId)}
                 disabled={isUpdating}
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors p-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-2 sm:p-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 aria-label={`Save ${item.product.name} to wishlist`}
                 title="Save for later"
               >
@@ -168,7 +168,7 @@ export function CartItemRow({
               type="button"
               onClick={() => onRemove(item.cartItemId)}
               disabled={isUpdating}
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors p-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-2 sm:p-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               aria-label={`Remove ${item.product.name} from bag`}
               title="Remove item"
             >

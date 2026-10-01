@@ -149,7 +149,7 @@ export function CartDrawer() {
 
         {/* Drawer Footer with Subtotal & Actions */}
         {cart && hasItems && (
-          <div className="p-6 border-t border-border/60 bg-surface-muted/30">
+          <div className="p-6 pb-[max(1.5rem,calc(1.25rem+env(safe-area-inset-bottom,0px)))] border-t border-border/60 bg-surface-muted/30">
             <div className="flex justify-between items-baseline mb-4">
               <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                 Estimated Subtotal

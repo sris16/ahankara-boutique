@@ -59,7 +59,7 @@ export function QuantitySelector({
       aria-label="Quantity selector"
       className={cn(
         "inline-flex items-center border border-border bg-surface rounded-sm select-none",
-        size === "default" ? "h-11 sm:h-10 min-h-[44px] sm:min-h-[40px]" : "h-9 min-h-[36px]",
+        size === "default" ? "h-11 sm:h-10 min-h-[44px] sm:min-h-[40px]" : "h-10 sm:h-9 min-h-[40px] sm:min-h-[36px]",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}
@@ -71,7 +71,7 @@ export function QuantitySelector({
         aria-label="Decrease quantity"
         className={cn(
           "flex items-center justify-center text-foreground hover:bg-muted/60 transition-colors disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-l-xs cursor-pointer",
-          size === "default" ? "w-11 sm:w-10 h-full" : "w-8 h-full"
+          size === "default" ? "w-11 sm:w-10 h-full" : "w-9 sm:w-8 h-full"
         )}
       >
         <Minus className="h-3.5 w-3.5 stroke-[2]" aria-hidden="true" />
@@ -87,7 +87,7 @@ export function QuantitySelector({
         aria-label="Quantity"
         className={cn(
           "flex items-center justify-center font-medium font-mono text-sm tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring px-2 border-x border-border/50",
-          size === "default" ? "min-w-[40px] h-full" : "min-w-[32px] h-full"
+          size === "default" ? "min-w-[40px] h-full" : "min-w-[34px] sm:min-w-[32px] h-full"
         )}
       >
         {isLoading ? (
@@ -104,7 +104,7 @@ export function QuantitySelector({
         aria-label="Increase quantity"
         className={cn(
           "flex items-center justify-center text-foreground hover:bg-muted/60 transition-colors disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-r-xs cursor-pointer",
-          size === "default" ? "w-11 sm:w-10 h-full" : "w-8 h-full"
+          size === "default" ? "w-11 sm:w-10 h-full" : "w-9 sm:w-8 h-full"
         )}
       >
         <Plus className="h-3.5 w-3.5 stroke-[2]" aria-hidden="true" />

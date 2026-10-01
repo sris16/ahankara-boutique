@@ -301,9 +301,9 @@ export function Navbar() {
           </nav>
 
           {/* Mobile Sheet Footer */}
-          <div className="p-6 border-t border-border/60 bg-surface-muted/40 mt-auto">
+          <div className="p-6 pb-[max(1.5rem,calc(1.25rem+env(safe-area-inset-bottom,0px)))] border-t border-border/60 bg-surface-muted/40 mt-auto">
             {loading ? (
-              <div className="h-10 bg-muted/60 animate-pulse rounded-sm" />
+              <div className="h-11 bg-muted/60 animate-pulse rounded-sm" />
             ) : user ? (
               <div className="flex flex-col gap-2">
                 <span className="text-xs text-muted-foreground truncate">
@@ -313,7 +313,7 @@ export function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="w-full uppercase tracking-widest text-xs min-h-[40px]"
+                  className="w-full uppercase tracking-widest text-xs min-h-[44px]"
                 >
                   Sign Out
                 </Button>
@@ -321,7 +321,7 @@ export function Navbar() {
             ) : (
               <Button
                 asChild
-                className="w-full uppercase tracking-widest text-xs min-h-[40px]"
+                className="w-full uppercase tracking-widest text-xs min-h-[44px]"
               >
                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
                   Sign In

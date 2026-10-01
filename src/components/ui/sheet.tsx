@@ -240,7 +240,7 @@ export function SheetContent({
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close sheet"
-            className="absolute right-4 top-4 rounded-xs text-muted-foreground hover:text-foreground transition-colors p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            className="absolute right-3 top-3 sm:right-4 sm:top-4 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xs text-muted-foreground hover:text-foreground transition-colors p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>

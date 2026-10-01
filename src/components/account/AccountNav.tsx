@@ -61,7 +61,7 @@ export function AccountNav() {
           <Link
             key={item.label}
             href={item.href}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.15em] transition-all duration-150 ${
+            className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] md:min-h-[38px] rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.15em] transition-all duration-150 ${
               isActive
                 ? "bg-foreground text-background shadow-xs font-semibold"
                 : "text-muted-foreground hover:text-foreground hover:bg-surface-muted/60"
@@ -79,7 +79,7 @@ export function AccountNav() {
         type="button"
         onClick={handleSignOut}
         disabled={signingOut}
-        className="flex items-center gap-3 px-3.5 py-2.5 rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.15em] transition-all duration-150 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-left w-full cursor-pointer disabled:opacity-50"
+        className="flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] md:min-h-[38px] rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.15em] transition-all duration-150 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-left w-full cursor-pointer disabled:opacity-50"
       >
         {signingOut ? (
           <Spinner size="sm" className="w-4 h-4" />
