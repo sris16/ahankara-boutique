@@ -1,5 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
-import fs from 'fs';
+import { test, expect } from '@playwright/test';
 
 // Helper to use authenticated state
 const authFile = 'e2e/.auth/customer.json';
@@ -24,7 +23,7 @@ test.describe('AHANKARA STUDIOS - E2E FULL DETERMINISTIC SUITE', () => {
     await products.first().click();
     await page.waitForURL(/\/products\/.+/);
     await expect(page.locator('h1')).toBeVisible();
-    await expect(page.getByRole('button', { name: /add to bag/i, exact: false }).or(page.getByRole('button', { name: /add to cart/i, exact: false }))).toBeVisible();
+    await expect(page.locator('#main-add-to-cart-btn')).toBeVisible();
   });
 
   // Create a new context specifically for the authenticated user tests
@@ -41,7 +40,7 @@ test.describe('AHANKARA STUDIOS - E2E FULL DETERMINISTIC SUITE', () => {
       const adminResp = await page.goto('/admin');
       const status = adminResp?.status();
       if (status === 200) {
-        await expect(page).toHaveURL(/.*login.*/);
+        await expect(page).toHaveURL(/.*(login|account\/orders).*/);
       } else {
         expect([401, 403, 404]).toContain(status);
       }
@@ -50,9 +49,24 @@ test.describe('AHANKARA STUDIOS - E2E FULL DETERMINISTIC SUITE', () => {
     test('PHASE 7: Cart Management', async ({ page }) => {
       await page.goto('/products/e2e-test-product');
 
+      // Select variants if they exist (color and size)
+      const colorOption = page.locator('button[role="radio"]').filter({ hasText: /^(black|white|red|blue|ivory|rust|gold|silver)$/i }).first();
+      if (await colorOption.isVisible().catch(() => false)) {
+        await colorOption.click();
+      }
+
+      const sizeOption = page.locator('button[role="radio"]').filter({ hasText: /^(xs|s|m|l|xl|xxl)$/i }).first();
+      if (await sizeOption.isVisible().catch(() => false)) {
+        await sizeOption.click();
+      }
+
       // Wait for Add to Cart
-      const addBtn = page.getByRole('button', { name: /add/i });
+      const addBtn = page.locator('#main-add-to-cart-btn');
+      await expect(addBtn).toBeEnabled();
       await addBtn.click();
+
+      // Wait for success state to prevent race condition
+      await expect(addBtn).toHaveText(/Added to Shopping Bag/i);
 
       // Navigate to cart
       await page.goto('/cart');

@@ -42,16 +42,17 @@ async function main() {
   } else {
     // Ensure session exists
     const sessionToken = 'e2e-deterministic-session-token-12345';
-    const existingSession = await prisma.session.findUnique({ where: { token: sessionToken } });
-    if (!existingSession) {
-      await prisma.session.create({
-        data: {
-          token: sessionToken,
-          userId: user.id,
-          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
-        }
-      });
-    }
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+
+    await prisma.session.upsert({
+      where: { token: sessionToken },
+      update: { expiresAt },
+      create: {
+        token: sessionToken,
+        userId: user.id,
+        expiresAt,
+      }
+    });
   }
 
   // 2. Ensure test product exists

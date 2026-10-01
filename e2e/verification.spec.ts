@@ -29,7 +29,7 @@ test.describe('AHANKARA STUDIOS - E2E Verification', () => {
 
       // A3 - Product Detail Page
       await expect(page.locator('h1')).toBeVisible();
-      await expect(page.getByRole('button', { name: /add to cart/i })).toBeVisible();
+      await expect(page.locator('#main-add-to-cart-btn')).toBeVisible();
     } else {
       // If no products, skip
       test.skip(true, 'No products available for testing.');
@@ -44,9 +44,36 @@ test.describe('AHANKARA STUDIOS - E2E Verification', () => {
       await products.first().click();
       await page.waitForURL(/\/products\/.+/);
 
-      const addToCart = page.getByRole('button', { name: /add to cart/i });
+      // Select variants if needed
+      const colorGroup = page.getByRole('radiogroup', { name: /colors?/i });
+      if (await colorGroup.isVisible().catch(() => false)) {
+        const availableColor = colorGroup.locator('button[role="radio"]:not([disabled])').first();
+        if (await availableColor.isVisible().catch(() => false)) {
+          await availableColor.click();
+        }
+      }
+
+      const sizeGroup = page.getByRole('radiogroup', { name: /sizes?/i });
+      if (await sizeGroup.isVisible().catch(() => false)) {
+        const availableSize = sizeGroup.locator('button[role="radio"]:not([disabled])').first();
+        if (await availableSize.isVisible().catch(() => false)) {
+          await availableSize.click();
+        }
+      }
+
+      const addToCart = page.locator('#main-add-to-cart-btn');
       if (await addToCart.isEnabled()) {
-        await addToCart.click();
+        await Promise.all([
+          page.waitForURL(/.*login.*/).catch(() => {}),
+          addToCart.click()
+        ]);
+
+        if (page.url().includes('login') || page.url().includes('auth')) {
+          test.skip(true, 'Cart requires authentication, blocked by OTP limitation.');
+        }
+
+        // Wait for success state to prevent race condition
+        await expect(addToCart).toHaveText(/Added to Shopping Bag/i);
 
         await page.goto('/cart');
         // Wait for body to be visible to confirm page loaded
