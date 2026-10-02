@@ -7,6 +7,7 @@ import { ProductForm } from "@/components/admin/products/ProductForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdminCategory, AdminCollection } from "@/types/admin";
 
 export const metadata = {
   title: "New Product | Admin | AHANKARA STUDIOS",
@@ -17,8 +18,8 @@ export default async function NewProductPage() {
   const reqHeaders = await headers();
   await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
 
-  let categoriesData: any[] = [];
-  let collectionsData: any[] = [];
+  let categoriesData: AdminCategory[] = [];
+  let collectionsData: AdminCollection[] = [];
 
   try {
     const [rawCategories, rawCollections] = await Promise.all([

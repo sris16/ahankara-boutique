@@ -3,8 +3,9 @@ import { AuthService } from '@/server/services/auth.service';
 import { ShippingService } from '@/server/services/shipping.service';
 import { createShipmentSchema } from '@/server/validators/shipping.validator';
 import { UserRole } from '@prisma/client';
-import { AppError } from '@/utils/errors';
-import { z } from 'zod';
+
+
+import { handleError } from '@/utils/error-handler';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(
@@ -26,14 +27,7 @@ export async function POST(
 
     return NextResponse.json(shipment, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error('Create shipment error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -62,10 +56,6 @@ export async function GET(
 
     return NextResponse.json(shipments);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    console.error('List order shipments error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

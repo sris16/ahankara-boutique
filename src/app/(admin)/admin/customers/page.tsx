@@ -39,7 +39,7 @@ export default async function AdminCustomersPage() {
             Customers
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage your store's customer accounts.
+            Manage your store&apos;s customer accounts.
           </p>
         </div>
       </div>

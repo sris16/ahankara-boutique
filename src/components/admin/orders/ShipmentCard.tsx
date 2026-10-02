@@ -5,9 +5,11 @@ import type { AdminShipment, AdminOrder } from '@/types/admin';
 import { adminApi } from '@/lib/api/admin';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { FileText, XCircle, AlertTriangle, Truck } from 'lucide-react';
+import { FileText, XCircle, AlertTriangle, Truck, ExternalLink } from 'lucide-react';
 import { CancelShipmentDialog } from './CancelShipmentDialog';
 import { ShipmentTrackingTimeline } from './ShipmentTrackingTimeline';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export function ShipmentCard({ shipment }: { shipment: AdminShipment; order: AdminOrder }) {
   const router = useRouter();
@@ -23,7 +25,7 @@ export function ShipmentCard({ shipment }: { shipment: AdminShipment; order: Adm
       router.refresh();
     } catch (err) {
       const error = err as Error & { response?: { data?: { error?: string } } };
-      setAwbError(error.response?.data?.error || error.message || 'AWB allocation failed. The shipping provider may require account recharge.');
+      setAwbError(error.response?.data?.error || error.message || 'AWB allocation failed.');
     } finally {
       setIsRequestingAWB(false);
     }
@@ -33,38 +35,54 @@ export function ShipmentCard({ shipment }: { shipment: AdminShipment; order: Adm
   const canRequestAWB = !isCancelled && !shipment.awb && (shipment.status === 'PENDING' || shipment.status === 'READY_TO_SHIP' || shipment.status === 'SHIPMENT_CREATED');
   const canCancel = !isCancelled && shipment.status !== 'DELIVERED';
 
-  let statusClasses = 'bg-gray-100 text-gray-800';
-  if (isCancelled) statusClasses = 'bg-red-100 text-red-800';
-  else if (shipment.status === 'DELIVERED') statusClasses = 'bg-green-100 text-green-800';
-  else if (shipment.status === 'IN_TRANSIT' || shipment.status === 'OUT_FOR_DELIVERY') statusClasses = 'bg-indigo-100 text-indigo-800';
-  else statusClasses = 'bg-blue-100 text-blue-800';
+  type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+
+  const getStatusVariant = (status: string): BadgeVariant => {
+    switch (status) {
+      case 'DELIVERED':
+        return 'default';
+      case 'CANCELLED':
+      case 'DELIVERY_FAILED':
+        return 'destructive';
+      case 'IN_TRANSIT':
+      case 'OUT_FOR_DELIVERY':
+        return 'secondary';
+      case 'SHIPMENT_CREATED':
+      case 'PENDING':
+      case 'READY_TO_SHIP':
+      case 'PICKUP_SCHEDULED':
+      case 'PICKED_UP':
+      default:
+        return 'outline';
+    }
+  };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border overflow-hidden ${isCancelled ? 'opacity-75' : ''}`}>
-      <div className="border-b px-6 py-4 bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <Card className={`overflow-hidden transition-opacity ${isCancelled ? 'opacity-75' : ''}`}>
+      <CardHeader className="bg-muted/30 border-b p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h3 className="font-semibold text-gray-900 flex items-center">
-              <Truck className="w-4 h-4 mr-2" />
+          <div className="flex flex-wrap items-center gap-3">
+            <CardTitle className="text-lg flex items-center font-bold">
+              <Truck className="w-5 h-5 mr-2 text-muted-foreground" />
               Shipment {shipment.id.slice(-6).toUpperCase()}
-            </h3>
-            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${statusClasses}`}>
-              {shipment.status}
-            </span>
+            </CardTitle>
+            <Badge variant={getStatusVariant(shipment.status)}>
+              {shipment.status.replace(/_/g, ' ')}
+            </Badge>
           </div>
-          <p className="text-xs text-gray-500 mt-1">Provider: {shipment.provider}</p>
+          <p className="text-xs text-muted-foreground mt-1.5 uppercase tracking-wider font-medium">Provider: {shipment.provider}</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {canRequestAWB && (
             <Button
               onClick={handleRequestAWB}
               disabled={isRequestingAWB}
               size="sm"
               variant="outline"
-              className="bg-white hover:bg-gray-50 border-indigo-200 text-indigo-700 hover:text-indigo-800"
+              className="w-full sm:w-auto"
             >
-              <FileText className="w-4 h-4 mr-1" />
+              <FileText className="w-4 h-4 mr-2" />
               {isRequestingAWB ? 'Requesting...' : 'Request AWB'}
             </Button>
           )}
@@ -73,61 +91,92 @@ export function ShipmentCard({ shipment }: { shipment: AdminShipment; order: Adm
             <Button
               onClick={() => setIsCancelDialogOpen(true)}
               size="sm"
-              variant="outline"
-              className="bg-white hover:bg-gray-50 border-red-200 text-red-600 hover:text-red-700"
+              variant="destructive"
+              className="w-full sm:w-auto"
             >
-              <XCircle className="w-4 h-4 mr-1" />
+              <XCircle className="w-4 h-4 mr-2" />
               Cancel Shipment
             </Button>
           )}
         </div>
-      </div>
+      </CardHeader>
 
-      <div className="px-6 py-4">
+      <CardContent className="p-0">
         {awbError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800 flex items-start">
+          <div className="p-4 bg-destructive/10 border-b border-destructive/20 text-sm text-destructive flex items-start">
             <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-medium">AWB Assignment Failed</p>
-              <p className="text-xs mt-1 text-red-700">{awbError}</p>
+              <p className="font-semibold">AWB Assignment Failed</p>
+              <p className="text-xs mt-1 text-destructive/80">{awbError}</p>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-2 border-b pb-1">Included Items</h4>
-            <ul className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+          {/* Included Items */}
+          <div className="p-4 sm:p-6">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Included Items</h4>
+            <ul className="space-y-3">
               {(shipment.items || []).map((sItem) => (
-                <li key={sItem.id} className="text-sm text-gray-700 flex justify-between">
-                  <span>{sItem.quantity}x {sItem.orderItem?.productName || 'Unknown Product'}</span>
-                  <span className="text-gray-500 text-xs">{sItem.orderItem?.sku}</span>
+                <li key={sItem.id} className="flex justify-between items-start text-sm">
+                  <div className="flex-1 pr-4">
+                    <span className="font-medium text-foreground">{sItem.orderItem?.productName || 'Unknown Product'}</span>
+                    <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
+                      {sItem.orderItem?.sku && <span className="font-mono">{sItem.orderItem.sku}</span>}
+                      {sItem.orderItem?.size && <span>Size: {sItem.orderItem.size}</span>}
+                      {sItem.orderItem?.color && <span>Color: {sItem.orderItem.color}</span>}
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 rounded-sm">Qty: {sItem.quantity}</Badge>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-2 border-b pb-1">Tracking Information</h4>
-            <div className="space-y-1 text-sm text-gray-700">
-              <p><span className="text-gray-500">AWB:</span> {shipment.awb || 'Not assigned yet'}</p>
-              <p><span className="text-gray-500">Courier:</span> {shipment.courierName || '-'}</p>
-              <p><span className="text-gray-500">Provider Order ID:</span> {shipment.providerOrderId || '-'}</p>
+          {/* Tracking Information */}
+          <div className="p-4 sm:p-6 bg-muted/5">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Tracking Details</h4>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">AWB Number</p>
+                <p className="text-sm font-medium text-foreground font-mono">{shipment.awb || 'Not assigned yet'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Courier</p>
+                  <p className="text-sm font-medium text-foreground">{shipment.courierName || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Provider ID</p>
+                  <p className="text-sm font-medium text-foreground font-mono truncate" title={shipment.providerOrderId || undefined}>
+                    {shipment.providerOrderId || '-'}
+                  </p>
+                </div>
+              </div>
+
               {shipment.trackingUrl && (
-                <p>
-                  <a href={shipment.trackingUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
-                    View official tracking tracking
+                <div className="pt-2">
+                  <a
+                    href={shipment.trackingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center text-sm text-primary hover:underline font-medium"
+                    aria-label="View official tracking link in new tab"
+                  >
+                    View Official Tracking <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                   </a>
-                </p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="mt-6 border-t pt-4">
+        {/* Timeline Boundary */}
+        <div className="border-t border-border p-4 sm:p-6 bg-muted/10">
           <ShipmentTrackingTimeline events={shipment.trackingEvents || []} />
         </div>
-      </div>
+      </CardContent>
 
       {isCancelDialogOpen && (
         <CancelShipmentDialog
@@ -135,6 +184,6 @@ export function ShipmentCard({ shipment }: { shipment: AdminShipment; order: Adm
           onClose={() => setIsCancelDialogOpen(false)}
         />
       )}
-    </div>
+    </Card>
   );
 }

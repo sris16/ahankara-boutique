@@ -29,6 +29,15 @@ export default async function AdminOrderDetailPage({
 
   const requestHeaders = await headers();
 
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  let order: any;
+  let shipments: any;
+  let returnRequests: any;
+  let exchangeRequests: any;
+  let cancellation: any;
+  let refunds: any;
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
   try {
     await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
 
@@ -37,93 +46,37 @@ export default async function AdminOrderDetailPage({
       prisma.shipment.findMany({
         where: { orderId },
         include: {
-          items: {
-            include: {
-              orderItem: true
-            }
-          },
-          trackingEvents: {
-            orderBy: { eventTime: 'desc' }
-          }
+          items: { include: { orderItem: true } },
+          trackingEvents: { orderBy: { eventTime: 'desc' } }
         },
         orderBy: { createdAt: 'desc' }
       }),
       prisma.returnRequest.findMany({
         where: { orderId },
-        include: {
-          items: {
-            include: {
-              orderItem: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
+        include: { items: { include: { orderItem: true } } },
+        orderBy: { createdAt: 'desc' }
       }),
       prisma.exchangeRequest.findMany({
         where: { orderId },
-        include: {
-          items: {
-            include: {
-              orderItem: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
+        include: { items: { include: { orderItem: true } } },
+        orderBy: { createdAt: 'desc' }
       }),
       prisma.orderCancellation.findUnique({
         where: { orderId }
       }),
       prisma.refund.findMany({
         where: { orderId },
-        orderBy: {
-          createdAt: 'desc'
-        }
+        orderBy: { createdAt: 'desc' }
       })
     ]);
 
-    const order = JSON.parse(JSON.stringify(rawOrder));
-    const shipments = JSON.parse(JSON.stringify(rawShipments));
-    const returnRequests = JSON.parse(JSON.stringify(rawReturnRequests));
-    const exchangeRequests = JSON.parse(JSON.stringify(rawExchangeRequests));
-    const cancellation = JSON.parse(JSON.stringify(rawCancellation));
-    const refunds = JSON.parse(JSON.stringify(rawRefunds));
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4 mb-2">
-          <Link href="/admin/orders" className="text-gray-500 hover:text-gray-900 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Order {order.orderNumber}</h1>
-            <p className="text-sm text-gray-500">
-              Placed on {new Date(order.createdAt).toLocaleString('en-IN')}
-            </p>
-          </div>
-        </div>
-
-        <OrderSummaryCards order={order} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <OrderItemsList order={order} shipments={shipments} />
-            <CancellationManager cancellation={cancellation} orderId={orderId} />
-            <ShipmentManager order={order} shipments={shipments} />
-            <ReturnManager returnRequests={returnRequests} />
-            <ExchangeManager exchangeRequests={exchangeRequests} />
-            <RefundManager refunds={refunds} />
-          </div>
-          <div className="space-y-6">
-            <OrderCustomerDetails order={order} />
-          </div>
-        </div>
-      </div>
-    );
-  } catch (error) {
+    order = JSON.parse(JSON.stringify(rawOrder));
+    shipments = JSON.parse(JSON.stringify(rawShipments));
+    returnRequests = JSON.parse(JSON.stringify(rawReturnRequests));
+    exchangeRequests = JSON.parse(JSON.stringify(rawExchangeRequests));
+    cancellation = JSON.parse(JSON.stringify(rawCancellation));
+    refunds = JSON.parse(JSON.stringify(rawRefunds));
+  } catch {
     return (
       <div className="bg-red-50 p-6 rounded-lg border border-red-100 text-center">
         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-4" />
@@ -137,4 +90,36 @@ export default async function AdminOrderDetailPage({
       </div>
     );
   }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <Link href="/admin/orders" className="text-gray-500 hover:text-gray-900 transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Order {order.orderNumber}</h1>
+          <p className="text-sm text-gray-500">
+            Placed on {new Date(order.createdAt).toLocaleString('en-IN')}
+          </p>
+        </div>
+      </div>
+
+      <OrderSummaryCards order={order} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <OrderItemsList order={order} shipments={shipments} />
+          <CancellationManager cancellation={cancellation} orderId={orderId} />
+          <ShipmentManager order={order} shipments={shipments} />
+          <ReturnManager returnRequests={returnRequests} />
+          <ExchangeManager exchangeRequests={exchangeRequests} />
+          <RefundManager refunds={refunds} />
+        </div>
+        <div className="space-y-6">
+          <OrderCustomerDetails order={order} />
+        </div>
+      </div>
+    </div>
+  );
 }

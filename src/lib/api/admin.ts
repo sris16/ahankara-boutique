@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient } from "./client";
-import type { 
-  AdminProduct, AdminProductListResponse, AdminVariant, 
+import type {
+  AdminProduct, AdminProductListResponse, AdminVariant,
   AdminProductImage, AdminCategory, AdminCategoryTree, AdminCollection,
   LowStockVariant, AdminInventoryTransaction, InventoryAdjustmentRequest,
   InventoryThresholdUpdateRequest, AdminInventory,
@@ -12,7 +12,7 @@ import type {
 async function rawFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const baseUrl = typeof window === "undefined" ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000" : "";
   const url = `${baseUrl}${endpoint}`;
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -49,12 +49,12 @@ export const adminApi = {
   assignAWB: async (shipmentId: string): Promise<AdminShipment> => {
     return rawFetch(`/api/admin/shipments/${shipmentId}/awb`, { method: "POST" });
   },
-  
+
   // DASHBOARD
   getRecentOrders: async (limit = 5, headers?: HeadersInit) => {
     return apiClient.get(`/api/admin/orders?limit=${limit}`, { headers });
   },
-  
+
   getLowStockAlerts: async (headers?: HeadersInit): Promise<LowStockVariant[]> => {
     return apiClient.get('/api/admin/inventory/low-stock', { headers });
   },
@@ -145,6 +145,9 @@ export const adminApi = {
   deleteCategory: async (categoryId: string): Promise<void> => {
     return apiClient.delete(`/api/admin/categories/${categoryId}`);
   },
+  reorderCategories: async (updates: { id: string, sortOrder: number }[]): Promise<void> => {
+    return apiClient.post('/api/admin/categories/reorder', { updates });
+  },
 
   // COLLECTIONS
   getCollections: async (headers?: HeadersInit): Promise<AdminCollection[]> => {
@@ -161,6 +164,9 @@ export const adminApi = {
   },
   deleteCollection: async (collectionId: string): Promise<void> => {
     return apiClient.delete(`/api/admin/collections/${collectionId}`);
+  },
+  reorderCollections: async (updates: { id: string, sortOrder: number }[]): Promise<void> => {
+    return apiClient.post('/api/admin/collections/reorder', { updates });
   },
 
   // COUPONS

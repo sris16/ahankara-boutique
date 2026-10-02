@@ -6,6 +6,7 @@ import { adminApi } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { X, AlertCircle } from "lucide-react";
 
 interface VariantFormProps {
@@ -131,12 +132,10 @@ export function VariantForm({ productId, variant, onClose, onSuccess }: VariantF
 
           <div className="pt-4 border-t flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="isActive"
                 name="isActive"
                 defaultChecked={variant ? variant.isActive : true}
-                className="w-4 h-4 rounded-sm border-input"
               />
               <Label htmlFor="isActive" className="font-medium">Active Variant</Label>
             </div>
@@ -145,8 +144,8 @@ export function VariantForm({ productId, variant, onClose, onSuccess }: VariantF
               <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Variant"}
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Variant
               </Button>
             </div>
           </div>

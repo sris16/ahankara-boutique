@@ -3,11 +3,32 @@
 import React, { useState } from 'react';
 import { Banknote, AlertTriangle, CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
+import type { Refund, RefundStatus } from '@prisma/client';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function RefundManager({ refunds }: { refunds: any[] }) {
+function getStatusConfig(status: RefundStatus | string): { variant: BadgeProps['variant'], icon: React.ReactNode, label: string } {
+  switch (status) {
+    case 'SUCCEEDED':
+      return { variant: 'success', icon: <CheckCircle className="w-3.5 h-3.5" />, label: 'Succeeded' };
+    case 'PENDING':
+      return { variant: 'outline', icon: <RefreshCw className="w-3.5 h-3.5" />, label: 'Pending' };
+    case 'PROCESSING':
+      return { variant: 'secondary', icon: <RefreshCw className="w-3.5 h-3.5 animate-spin" />, label: 'Processing' };
+    case 'FAILED':
+      return { variant: 'destructive', icon: <XCircle className="w-3.5 h-3.5" />, label: 'Failed' };
+    case 'CANCELLED':
+      return { variant: 'outline', icon: <XCircle className="w-3.5 h-3.5" />, label: 'Cancelled' };
+    case 'REQUIRES_REVIEW':
+      return { variant: 'warning', icon: <AlertTriangle className="w-3.5 h-3.5" />, label: 'Requires Review' };
+    default:
+      return { variant: 'outline', icon: null, label: status };
+  }
+}
+
+export function RefundManager({ refunds }: { refunds: Refund[] }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,9 +49,8 @@ export function RefundManager({ refunds }: { refunds: any[] }) {
       }
 
       router.refresh();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoadingId(null);
     }
@@ -41,84 +61,84 @@ export function RefundManager({ refunds }: { refunds: any[] }) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-6">
-      <div className="px-4 py-5 sm:px-6 flex justify-between items-center bg-gray-50 border-b border-gray-200">
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/30 border-b p-4 sm:p-6 flex flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <Banknote className="w-5 h-5 text-gray-500" />
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Refunds</h3>
+          <Banknote className="w-5 h-5 text-muted-foreground" />
+          <CardTitle className="text-base font-semibold">Refunds</CardTitle>
         </div>
-        <span className="bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full text-sm font-medium">
+        <Badge variant="secondary" className="px-2.5 py-0.5 rounded-full">
           {refunds.length}
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
-      <div className="divide-y divide-gray-200">
-        {error && (
-          <div className="p-4 bg-red-50 text-red-800 text-sm flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <p>{error}</p>
-          </div>
-        )}
-
-        {refunds.map((refund) => (
-          <div key={refund.id} className="p-4">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {formatPrice(refund.amount)}
-                </p>
-                <p className="text-xs text-gray-500 font-mono mt-1">ID: {refund.id}</p>
-                {refund.providerRefundId && (
-                  <p className="text-xs text-gray-500 font-mono mt-0.5">Ref: {refund.providerRefundId}</p>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${
-                  refund.status === 'SUCCEEDED' ? 'bg-green-50 text-green-700 border-green-200' :
-                  refund.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  refund.status === 'FAILED' ? 'bg-red-50 text-red-700 border-red-200' :
-                  'bg-blue-50 text-blue-700 border-blue-200'
-                }`}>
-                  {refund.status === 'SUCCEEDED' && <CheckCircle className="w-3.5 h-3.5" />}
-                  {refund.status === 'PENDING' && <RefreshCw className="w-3.5 h-3.5" />}
-                  {refund.status === 'FAILED' && <XCircle className="w-3.5 h-3.5" />}
-                  {refund.status === 'PROCESSING' && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  {refund.status}
-                </span>
-
-                {refund.status === 'PENDING' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleProcessRefund(refund.id)}
-                    disabled={loadingId === refund.id}
-                  >
-                    {loadingId === refund.id ? 'Processing...' : 'Process Refund'}
-                  </Button>
-                )}
-              </div>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {error && (
+            <div className="p-4 sm:px-6 bg-destructive/10 text-destructive text-sm flex items-start gap-2 border-b border-border/50">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <p>{error}</p>
             </div>
+          )}
 
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-100">
-              <div>
-                <dt className="text-xs font-medium text-gray-500">Reason</dt>
-                <dd className="mt-1 text-sm text-gray-900">{refund.reason || 'Not specified'}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-gray-500">Date Created</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {new Date(refund.createdAt).toLocaleString('en-IN')}
-                </dd>
-              </div>
-              {refund.failureReason && (
-                <div className="sm:col-span-2 bg-red-50 p-2 rounded text-xs text-red-800">
-                  <span className="font-semibold">Failure Reason:</span> {refund.failureReason}
+          {refunds.map((refund) => {
+            const statusConfig = getStatusConfig(refund.status);
+            return (
+              <div key={refund.id} className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {formatPrice(refund.amount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono mt-1 break-all">ID: {refund.id}</p>
+                    {refund.providerRefundId && (
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">Ref: {refund.providerRefundId}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-start sm:items-end gap-3 shrink-0">
+                    <Badge variant={statusConfig.variant} className="flex items-center gap-1.5 px-2.5 py-1 whitespace-nowrap">
+                      {statusConfig.icon}
+                      <span>{statusConfig.label}</span>
+                    </Badge>
+
+                    {refund.status === 'PENDING' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleProcessRefund(refund.id)}
+                        isLoading={loadingId === refund.id}
+                        className="w-full sm:w-auto"
+                      >
+                        Process Refund
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              )}
-            </dl>
-          </div>
-        ))}
-      </div>
-    </div>
+
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-border/50 mt-4">
+                  <div>
+                    <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reason</dt>
+                    <dd className="mt-1 text-sm font-medium text-foreground">{refund.reason || 'Not specified'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date Created</dt>
+                    <dd className="mt-1 text-sm font-medium text-foreground">
+                      {new Date(refund.createdAt).toLocaleString('en-IN', {
+                        month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                      })}
+                    </dd>
+                  </div>
+                  {refund.failureReason && (
+                    <div className="sm:col-span-2 bg-destructive/10 border border-destructive/20 p-3 rounded-md text-xs text-destructive">
+                      <span className="font-semibold uppercase tracking-wider">Failure Reason:</span> <span className="ml-1">{refund.failureReason}</span>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

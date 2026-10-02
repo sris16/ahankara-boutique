@@ -38,9 +38,8 @@ export default async function InventoryPage({
     // Serialize dates to strings to match the AdminProduct type which expects JSON-serialized data
     products = JSON.parse(JSON.stringify(response.data));
     totalPages = response.meta.totalPages || 1;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    error = err.message || 'Failed to load inventory data';
+  } catch (err: unknown) {
+    error = err instanceof Error ? err.message : 'Failed to load inventory data';
   }
 
   return (

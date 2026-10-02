@@ -21,10 +21,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     search: typeof params.search === 'string' ? params.search : undefined,
     status: typeof params.status === 'string' ? params.status : undefined,
     categoryId: typeof params.category === 'string' ? params.category : undefined,
+    collectionId: typeof params.collection === 'string' ? params.collection : undefined,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let productsData: any = { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 1 } };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let categoriesData: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let collectionsData: any[] = [];
 
   try {
     const rawProducts = await ProductService.getAdminProducts(query);
@@ -40,6 +45,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     console.error("Failed to fetch categories:", err);
   }
 
+  try {
+    const { CollectionService } = await import("@/server/services/collection.service");
+    const rawCollections = await CollectionService.getCollections();
+    collectionsData = JSON.parse(JSON.stringify(rawCollections));
+  } catch (err) {
+    console.error("Failed to fetch collections:", err);
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
@@ -51,6 +64,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         initialData={productsData.data}
         meta={productsData.meta}
         categories={categoriesData}
+        collections={collectionsData}
       />
     </div>
   );

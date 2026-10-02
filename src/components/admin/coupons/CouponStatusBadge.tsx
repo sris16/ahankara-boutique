@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface CouponStatusBadgeProps {
@@ -10,9 +11,9 @@ interface CouponStatusBadgeProps {
 export function CouponStatusBadge({ isActive, startsAt, endsAt, className }: CouponStatusBadgeProps) {
   if (!isActive) {
     return (
-      <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800", className)}>
+      <Badge variant="secondary" className={cn("uppercase text-[10px] tracking-wider font-semibold", className)}>
         Inactive
-      </span>
+      </Badge>
     );
   }
 
@@ -20,23 +21,23 @@ export function CouponStatusBadge({ isActive, startsAt, endsAt, className }: Cou
 
   if (startsAt && new Date(startsAt) > now) {
     return (
-      <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800", className)}>
+      <Badge variant="warning" className={cn("uppercase text-[10px] tracking-wider font-semibold", className)}>
         Scheduled
-      </span>
+      </Badge>
     );
   }
 
   if (endsAt && new Date(endsAt) < now) {
     return (
-      <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800", className)}>
+      <Badge variant="destructive" className={cn("uppercase text-[10px] tracking-wider font-semibold", className)}>
         Expired
-      </span>
+      </Badge>
     );
   }
 
   return (
-    <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800", className)}>
+    <Badge variant="success" className={cn("uppercase text-[10px] tracking-wider font-semibold", className)}>
       Active
-    </span>
+    </Badge>
   );
 }

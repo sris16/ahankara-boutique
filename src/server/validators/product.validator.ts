@@ -8,10 +8,10 @@ export const baseProductSchema = z.object({
   slug: z.string().trim().regex(slugRegex, 'Slug can only contain lowercase letters, numbers, and hyphens').max(100),
   shortDescription: z.string().trim().max(300, 'Short description max 300 characters').optional().nullable(),
   description: z.string().trim().max(10000, 'Description max 10000 characters').optional().nullable(),
-  
+
   basePrice: z.number().int().min(1, 'Base price must be greater than 0'),
   compareAtPrice: z.number().int().min(1, 'Compare at price must be greater than 0').optional().nullable(),
-  
+
   categoryId: z.string().uuid('Invalid category ID'),
   collectionIds: z.array(z.string().uuid('Invalid collection ID')).optional(),
 
@@ -53,6 +53,7 @@ export const productListFilterSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().optional(),
   categoryId: z.string().uuid().optional(),
+  collectionId: z.string().uuid().optional(),
   collectionSlug: z.string().optional(),
   status: z.nativeEnum(ProductStatus).optional(),
   isFeatured: z.coerce.boolean().optional(),

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
+import { AdminCategory, AdminCollection } from "@/types/admin";
 
 export const metadata = {
   title: "Edit Product | Admin | AHANKARA STUDIOS",
@@ -26,12 +27,12 @@ export default async function EditProductPage({ params }: { params: Promise<{ pr
   try {
     const rawProduct = await ProductService.getProductById(productId);
     productData = JSON.parse(JSON.stringify(rawProduct));
-  } catch (err) {
+  } catch {
     notFound();
   }
 
-  let categoriesData: any[] = [];
-  let collectionsData: any[] = [];
+  let categoriesData: AdminCategory[] = [];
+  let collectionsData: AdminCollection[] = [];
   try {
     const [rawCategories, rawCollections] = await Promise.all([
       CategoryService.getCategories(),

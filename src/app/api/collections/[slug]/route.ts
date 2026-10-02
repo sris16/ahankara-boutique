@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest} from 'next/server';
 import { CollectionService } from '@/server/services/collection.service';
 import { successResponse } from '@/utils/api-response';
 import { handleError } from '@/utils/error-handler';

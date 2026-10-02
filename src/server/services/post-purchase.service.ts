@@ -1,4 +1,4 @@
-import { Order, OrderItem, ReturnItem, ExchangeItem, ReturnStatus, ExchangeStatus } from '@prisma/client';
+import { Order, OrderItem,   ReturnStatus, ExchangeStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export interface ReturnEligibility {
@@ -12,7 +12,7 @@ export interface ReturnEligibility {
 
 export class PostPurchaseService {
   /**
-   * Calculate proportional discount for all items in an order to ensure 
+   * Calculate proportional discount for all items in an order to ensure
    * the sum of item discounts equals the total order discount.
    */
   static allocateHistoricalDiscount(order: Order, items: OrderItem[]): Map<string, number> {
@@ -72,12 +72,12 @@ export class PostPurchaseService {
 
     let returnedQuantity = 0;
     let returnRequestedQuantity = 0;
-    
+
     for (const ri of item.returnItems) {
       if (ri.returnRequest.status === ReturnStatus.COMPLETED || ri.returnRequest.status === ReturnStatus.REFUNDED) {
         returnedQuantity += ri.acceptedQuantity;
       } else if (
-        ri.returnRequest.status !== ReturnStatus.REJECTED && 
+        ri.returnRequest.status !== ReturnStatus.REJECTED &&
         ri.returnRequest.status !== ReturnStatus.CANCELLED &&
         ri.returnRequest.status !== ReturnStatus.REJECTED_AFTER_INSPECTION
       ) {
@@ -87,7 +87,7 @@ export class PostPurchaseService {
 
     let exchangedQuantity = 0;
     let exchangeRequestedQuantity = 0;
-    
+
     for (const ei of item.exchangeItems) {
       if (ei.exchangeRequest.status === ExchangeStatus.COMPLETED) {
         exchangedQuantity += ei.quantity;
@@ -129,18 +129,18 @@ export class PostPurchaseService {
 
     const discountMap = this.allocateHistoricalDiscount(order, items);
     const itemTotalDiscount = discountMap.get(targetOrderItemId) || 0;
-    
+
     // Pro-rate the item's discount across its quantity
     const itemFinalLineTotal = targetItem.lineTotal - itemTotalDiscount;
-    
+
     // Calculate per-unit refund value (rounding down)
     const unitRefundValue = Math.floor(itemFinalLineTotal / targetItem.quantity);
-    
+
     // If they return the full quantity, they get the exact line total minus discount to avoid rounding loss
     if (returnQuantity === targetItem.quantity) {
       return itemFinalLineTotal;
     }
-    
+
     return unitRefundValue * returnQuantity;
   }
 }

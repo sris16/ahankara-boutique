@@ -3,6 +3,7 @@ import { CollectionService } from "@/server/services/collection.service";
 import { AuthService } from "@/server/services/auth.service";
 import { UserRole } from "@prisma/client";
 import { CollectionManager } from "@/components/admin/collections/CollectionManager";
+import { AdminCollection } from "@/types/admin";
 
 export const metadata = {
   title: "Collections | Admin | AHANKARA STUDIOS",
@@ -13,7 +14,7 @@ export default async function CollectionsPage() {
   const reqHeaders = await headers();
   await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
 
-  let collectionsData: any[] = [];
+  let collectionsData: AdminCollection[] = [];
   try {
     const rawCollections = await CollectionService.getCollections(false);
     collectionsData = JSON.parse(JSON.stringify(rawCollections));

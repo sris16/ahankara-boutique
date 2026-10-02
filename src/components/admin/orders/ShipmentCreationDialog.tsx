@@ -5,7 +5,17 @@ import type { AdminOrder, AdminShipment } from '@/types/admin';
 import { adminApi } from '@/lib/api/admin';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { X, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface ShipmentCreationDialogProps {
   order: AdminOrder;
@@ -62,7 +72,7 @@ export function ShipmentCreationDialog({ order, shipments, onClose }: ShipmentCr
 
     try {
       await adminApi.createShipment(order.id, {
-        provider: 'SHIPROCKET',
+        provider: 'MOCK', // Using configured active provider
         items: itemsToFulfill
       });
       router.refresh();
@@ -76,88 +86,96 @@ export function ShipmentCreationDialog({ order, shipments, onClose }: ShipmentCr
 
   if (unfulfilledItems.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
-          <div className="px-6 py-4 border-b flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Create Shipment</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+      <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent showCloseButton={true}>
+          <DialogHeader>
+            <DialogTitle>Create Shipment</DialogTitle>
+            <DialogDescription>
+              All items in this order have already been fulfilled.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 text-center text-muted-foreground text-sm">
+            There are no items left to ship.
           </div>
-          <div className="p-6 text-center text-gray-600">
-            All items have been completely fulfilled.
-          </div>
-          <div className="px-6 py-4 border-t bg-gray-50 flex justify-end">
+          <DialogFooter>
             <Button onClick={onClose} variant="outline">Close</Button>
-          </div>
-        </div>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="px-6 py-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Create Shipment</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" disabled={isSubmitting}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+      <DialogContent showCloseButton={!isSubmitting}>
+        <DialogHeader>
+          <DialogTitle>Create Shipment</DialogTitle>
+          <DialogDescription>
+            Select the items and quantities you want to fulfill in this shipment.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="p-6 overflow-y-auto flex-1">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start text-red-800">
-              <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-              <p className="text-sm">{error}</p>
-            </div>
-          )}
+        {error && (
+          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive flex items-start mt-2">
+            <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
 
-          <form id="create-shipment-form" onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <h3 className="font-medium text-gray-900 mb-4">Select Items to Fulfill</h3>
-              <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-                {unfulfilledItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between bg-white p-3 rounded border">
-                    <div>
-                      <p className="font-medium text-sm text-gray-900">{item.productName}</p>
-                      <p className="text-xs text-gray-500">SKU: {item.sku} | Remaining: {item.remaining}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">Qty:</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={item.remaining}
-                        value={selections[item.id] || 0}
-                        onChange={(e) => handleQuantityChange(item.id, e.target.value, item.remaining)}
-                        className="w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-2 py-1 border"
-                        disabled={isSubmitting}
-                      />
-                    </div>
+        <form id="create-shipment-form" onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Items to Fulfill</h3>
+            <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+              {unfulfilledItems.map((item) => (
+                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/20 p-4 rounded-md border">
+                  <div className="flex-1">
+                    <Label htmlFor={`quantity-${item.id}`} className="font-semibold text-foreground text-sm mb-1 block">
+                      {item.productName}
+                    </Label>
+                    <p className="text-xs text-muted-foreground font-mono">SKU: {item.sku}</p>
                   </div>
-                ))}
-              </div>
+                  <div className="flex items-center gap-3 bg-background p-2 rounded-md border shrink-0">
+                    <Label htmlFor={`quantity-${item.id}`} className="text-xs text-muted-foreground whitespace-nowrap">
+                      Qty (Max {item.remaining}):
+                    </Label>
+                    <Input
+                      id={`quantity-${item.id}`}
+                      type="number"
+                      min="0"
+                      max={item.remaining}
+                      value={selections[item.id] || 0}
+                      onChange={(e) => handleQuantityChange(item.id, e.target.value, item.remaining)}
+                      className="w-16 h-8 text-center px-2 py-1"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
-              <p><strong>Provider:</strong> Shiprocket will be used for fulfillment. A new internal shipment record will be created, and the order will be sent to Shiprocket immediately.</p>
-            </div>
-          </form>
-        </div>
+          <div className="bg-muted/30 border rounded-md p-3 text-sm text-muted-foreground flex gap-3 items-start">
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+            <p>
+              <strong className="text-foreground">Shipping Provider:</strong> The current environment uses the configured Mock shipping provider. A new internal shipment record will be created.
+            </p>
+          </div>
+        </form>
 
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+        <DialogFooter>
           <Button onClick={onClose} variant="outline" disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             type="submit"
             form="create-shipment-form"
-            disabled={isSubmitting || totalSelected === 0}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            isLoading={isSubmitting}
+            disabled={totalSelected === 0}
           >
-            {isSubmitting ? 'Creating...' : `Create Shipment (${totalSelected} items)`}
+            Create Shipment ({totalSelected} item{totalSelected === 1 ? '' : 's'})
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

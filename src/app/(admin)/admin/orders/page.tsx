@@ -14,32 +14,37 @@ export const metadata = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolvedParams = await searchParams;
-  const page = parseInt(resolvedParams.page || '1', 10);
+  const page = parseInt(resolvedParams.page as string || '1', 10);
+  const search = resolvedParams.search as string | undefined;
+  const status = resolvedParams.status as string | undefined;
+  const dateFrom = resolvedParams.dateFrom as string | undefined;
+  const dateTo = resolvedParams.dateTo as string | undefined;
 
   const requestHeaders = await headers();
+
+  let response;
+  let hasError = false;
 
   try {
     await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
 
-    const rawResponse = await OrderService.getAllOrders(page, 20);
-    const response = JSON.parse(JSON.stringify(rawResponse));
+    const rawResponse = await OrderService.getAllOrders(page, 20, {
+      search,
+      status,
+      dateFrom,
+      dateTo,
+    });
 
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            View and manage customer orders and fulfillment
-          </p>
-        </div>
+    // Safely serialize dates/Decimal
+    response = JSON.parse(JSON.stringify(rawResponse));
+  } catch {
+    hasError = true;
+  }
 
-        <OrderListTable data={response} />
-      </div>
-    );
-  } catch (error) {
+  if (hasError || !response) {
     return (
       <div className="bg-red-50 p-6 rounded-lg border border-red-100 text-center">
         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-4" />
@@ -50,4 +55,19 @@ export default async function AdminOrdersPage({
       </div>
     );
   }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 font-serif">Orders</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            View and manage customer orders and fulfillment
+          </p>
+        </div>
+      </div>
+
+      <OrderListTable data={response} />
+    </div>
+  );
 }

@@ -35,9 +35,9 @@ export default async function InventoryVariantPage({
 
     variant = JSON.parse(JSON.stringify(rawVariant));
     product = JSON.parse(JSON.stringify(rawProduct));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    if (err.name === 'NotFoundError' || err.status === 404) {
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    if (error.name === 'NotFoundError' || error.status === 404) {
       notFound();
     }
     throw err;

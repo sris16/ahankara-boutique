@@ -74,9 +74,9 @@ export class ProductService {
         if (collections.length !== validated.collectionIds.length) {
           throw new ValidationError('One or more collections are invalid');
         }
-        
+
         await tx.productCollection.deleteMany({ where: { productId: id } });
-        
+
         if (validated.collectionIds.length > 0) {
           await tx.productCollection.createMany({
             data: validated.collectionIds.map((cid, idx) => ({
@@ -112,14 +112,14 @@ export class ProductService {
         category: true,
         collections: { include: { collection: true }, orderBy: { sortOrder: 'asc' } },
         images: { orderBy: { sortOrder: 'asc' } },
-        variants: { 
+        variants: {
           where: requirePublic ? { isActive: true } : undefined,
           include: { inventory: true }
         }
       }
     });
     if (!product) throw new NotFoundError('Product not found');
-    
+
     if (requirePublic) {
       return {
         ...product,
@@ -128,7 +128,7 @@ export class ProductService {
           let stockStatus = 'IN_STOCK';
           if (availableQty <= 0) stockStatus = 'OUT_OF_STOCK';
           else if (availableQty <= (v.inventory?.lowStockThreshold || 0)) stockStatus = 'LOW_STOCK';
-          
+
           return {
             id: v.id,
             size: v.size,
@@ -154,8 +154,8 @@ export class ProductService {
       where,
       include: {
         category: true,
-        collections: { 
-          include: { collection: true }, 
+        collections: {
+          include: { collection: true },
           orderBy: { sortOrder: 'asc' },
           where: requirePublic ? {
             collection: {
@@ -169,7 +169,7 @@ export class ProductService {
           } : undefined
         },
         images: { orderBy: { sortOrder: 'asc' } },
-        variants: { 
+        variants: {
           where: requirePublic ? { isActive: true } : undefined,
           include: { inventory: true },
           orderBy: [ { color: 'asc' }, { size: 'asc' } ]
@@ -186,7 +186,7 @@ export class ProductService {
           let stockStatus = 'IN_STOCK';
           if (availableQty <= 0) stockStatus = 'OUT_OF_STOCK';
           else if (availableQty <= (v.inventory?.lowStockThreshold || 0)) stockStatus = 'LOW_STOCK';
-          
+
           return {
             id: v.id,
             size: v.size,
@@ -309,6 +309,12 @@ export class ProductService {
     if (filters.collectionSlug) {
       where.collections = { some: { collection: { slug: filters.collectionSlug } } };
     }
+    if (filters.collectionId) {
+      where.collections = {
+        ...where.collections,
+        some: { ...where.collections?.some, collectionId: filters.collectionId }
+      };
+    }
 
     const orderBy: Prisma.ProductOrderByWithRelationInput = {};
     switch (filters.sortBy) {
@@ -327,8 +333,8 @@ export class ProductService {
         orderBy,
         skip,
         take: filters.limit,
-        include: { 
-          category: true, 
+        include: {
+          category: true,
           images: { orderBy: { sortOrder: 'asc' } },
           variants: { include: { inventory: true } }
         }

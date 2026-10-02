@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest} from 'next/server';
 import { CategoryService } from '@/server/services/category.service';
 import { successResponse } from '@/utils/api-response';
 import { handleError } from '@/utils/error-handler';

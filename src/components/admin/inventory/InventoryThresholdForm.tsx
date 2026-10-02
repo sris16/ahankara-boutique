@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api/admin';
 import type { AdminInventory } from '@/types/admin';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface Props {
   productId: string;
@@ -45,18 +46,19 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
       router.refresh();
 
       setTimeout(() => setSuccess(false), 3000);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to update threshold');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update threshold');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Low Stock Configuration</h3>
-
+    <Card>
+      <CardHeader>
+        <CardTitle>Low Stock Configuration</CardTitle>
+      </CardHeader>
+      <CardContent>
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
@@ -85,10 +87,10 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
             />
             <Button
               type="submit"
-              disabled={!isValid || !isChanged || loading}
+              disabled={!isValid || !isChanged}
+              isLoading={loading}
               variant="secondary"
             >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? 'Saving...' : 'Save'}
             </Button>
           </div>
@@ -97,6 +99,7 @@ export function InventoryThresholdForm({ productId, variantId, inventory }: Prop
           </p>
         </div>
       </form>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

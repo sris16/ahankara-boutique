@@ -1,16 +1,16 @@
 import { prisma } from '@/lib/prisma';
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors';
-import { Order, OrderItem, ReturnReason, ReturnStatus, UserRole } from '@prisma/client';
+import {  ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors';
+import {   ReturnReason, ReturnStatus} from '@prisma/client';
 import { PostPurchaseService } from './post-purchase.service';
-import { RefundService } from './refund.service';
+
 
 export class ReturnService {
   /**
    * Customers can create a return request for delivered orders within the return window.
    */
   static async createReturnRequest(
-    orderId: string, 
-    userId: string, 
+    orderId: string,
+    userId: string,
     data: { items: { orderItemId: string, quantity: number, reason: ReturnReason }[], customerNote?: string }
   ) {
     const order = await prisma.order.findUnique({
@@ -18,7 +18,7 @@ export class ReturnService {
       include: { items: true, shipments: true }
     });
 
-    if (!order) throw new NotFoundError('Order not found');
+    if (!order) throw new NotFoundError(' not found');
     if (order.userId !== userId) throw new ForbiddenError('Not your order');
 
     // Return policy: 7 days after delivery
@@ -31,7 +31,7 @@ export class ReturnService {
     // Get latest delivery date
     const latestDeliveryDate = new Date(Math.max(...deliveredShipments.map(s => s.deliveredAt!.getTime())));
     const returnDeadline = new Date(latestDeliveryDate.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-    
+
     if (new Date() > returnDeadline) {
       throw new ForbiddenError('Return window has expired');
     }
@@ -44,14 +44,13 @@ export class ReturnService {
           userId,
           status: ReturnStatus.REQUESTED,
           customerNote: data.customerNote,
-          reason: data.items[0].reason,
-        }
+          reason: data.items[0].reason}
       });
 
       for (const reqItem of data.items) {
         // Validate eligibility
         const eligibility = await PostPurchaseService.getItemEligibility(reqItem.orderItemId);
-        
+
         if (reqItem.quantity > eligibility.remainingEligibleQuantity) {
           throw new ConflictError(`Requested return quantity (${reqItem.quantity}) exceeds eligible quantity (${eligibility.remainingEligibleQuantity}) for item`);
         }
@@ -61,8 +60,7 @@ export class ReturnService {
             returnRequestId: returnRequest.id,
             orderItemId: reqItem.orderItemId,
             quantity: reqItem.quantity,
-            reason: reqItem.reason,
-          }
+            reason: reqItem.reason}
         });
       }
 
@@ -94,7 +92,7 @@ export class ReturnService {
 
       return await tx.returnRequest.update({
         where: { id: returnId },
-        data: { 
+        data: {
           status: ReturnStatus.APPROVED,
           approvedAt: new Date()
         }
@@ -106,7 +104,7 @@ export class ReturnService {
     return await prisma.$transaction(async (tx) => {
       const returnReq = await tx.returnRequest.findUnique({
         where: { id: returnId },
-        include: { 
+        include: {
           items: { include: { orderItem: true } },
           order: { include: { items: true } }
         }
@@ -131,7 +129,7 @@ export class ReturnService {
 
         await tx.returnItem.update({
           where: { id: item.id },
-          data: { 
+          data: {
             acceptedQuantity: inspection.acceptedQuantity,
             receivedQuantity: inspection.acceptedQuantity // Assume received = accepted for now
           }
@@ -164,7 +162,7 @@ export class ReturnService {
                await tx.inventoryTransaction.create({
                  data: {
                    inventoryId: inventory.id,
-                   type: 'RETURN', 
+                   type: 'RETURN',
                    quantityChange: inspection.acceptedQuantity,
                    quantityBefore: inventory.quantity - inspection.acceptedQuantity,
                    quantityAfter: inventory.quantity,
@@ -188,10 +186,9 @@ export class ReturnService {
 
       const updatedRequest = await tx.returnRequest.update({
         where: { id: returnId },
-        data: { 
+        data: {
           status: newStatus,
-          inspectedAt: new Date(),
-        }
+          inspectedAt: new Date()}
       });
 
       if (totalRefundAmount > 0) {

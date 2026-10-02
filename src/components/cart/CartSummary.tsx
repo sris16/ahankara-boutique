@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldCheck, ArrowRight, Tag, X, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { checkoutApi } from "@/lib/api/checkout";
 
 interface CartSummaryProps {
   subtotal: number;
@@ -38,16 +39,7 @@ export function CartSummary({
 
     setIsValidating(true);
     try {
-      const res = await fetch("/api/me/cart/coupon/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode.trim() }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Invalid promotion code");
-      }
+      const data = await checkoutApi.validateCoupon(couponCode.trim());
 
       setAppliedCoupon({
         code: data.coupon?.code || couponCode.toUpperCase().trim(),

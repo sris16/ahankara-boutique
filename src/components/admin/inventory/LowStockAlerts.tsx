@@ -4,8 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api/admin';
 import type { LowStockVariant } from '@/types/admin';
 import Link from 'next/link';
-import { AlertCircle, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function LowStockAlerts() {
   const [alerts, setAlerts] = useState<LowStockVariant[]>([]);
@@ -17,9 +20,8 @@ export function LowStockAlerts() {
       try {
         const data = await adminApi.getLowStockAlerts();
         setAlerts(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        setError(err.message || 'Failed to load low stock alerts');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load low stock alerts');
       } finally {
         setLoading(false);
       }
@@ -28,20 +30,21 @@ export function LowStockAlerts() {
   }, []);
 
   if (loading) {
-    return <div className="animate-pulse bg-gray-100 rounded-lg h-32 w-full"></div>;
+    return <Skeleton className="h-32 w-full rounded-lg" />;
   }
 
   if (error) {
-    return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center">
-        <AlertCircle className="w-5 h-5 mr-2" />
-        <p>{error}</p>
-      </div>
-    );
+    return <ErrorState message={error} homeHref="" />;
   }
 
   if (alerts.length === 0) {
-    return null; // Don't show anything if stock is healthy
+    return (
+      <EmptyState
+        icon={CheckCircle2}
+        title="Stock is Healthy"
+        description="There are currently no items running low on stock."
+      />
+    );
   }
 
   return (

@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AuthService } from '@/server/services/auth.service';
 import { UserRole } from '@prisma/client';
-import { AppError } from '@/utils/errors';
+
+import { handleError } from '@/utils/error-handler';
 
 export async function GET(
   request: Request,
@@ -33,10 +34,6 @@ export async function GET(
 
     return NextResponse.json(shipment);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    console.error('Get shipment error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

@@ -1,8 +1,10 @@
-import { NextResponse } from 'next/server';
+
 import { AuthService } from '@/server/services/auth.service';
 import { PricingService } from '@/server/services/pricing.service';
-import { AppError } from '@/utils/errors';
+
 import { z } from 'zod';
+import { successResponse } from '@/utils/api-response';
+import { handleError } from '@/utils/error-handler';
 
 const validateCouponSchema = z.object({
   code: z.string().min(1)
@@ -17,7 +19,7 @@ export async function POST(request: Request) {
 
     const pricing = await PricingService.calculateCheckoutPricing(user.id, validated.code);
 
-    return NextResponse.json({
+    return successResponse({
       subtotal: pricing.subtotal,
       eligibleSubtotal: pricing.eligibleSubtotal,
       discountAmount: pricing.discountAmount,
@@ -28,13 +30,6 @@ export async function POST(request: Request) {
       coupon: pricing.coupon
     });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error('Validate coupon error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

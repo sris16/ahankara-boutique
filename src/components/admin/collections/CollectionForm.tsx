@@ -6,7 +6,11 @@ import { adminApi } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle } from "lucide-react";
+import { ImageUpload } from "@/components/admin/ui/ImageUpload";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface CollectionFormProps {
   collection: AdminCollection | null;
@@ -18,6 +22,32 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [name, setName] = useState(collection?.name || "");
+  const [slug, setSlug] = useState(collection?.slug || "");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!collection);
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/[\s-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+    if (!isSlugManuallyEdited) {
+      setSlug(generateSlug(newName));
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setIsSlugManuallyEdited(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -25,8 +55,8 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
 
     const formData = new FormData(e.currentTarget);
 
-    let startsAt = formData.get("startsAt") as string;
-    let endsAt = formData.get("endsAt") as string;
+    const startsAt = formData.get("startsAt") as string;
+    const endsAt = formData.get("endsAt") as string;
 
     // Ensure endsAt is strictly greater than startsAt if both provided
     if (startsAt && endsAt && new Date(endsAt) <= new Date(startsAt)) {
@@ -38,6 +68,7 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
     const data = {
       name: formData.get("name") as string,
       slug: formData.get("slug") as string,
+      imageUrl: formData.get("imageUrl") as string || null,
       description: formData.get("description") as string || null,
       sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
       isActive: formData.get("isActive") === "on",
@@ -53,8 +84,9 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
         await adminApi.createCollection(data);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "An unexpected error occurred");
       setIsSubmitting(false);
     }
   };
@@ -65,18 +97,18 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card border shadow-xl rounded-sm w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-serif font-medium">
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="p-0 gap-0 overflow-hidden max-w-2xl flex flex-col">
+        <DialogHeader className="p-4 border-b m-0 pb-4 pr-12">
+          <DialogTitle>
             {collection ? "Edit Collection" : "New Collection"}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={onClose} className="w-8 h-8 p-0">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Form to {collection ? "edit an existing" : "create a new"} collection.
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto flex-1 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto max-h-[75vh] flex flex-col space-y-6">
           {error && (
             <div className="p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-sm flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -84,77 +116,109 @@ export function CollectionForm({ collection, onClose, onSuccess }: CollectionFor
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input id="name" name="name" defaultValue={collection?.name} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug *</Label>
-              <Input id="slug" name="slug" defaultValue={collection?.slug} required pattern="^[a-z0-9-]+$" title="Only lowercase letters, numbers, and hyphens" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <textarea
-              id="description"
-              name="description"
-              defaultValue={collection?.description || ""}
-              className="flex min-h-[80px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-sm border">
-            <div className="space-y-2">
-              <Label htmlFor="startsAt">Start Date & Time (Optional)</Label>
-              <Input type="datetime-local" id="startsAt" name="startsAt" defaultValue={formatDateForInput(collection?.startsAt)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endsAt">End Date & Time (Optional)</Label>
-              <Input type="datetime-local" id="endsAt" name="endsAt" defaultValue={formatDateForInput(collection?.endsAt)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="sortOrder">Sort Order</Label>
-              <Input id="sortOrder" name="sortOrder" type="number" defaultValue={collection?.sortOrder ?? 0} />
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input id="name" name="name" value={name} onChange={handleNameChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="slug">Slug *</Label>
+                <Input id="slug" name="slug" value={slug} onChange={handleSlugChange} required pattern="^[a-z0-9-]+$" title="Only lowercase letters, numbers, and hyphens" />
+                <p className="text-xs text-muted-foreground">Automatically generated from name. Can be edited.</p>
+              </div>
             </div>
 
-            <div className="flex items-center space-x-2 pt-8">
-              <input
-                type="checkbox"
-                id="isActive"
-                name="isActive"
-                defaultChecked={collection ? collection.isActive : true}
-                className="w-4 h-4 rounded-sm border-input"
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                defaultValue={collection?.description || ""}
+                className="min-h-[80px]"
               />
-              <Label htmlFor="isActive">Active</Label>
-            </div>
-
-            <div className="flex items-center space-x-2 pt-8">
-              <input
-                type="checkbox"
-                id="isFeatured"
-                name="isFeatured"
-                defaultChecked={collection ? collection.isFeatured : false}
-                className="w-4 h-4 rounded-sm border-input"
-              />
-              <Label htmlFor="isFeatured">Featured</Label>
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-2 border-t mt-4">
+          {/* Collection Media */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Collection Media</h3>
+            <div className="space-y-2">
+              <Label>Cover Image</Label>
+              <ImageUpload name="imageUrl" purpose="collection" defaultValue={collection?.imageUrl} />
+            </div>
+          </div>
+
+          {/* Visibility & Sorting */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Visibility & Sorting</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-muted/30 p-4 rounded-sm border">
+
+              <div className="space-y-2 lg:col-span-1">
+                <Label htmlFor="sortOrder" className="font-medium text-base">Sort Order</Label>
+                <Input id="sortOrder" name="sortOrder" type="number" defaultValue={collection?.sortOrder ?? 0} className="w-full" />
+                <p className="text-xs text-muted-foreground mt-1">Manual integer priority.</p>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <div className="pt-0.5">
+                  <Checkbox
+                    id="isActive"
+                    name="isActive"
+                    defaultChecked={collection ? collection.isActive : true}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="isActive" className="font-medium text-base cursor-pointer">Active</Label>
+                  <p className="text-xs text-muted-foreground mt-1">Collection is available according to its configured visibility rules.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <div className="pt-0.5">
+                  <Checkbox
+                    id="isFeatured"
+                    name="isFeatured"
+                    defaultChecked={collection ? collection.isFeatured : false}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="isFeatured" className="font-medium text-base cursor-pointer">Featured</Label>
+                  <p className="text-xs text-muted-foreground mt-1">Collection can appear in featured/spotlight storefront areas.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Schedule</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-sm">
+              <div className="space-y-2">
+                <Label htmlFor="startsAt">Starts At (Optional)</Label>
+                <Input type="datetime-local" id="startsAt" name="startsAt" defaultValue={formatDateForInput(collection?.startsAt)} />
+                <p className="text-xs text-muted-foreground mt-1">Collection becomes eligible according to the existing scheduling logic.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endsAt">Ends At (Optional)</Label>
+                <Input type="datetime-local" id="endsAt" name="endsAt" defaultValue={formatDateForInput(collection?.endsAt)} />
+                <p className="text-xs text-muted-foreground mt-1">Collection stops being active according to the existing scheduling logic.</p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4 flex justify-end gap-2 border-t mt-4 mb-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Collection"}
+            <Button type="submit" isLoading={isSubmitting}>
+              Save Collection
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

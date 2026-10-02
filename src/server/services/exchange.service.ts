@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors';
-import { ExchangeStatus, UserRole } from '@prisma/client';
+import {  ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors';
+import { ExchangeStatus} from '@prisma/client';
 import { PostPurchaseService } from './post-purchase.service';
 
 export class ExchangeService {
@@ -8,8 +8,8 @@ export class ExchangeService {
    * Create an exchange request
    */
   static async createExchangeRequest(
-    orderId: string, 
-    userId: string, 
+    orderId: string,
+    userId: string,
     data: { items: { orderItemId: string, quantity: number, replacementVariantId: string }[], reason?: string }
   ) {
     const order = await prisma.order.findUnique({
@@ -28,7 +28,7 @@ export class ExchangeService {
 
     const latestDeliveryDate = new Date(Math.max(...deliveredShipments.map(s => s.deliveredAt!.getTime())));
     const returnDeadline = new Date(latestDeliveryDate.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-    
+
     if (new Date() > returnDeadline) {
       throw new ForbiddenError('Exchange window has expired');
     }
@@ -59,7 +59,7 @@ export class ExchangeService {
         // Simple V12 policy check: exchange must be same product
         const originalItem = order.items.find(i => i.id === reqItem.orderItemId);
         if (!originalItem) throw new NotFoundError('Original order item not found');
-        
+
         if (originalItem.productId !== replacementVariant.productId) {
            throw new ForbiddenError('V12 Policy: Exchange is only allowed for the same product (e.g. different size/color)');
         }
@@ -86,7 +86,7 @@ export class ExchangeService {
       // Lock exchange
       const ex = await tx.$queryRaw<{ id: string }[]>`SELECT * FROM "exchange_requests" WHERE id = ${exchangeId} FOR UPDATE`;
       if (!ex.length) throw new NotFoundError('Exchange request not found');
-      
+
       const exchangeReq = await tx.exchangeRequest.findUnique({
         where: { id: exchangeId },
         include: { items: true }

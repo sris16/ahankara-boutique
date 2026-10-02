@@ -4,8 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCouponDetail, CreateCouponInput, UpdateCouponInput, CouponType } from "@/types/admin";
 import { adminApi } from "@/lib/api/admin";
-import { Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface CouponFormProps {
   initialData?: AdminCouponDetail;
@@ -16,9 +24,9 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to convert paise to rupees for display
   const toRupees = (paise?: number | null) => (paise ? (paise / 100).toString() : "");
 
   const [formData, setFormData] = useState({
@@ -36,7 +44,6 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
     isActive: initialData !== undefined ? initialData.isActive : true,
     startsAt: initialData?.startsAt ? new Date(initialData.startsAt).toISOString().slice(0, 16) : "",
     endsAt: initialData?.endsAt ? new Date(initialData.endsAt).toISOString().slice(0, 16) : "",
-    // Restrictions
     productIds: initialData?.products?.map((p) => p.productId).join(", ") || "",
     categoryIds: initialData?.categories?.map((c) => c.categoryId).join(", ") || "",
     collectionIds: initialData?.collections?.map((c) => c.collectionId).join(", ") || "",
@@ -56,7 +63,6 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
     setError(null);
 
     try {
-      // Prepare payload
       const valueNumber = parseFloat(formData.value);
       const finalValue = formData.type === "FIXED_AMOUNT" ? Math.round(valueNumber * 100) : valueNumber;
 
@@ -73,7 +79,6 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
         isActive: formData.isActive,
         startsAt: formData.startsAt ? new Date(formData.startsAt).toISOString() : null,
         endsAt: formData.endsAt ? new Date(formData.endsAt).toISOString() : null,
-        // Basic split for IDs. In a real app with existing MultiSelects we would use array state directly
         productIds: formData.productIds ? formData.productIds.split(",").map(s => s.trim()).filter(Boolean) : [],
         categoryIds: formData.categoryIds ? formData.categoryIds.split(",").map(s => s.trim()).filter(Boolean) : [],
         collectionIds: formData.collectionIds ? formData.collectionIds.split(",").map(s => s.trim()).filter(Boolean) : [],
@@ -96,361 +101,335 @@ export function CouponForm({ initialData, couponId }: CouponFormProps) {
 
   const handleDelete = async () => {
     if (!couponId) return;
-    if (!window.confirm("Are you sure you want to delete this coupon?")) return;
 
     setIsDeleting(true);
     setError(null);
     try {
       const res = await adminApi.deleteCoupon(couponId);
       if (res.message) {
-        alert(res.message); // Inform the user if it was soft-deactivated vs deleted
+        alert(res.message);
       }
+      setIsDeleteDialogOpen(false);
       router.push("/admin/coupons");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to delete coupon");
+      setIsDeleteDialogOpen(false);
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 divide-y divide-gray-200">
-      <div className="space-y-6 sm:space-y-5">
-        <div>
-          <h3 className="text-lg font-medium leading-6 text-gray-900">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+        <div className="mb-6">
+          <h2 className="text-2xl font-serif text-foreground">
             {initialData ? "Edit Coupon" : "New Coupon"}
-          </h3>
-          <p className="max-w-2xl text-sm text-gray-500 mt-1">
-            Coupons are applied securely on the backend. Customer restrictions are evaluated based on cart contents.
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Coupons are evaluated securely during checkout. Ensure limits and restrictions are set correctly.
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
+          <div className="p-4 rounded-sm border border-destructive/20 bg-destructive/10 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive font-medium">{error}</p>
           </div>
         )}
 
-        <div className="space-y-6 sm:space-y-5">
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="code" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Coupon Code *
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="text"
-                name="code"
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Basic Details</CardTitle>
+            <CardDescription>The core identification properties of the coupon.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-2">
+              <Label htmlFor="code">Coupon Code <span className="text-destructive">*</span></Label>
+              <Input
                 id="code"
+                name="code"
                 required
                 value={formData.code}
                 onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
+                placeholder="SUMMER25"
+                className="uppercase"
               />
             </div>
-          </div>
 
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Internal Name *
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="text"
-                name="name"
+            <div className="grid gap-2">
+              <Label htmlFor="name">Internal Name <span className="text-destructive">*</span></Label>
+              <Input
                 id="name"
+                name="name"
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
+                placeholder="Summer Sale 2026"
               />
             </div>
-          </div>
 
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Description
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <textarea
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
                 id="description"
                 name="description"
                 rows={3}
                 value={formData.description}
                 onChange={handleChange}
-                className="max-w-lg shadow-sm block w-full focus:ring-black focus:border-black sm:text-sm border border-gray-300 rounded-md"
+                placeholder="Optional internal notes about this promotion..."
               />
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Discount Type *
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <select
-                id="type"
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-              >
-                <option value="PERCENTAGE">Percentage (%)</option>
-                <option value="FIXED_AMOUNT">Fixed Amount (₹)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="value" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Discount Value *
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2 relative max-w-xs rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 sm:text-sm">
-                  {formData.type === "FIXED_AMOUNT" ? "₹" : ""}
-                </span>
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Discount Configuration</CardTitle>
+            <CardDescription>Determine how the discount affects the cart total.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="type">Discount Type <span className="text-destructive">*</span></Label>
+                <Select
+                  id="type"
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                >
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FIXED_AMOUNT">Fixed Amount (₹)</option>
+                </Select>
               </div>
-              <input
-                type="number"
-                name="value"
-                id="value"
-                required
-                min="0"
-                step={formData.type === "PERCENTAGE" ? "1" : "0.01"}
-                max={formData.type === "PERCENTAGE" ? "100" : undefined}
-                value={formData.value}
-                onChange={handleChange}
-                className={cn(
-                  "block w-full focus:ring-black focus:border-black sm:text-sm border-gray-300 rounded-md",
-                  formData.type === "FIXED_AMOUNT" ? "pl-7" : "",
-                  formData.type === "PERCENTAGE" ? "pr-8" : ""
-                )}
-              />
+
+              <div className="grid gap-2">
+                <Label htmlFor="value">Discount Value <span className="text-destructive">*</span></Label>
+                <div className="relative">
+                  {formData.type === "FIXED_AMOUNT" && (
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-muted-foreground sm:text-sm">₹</span>
+                    </div>
+                  )}
+                  <Input
+                    type="number"
+                    id="value"
+                    name="value"
+                    required
+                    min="0"
+                    step={formData.type === "PERCENTAGE" ? "1" : "0.01"}
+                    max={formData.type === "PERCENTAGE" ? "100" : undefined}
+                    value={formData.value}
+                    onChange={handleChange}
+                    className={cn(
+                      formData.type === "FIXED_AMOUNT" ? "pl-7" : "",
+                      formData.type === "PERCENTAGE" ? "pr-8" : ""
+                    )}
+                  />
+                  {formData.type === "PERCENTAGE" && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-muted-foreground sm:text-sm">%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="minimumOrderAmount">Minimum Order Amount (₹)</Label>
+                <Input
+                  type="number"
+                  id="minimumOrderAmount"
+                  name="minimumOrderAmount"
+                  min="0"
+                  step="0.01"
+                  value={formData.minimumOrderAmount}
+                  onChange={handleChange}
+                />
+              </div>
+
               {formData.type === "PERCENTAGE" && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">%</span>
+                <div className="grid gap-2">
+                  <Label htmlFor="maximumDiscountAmount">Maximum Discount (₹)</Label>
+                  <Input
+                    type="number"
+                    id="maximumDiscountAmount"
+                    name="maximumDiscountAmount"
+                    min="0"
+                    step="0.01"
+                    value={formData.maximumDiscountAmount}
+                    onChange={handleChange}
+                  />
                 </div>
               )}
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Limits */}
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="minimumOrderAmount" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Minimum Order Amount (₹)
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="number"
-                name="minimumOrderAmount"
-                id="minimumOrderAmount"
-                min="0"
-                step="0.01"
-                value={formData.minimumOrderAmount}
-                onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-
-          {formData.type === "PERCENTAGE" && (
-            <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-              <label htmlFor="maximumDiscountAmount" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-                Maximum Discount (₹)
-              </label>
-              <div className="mt-1 sm:mt-0 sm:col-span-2">
-                <input
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Limits & Validity</CardTitle>
+            <CardDescription>Control when and how often this coupon can be redeemed.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="usageLimit">Global Usage Limit</Label>
+                <Input
                   type="number"
-                  name="maximumDiscountAmount"
-                  id="maximumDiscountAmount"
-                  min="0"
-                  step="0.01"
-                  value={formData.maximumDiscountAmount}
+                  id="usageLimit"
+                  name="usageLimit"
+                  min="1"
+                  step="1"
+                  value={formData.usageLimit}
                   onChange={handleChange}
-                  className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
+                  placeholder="Unlimited"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="usageLimitPerUser">Per-User Limit</Label>
+                <Input
+                  type="number"
+                  id="usageLimitPerUser"
+                  name="usageLimitPerUser"
+                  min="1"
+                  step="1"
+                  value={formData.usageLimitPerUser}
+                  onChange={handleChange}
+                  placeholder="Unlimited"
                 />
               </div>
             </div>
-          )}
 
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="usageLimit" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Global Usage Limit
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="number"
-                name="usageLimit"
-                id="usageLimit"
-                min="1"
-                step="1"
-                value={formData.usageLimit}
-                onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="usageLimitPerUser" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Per-User Limit
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="number"
-                name="usageLimitPerUser"
-                id="usageLimitPerUser"
-                min="1"
-                step="1"
-                value={formData.usageLimitPerUser}
-                onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-
-          {/* Dates */}
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="startsAt" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Start Date
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="datetime-local"
-                name="startsAt"
-                id="startsAt"
-                value={formData.startsAt}
-                onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="endsAt" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              End Date
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
-                type="datetime-local"
-                name="endsAt"
-                id="endsAt"
-                value={formData.endsAt}
-                onChange={handleChange}
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-
-          {/* Active Status */}
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="isActive" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Active Status
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <div className="flex items-center h-5">
-                <input
-                  id="isActive"
-                  name="isActive"
-                  type="checkbox"
-                  checked={formData.isActive}
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="startsAt">Start Date</Label>
+                <Input
+                  type="datetime-local"
+                  id="startsAt"
+                  name="startsAt"
+                  value={formData.startsAt}
                   onChange={handleChange}
-                  className="focus:ring-black h-4 w-4 text-black border-gray-300 rounded"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="endsAt">End Date</Label>
+                <Input
+                  type="datetime-local"
+                  id="endsAt"
+                  name="endsAt"
+                  value={formData.endsAt}
+                  onChange={handleChange}
                 />
               </div>
             </div>
-          </div>
 
-          {/* Restrictions (Simple CSV input for IDs for now, per plan) */}
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="productIds" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Product Restrictions (CSV of UUIDs)
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
+            <div className="pt-2 flex items-center space-x-3">
+              <Checkbox
+                id="isActive"
+                name="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+              />
+              <Label htmlFor="isActive" className="text-sm font-medium leading-none cursor-pointer">
+                Coupon is Active
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Restrictions</CardTitle>
+            <CardDescription>Limit application to specific products, categories, or collections via UUIDs.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-2">
+              <Label htmlFor="productIds">Product Restrictions (CSV of UUIDs)</Label>
+              <Input
                 type="text"
-                name="productIds"
                 id="productIds"
+                name="productIds"
                 value={formData.productIds}
                 onChange={handleChange}
                 placeholder="uuid-1, uuid-2"
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:text-sm border-gray-300 rounded-md"
               />
             </div>
-          </div>
-
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="categoryIds" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Category Restrictions (CSV of UUIDs)
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="categoryIds">Category Restrictions (CSV of UUIDs)</Label>
+              <Input
                 type="text"
-                name="categoryIds"
                 id="categoryIds"
+                name="categoryIds"
                 value={formData.categoryIds}
                 onChange={handleChange}
                 placeholder="uuid-1, uuid-2"
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:text-sm border-gray-300 rounded-md"
               />
             </div>
-          </div>
-
-          <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:border-t sm:border-gray-200 sm:pt-5">
-            <label htmlFor="collectionIds" className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Collection Restrictions (CSV of UUIDs)
-            </label>
-            <div className="mt-1 sm:mt-0 sm:col-span-2">
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="collectionIds">Collection Restrictions (CSV of UUIDs)</Label>
+              <Input
                 type="text"
-                name="collectionIds"
                 id="collectionIds"
+                name="collectionIds"
                 value={formData.collectionIds}
                 onChange={handleChange}
                 placeholder="uuid-1, uuid-2"
-                className="max-w-lg block w-full shadow-sm focus:ring-black focus:border-black sm:text-sm border-gray-300 rounded-md"
               />
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-        </div>
-      </div>
-
-      <div className="pt-5">
-        <div className="flex justify-between">
+        <div className="flex flex-col-reverse sm:flex-row justify-between gap-4 pt-4 border-t border-border">
           <div>
             {couponId && (
-              <button
+              <Button
                 type="button"
-                disabled={isDeleting}
-                onClick={handleDelete}
-                className="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                variant="destructive"
+                disabled={isDeleting || isSubmitting}
+                onClick={() => setIsDeleteDialogOpen(true)}
               >
-                {isDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />}
                 Delete Coupon
-              </button>
+              </Button>
             )}
           </div>
-          <div className="flex justify-end">
-            <button
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
               type="button"
+              variant="outline"
+              disabled={isSubmitting || isDeleting}
               onClick={() => router.back()}
-              className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || isDeleting}
-              className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
-            >
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            </Button>
+            <Button type="submit" isLoading={isSubmitting} disabled={isDeleting}>
               {initialData ? "Save Changes" : "Create Coupon"}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </form>
+      </form>
+
+      {/* Deletion AlertDialog replacement using generic Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Coupon</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this coupon? This action cannot be undone and will prevent customers from redeeming it immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} isLoading={isDeleting}>
+              Yes, Delete Coupon
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

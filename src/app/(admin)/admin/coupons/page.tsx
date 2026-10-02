@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { adminApi } from "@/lib/api/admin";
+
 import { CouponTable } from "@/components/admin/coupons/CouponTable";
 import { Metadata } from "next";
 import { Ticket } from "lucide-react";

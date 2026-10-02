@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+
 import { AuthService } from '@/server/services/auth.service';
 import { updateCouponSchema } from '@/server/validators/coupon.validator';
-import { AppError } from '@/utils/errors';
+
 import { UserRole } from '@prisma/client';
+import { handleError } from '@/utils/error-handler';
 
 export async function GET(
   request: Request,
@@ -33,10 +34,7 @@ export async function GET(
 
     return NextResponse.json(coupon);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -105,21 +103,13 @@ export async function PATCH(
         include: {
           products: true,
           categories: true,
-          collections: true,
-        }
+          collections: true}
       });
     });
 
     return NextResponse.json(coupon);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error('Update coupon error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -159,10 +149,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Coupon deleted successfully' });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    console.error('Delete coupon error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

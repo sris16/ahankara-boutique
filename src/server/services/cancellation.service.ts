@@ -1,14 +1,14 @@
 import { prisma } from '@/lib/prisma';
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors';
-import { 
-  CancellationInitiator, 
-  CancellationStatus, 
-  Order, 
-  OrderStatus, 
-  PaymentStatus, 
-  UserRole, 
-  FulfillmentStatus, 
-  ShipmentStatus 
+import {  ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors';
+import {
+  CancellationInitiator,
+  CancellationStatus,
+  Order,
+  OrderStatus,
+  PaymentStatus,
+  UserRole,
+  FulfillmentStatus,
+  ShipmentStatus
 } from '@prisma/client';
 
 export class CancellationService {
@@ -46,7 +46,7 @@ export class CancellationService {
         ShipmentStatus.DELIVERY_ATTEMPTED,
         ShipmentStatus.DELIVERY_FAILED
       ];
-      
+
       const hasIrreversibleShipment = shipments.some(s => irreversibleShipmentStatuses.includes(s.status));
       if (hasIrreversibleShipment) {
         throw new ForbiddenError('Order cannot be cancelled because a shipment is already in transit');
@@ -55,16 +55,15 @@ export class CancellationService {
   }
 
   static async cancelOrder(
-    orderId: string, 
-    userId: string, 
-    role: UserRole, 
+    orderId: string,
+    userId: string,
+    role: UserRole,
     data: { reason?: string, note?: string }
   ) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: true,
-      }
+        items: true}
     });
 
     if (!order) {
@@ -81,9 +80,9 @@ export class CancellationService {
     return await prisma.$transaction(async (tx) => {
       // Lock the order
       const lockedOrder = await tx.$queryRaw<{ id: string, status: string, paymentStatus: string, fulfillmentStatus: string }[]>`
-        SELECT id, "status", "paymentStatus", "fulfillmentStatus" 
-        FROM "orders" 
-        WHERE id = ${order.id} 
+        SELECT id, "status", "paymentStatus", "fulfillmentStatus"
+        FROM "orders"
+        WHERE id = ${order.id}
         FOR UPDATE
       `;
 
@@ -109,8 +108,7 @@ export class CancellationService {
           reason: data.reason,
           note: data.note,
           status: CancellationStatus.COMPLETED,
-          processedAt: new Date(),
-        }
+          processedAt: new Date()}
       });
 
       // Update Order Status
@@ -118,8 +116,7 @@ export class CancellationService {
         where: { id: order.id },
         data: {
           status: OrderStatus.CANCELLED,
-          fulfillmentStatus: FulfillmentStatus.CANCELLED,
-        }
+          fulfillmentStatus: FulfillmentStatus.CANCELLED}
       });
 
       // Cancel pending shipments
@@ -148,7 +145,7 @@ export class CancellationService {
                   "updatedAt" = NOW()
               WHERE "variantId" = ${item.variantId} AND "reservedQuantity" >= ${item.quantity}
             `;
-            
+
             // Create InventoryTransaction for Reservation Release
             const inventory = await tx.inventory.findUnique({ where: { variantId: item.variantId } });
             if (inventory) {

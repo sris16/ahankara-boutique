@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+
 import { AuthService } from '@/server/services/auth.service';
 import { createCouponSchema } from '@/server/validators/coupon.validator';
-import { AppError } from '@/utils/errors';
 import { UserRole } from '@prisma/client';
+import { handleError } from '@/utils/error-handler';
 
 export async function GET(request: Request) {
   try {
@@ -21,11 +21,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(coupons);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    console.error('List coupons error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -66,24 +62,15 @@ export async function POST(request: Request) {
         } : undefined,
         collections: validated.collectionIds ? {
           create: validated.collectionIds.map(id => ({ collectionId: id }))
-        } : undefined,
-      },
+        } : undefined},
       include: {
         products: true,
         categories: true,
-        collections: true,
-      }
+        collections: true}
     });
 
     return NextResponse.json(coupon, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error('Create coupon error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

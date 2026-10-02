@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '@/lib/prisma';
-import { ConflictError, NotFoundError } from '@/utils/errors';
+import { AppError, ConflictError, NotFoundError } from '@/utils/errors';
 
 export class CollectionService {
   static async getCollections(activeOnly = false, includeFeatured = false) {
     const where: any = {};
-    
+
     if (activeOnly) {
       where.isActive = true;
       const now = new Date();
@@ -42,7 +42,7 @@ export class CollectionService {
   static async getCollectionById(id: string, activeOnly = false) {
     const collection = await prisma.collection.findUnique({ where: { id } });
     if (!collection) throw new NotFoundError('Collection not found');
-    
+
     if (activeOnly) {
       if (!this.isCollectionActive(collection)) {
         throw new NotFoundError('Collection not found or inactive');
@@ -86,7 +86,7 @@ export class CollectionService {
     // Validation for startsAt / endsAt on partial updates
     const startsAt = data.startsAt !== undefined ? data.startsAt : collection.startsAt;
     const endsAt = data.endsAt !== undefined ? data.endsAt : collection.endsAt;
-    
+
     if (startsAt && endsAt && new Date(startsAt as Date | string) >= new Date(endsAt as Date | string)) {
       throw new ConflictError('endsAt must be after startsAt');
     }
@@ -113,5 +113,30 @@ export class CollectionService {
     if (collection.startsAt && new Date(collection.startsAt) > now) return false;
     if (collection.endsAt && new Date(collection.endsAt) < now) return false;
     return true;
+  }
+
+  static async reorderCollections(updates: { id: string; sortOrder: number }[]) {
+    if (!updates || updates.length === 0) return { success: true };
+
+    const ids = updates.map((u) => u.id);
+    const collections = await prisma.collection.findMany({
+      where: { id: { in: ids } },
+      select: { id: true },
+    });
+
+    if (collections.length !== updates.length) {
+      throw new AppError('One or more collections not found', 404, 'NOT_FOUND');
+    }
+
+    await prisma.$transaction(
+      updates.map((update) =>
+        prisma.collection.update({
+          where: { id: update.id },
+          data: { sortOrder: update.sortOrder },
+        })
+      )
+    );
+
+    return { success: true };
   }
 }

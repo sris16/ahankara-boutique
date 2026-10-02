@@ -295,11 +295,38 @@ export class OrderService {
     return order;
   }
 
-  static async getAllOrders(page = 1, limit = 20) {
+  static async getAllOrders(page = 1, limit = 20, filters?: { search?: string, status?: string, dateFrom?: string, dateTo?: string }) {
     const skip = (page - 1) * limit;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.dateFrom || filters?.dateTo) {
+      where.createdAt = {};
+      if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        // Ensure dateTo includes the end of the day if just a date is provided
+        const toDate = new Date(filters.dateTo);
+        toDate.setUTCHours(23, 59, 59, 999);
+        where.createdAt.lte = toDate;
+      }
+    }
+
+    if (filters?.search) {
+      where.OR = [
+        { orderNumber: { contains: filters.search, mode: 'insensitive' } },
+        { user: { email: { contains: filters.search, mode: 'insensitive' } } },
+        { user: { name: { contains: filters.search, mode: 'insensitive' } } }
+      ];
+    }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -309,7 +336,7 @@ export class OrderService {
           }
         }
       }),
-      prisma.order.count()
+      prisma.order.count({ where })
     ]);
 
     return {

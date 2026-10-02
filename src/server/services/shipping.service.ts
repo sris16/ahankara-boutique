@@ -194,6 +194,8 @@ export class ShippingService {
       newStatus = FulfillmentStatus.FULFILLED;
     } else if (totalShipped > 0) {
       newStatus = FulfillmentStatus.PARTIALLY_FULFILLED;
+    } else if (anyCancelled && totalShipped === 0) {
+      newStatus = FulfillmentStatus.CANCELLED;
     }
 
     if (order.fulfillmentStatus !== newStatus) {

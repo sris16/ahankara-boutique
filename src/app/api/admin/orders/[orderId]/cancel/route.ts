@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { AuthService } from '@/server/services/auth.service';
 import { CancellationService } from '@/server/services/cancellation.service';
-import { AppError } from '@/utils/errors';
+
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
+import { handleError } from '@/utils/error-handler';
 
 const cancelOrderSchema = z.object({
   reason: z.string().optional(),
-  note: z.string().optional(),
-});
+  note: z.string().optional()});
 
 export async function POST(
   request: Request,
@@ -32,13 +32,6 @@ export async function POST(
 
     return NextResponse.json(cancellation, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
-    }
-    console.error('Admin cancel order error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleError(error);
   }
 }

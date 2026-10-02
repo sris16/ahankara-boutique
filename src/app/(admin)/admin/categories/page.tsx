@@ -1,10 +1,10 @@
-import { Suspense } from "react";
+
 import { headers } from "next/headers";
 import { CategoryService } from "@/server/services/category.service";
 import { AuthService } from "@/server/services/auth.service";
 import { UserRole } from "@prisma/client";
 import { CategoryManager } from "@/components/admin/categories/CategoryManager";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AdminCategory, AdminCategoryTree } from "@/types/admin";
 
 export const metadata = {
   title: "Categories | Admin | AHANKARA STUDIOS",
@@ -15,8 +15,8 @@ export default async function CategoriesPage() {
   const reqHeaders = await headers();
   await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
 
-  let treeData: any[] = [];
-  let flatListData: any[] = [];
+  let treeData: AdminCategoryTree[] = [];
+  let flatListData: AdminCategory[] = [];
 
   try {
     // Fetch tree and flat list for parent selection (pass false to get both active and inactive categories for Admin)

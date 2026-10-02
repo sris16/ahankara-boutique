@@ -12,16 +12,13 @@ if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SE
 
 export class CloudinaryService {
   /**
-   * Upload an image buffer to Cloudinary
+   * Upload an image buffer to a specific folder in Cloudinary
    * @param fileBuffer The file buffer
-   * @param productId The ID of the product for folder organization
-   * @param _mimetype The MIME type of the file
+   * @param folder The target folder path
    */
-  static async uploadProductImage(
+  private static async uploadImage(
     fileBuffer: Buffer,
-    productId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _mimetype: string
+    folder: string
   ): Promise<UploadApiResponse> {
     if (!env.CLOUDINARY_CLOUD_NAME) {
       throw new Error('Cloudinary is not configured. External configuration required.');
@@ -30,7 +27,7 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: `ahankara/products/${productId}`,
+          folder,
           allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
           resource_type: 'image',
         },
@@ -47,6 +44,35 @@ export class CloudinaryService {
 
       uploadStream.end(fileBuffer);
     });
+  }
+
+  /**
+   * Upload a category image to Cloudinary
+   */
+  static async uploadCategoryImage(fileBuffer: Buffer): Promise<UploadApiResponse> {
+    return this.uploadImage(fileBuffer, 'ahankara/categories');
+  }
+
+  /**
+   * Upload a collection image to Cloudinary
+   */
+  static async uploadCollectionImage(fileBuffer: Buffer): Promise<UploadApiResponse> {
+    return this.uploadImage(fileBuffer, 'ahankara/collections');
+  }
+
+  /**
+   * Upload an image buffer to Cloudinary
+   * @param fileBuffer The file buffer
+   * @param productId The ID of the product for folder organization
+   * @param _mimetype The MIME type of the file
+   */
+  static async uploadProductImage(
+    fileBuffer: Buffer,
+    productId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _mimetype: string
+  ): Promise<UploadApiResponse> {
+    return this.uploadImage(fileBuffer, `ahankara/products/${productId}`);
   }
 
   /**

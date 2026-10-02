@@ -19,7 +19,7 @@ export class CategoryService {
    */
   static async getCategoryTree(activeOnly = false) {
     const where = activeOnly ? { isActive: true } : {};
-    
+
     // First, fetch all categories to build the tree in-memory
     const allCategories = await prisma.category.findMany({
       where,
@@ -142,6 +142,38 @@ export class CategoryService {
     }
 
     await prisma.category.delete({ where: { id } });
+    return { success: true };
+  }
+
+  static async reorderCategories(updates: { id: string; sortOrder: number }[]) {
+    if (!updates || updates.length === 0) return { success: true };
+
+    const ids = updates.map((u) => u.id);
+    const categories = await prisma.category.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, parentId: true },
+    });
+
+    if (categories.length !== updates.length) {
+      throw new AppError('One or more categories not found', 404, 'NOT_FOUND');
+    }
+
+    const firstParentId = categories[0].parentId;
+    for (const cat of categories) {
+      if (cat.parentId !== firstParentId) {
+        throw new AppError('Cannot reorder categories across different parents', 400, 'BAD_REQUEST');
+      }
+    }
+
+    await prisma.$transaction(
+      updates.map((update) =>
+        prisma.category.update({
+          where: { id: update.id },
+          data: { sortOrder: update.sortOrder },
+        })
+      )
+    );
+
     return { success: true };
   }
 

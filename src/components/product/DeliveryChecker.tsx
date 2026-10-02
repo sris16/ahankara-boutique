@@ -21,8 +21,8 @@ export function DeliveryChecker({ productId, variantId }: DeliveryCheckerProps) 
   const [result, setResult] = React.useState<DeliveryResult | null>(null)
   const [error, setError] = React.useState<string | null>(null)
 
-  const handleCheck = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCheck = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault()
     const cleanedCode = postalCode.trim()
     if (!cleanedCode || !/^\d{6}$/.test(cleanedCode)) {
       setError("Please enter a valid 6-digit Indian PIN code.")
@@ -67,7 +67,7 @@ export function DeliveryChecker({ productId, variantId }: DeliveryCheckerProps) 
         </h3>
       </div>
 
-      <form onSubmit={handleCheck} className="flex gap-2">
+      <div className="flex gap-2">
         <div className="flex-1 relative">
           <label htmlFor="postalCode" className="sr-only">PIN code</label>
           <input
@@ -81,19 +81,26 @@ export function DeliveryChecker({ productId, variantId }: DeliveryCheckerProps) 
               setPostalCode(e.target.value.replace(/\D/g, ""))
               if (error) setError(null)
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleCheck()
+              }
+            }}
             className="w-full h-11 px-3.5 bg-surface border border-border rounded-xs text-sm font-mono tracking-wider focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-muted-foreground placeholder:font-sans placeholder:tracking-normal"
             aria-invalid={!!error}
             aria-describedby={error ? "delivery-error" : undefined}
           />
         </div>
         <button
-          type="submit"
+          type="button"
+          onClick={handleCheck}
           disabled={isChecking || postalCode.length !== 6}
           className="h-11 px-6 bg-primary text-primary-foreground text-xs font-medium tracking-[0.2em] uppercase rounded-xs hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors min-w-[100px] flex items-center justify-center cursor-pointer shadow-subtle"
         >
           {isChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Check"}
         </button>
-      </form>
+      </div>
 
       <div aria-live="polite" className="text-xs">
         {error && (

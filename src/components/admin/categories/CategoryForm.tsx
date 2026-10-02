@@ -6,7 +6,12 @@ import { adminApi } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, AlertCircle } from "lucide-react";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle } from "lucide-react";
+import { ImageUpload } from "@/components/admin/ui/ImageUpload";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface CategoryFormProps {
   category: AdminCategory | null;
@@ -19,6 +24,32 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [name, setName] = useState(category?.name || "");
+  const [slug, setSlug] = useState(category?.slug || "");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!category);
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/[\s-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+    if (!isSlugManuallyEdited) {
+      setSlug(generateSlug(newName));
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setIsSlugManuallyEdited(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -28,6 +59,7 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
     const data = {
       name: formData.get("name") as string,
       slug: formData.get("slug") as string,
+      imageUrl: formData.get("imageUrl") as string || null,
       description: formData.get("description") as string || null,
       parentId: formData.get("parentId") as string || null,
       sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
@@ -41,8 +73,9 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
         await adminApi.createCategory(data);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "An unexpected error occurred");
       setIsSubmitting(false);
     }
   };
@@ -51,18 +84,18 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
   const validParents = flatCategories.filter(c => c.id !== category?.id);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card border shadow-xl rounded-sm w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-serif font-medium">
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="p-0 gap-0 overflow-hidden max-w-lg flex flex-col">
+        <DialogHeader className="p-4 border-b m-0 pb-4 pr-12">
+          <DialogTitle>
             {category ? "Edit Category" : "New Category"}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={onClose} className="w-8 h-8 p-0">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Form to {category ? "edit an existing" : "create a new"} category.
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto flex-1 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto max-h-[75vh] flex flex-col space-y-4">
           {error && (
             <div className="p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-sm flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -72,38 +105,42 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
 
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
-            <Input id="name" name="name" defaultValue={category?.name} required />
+            <Input id="name" name="name" value={name} onChange={handleNameChange} required />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="slug">Slug *</Label>
-            <Input id="slug" name="slug" defaultValue={category?.slug} required pattern="^[a-z0-9-]+$" title="Only lowercase letters, numbers, and hyphens" />
-            <p className="text-xs text-muted-foreground">Used in URLs (e.g. summer-collection)</p>
+            <Input id="slug" name="slug" value={slug} onChange={handleSlugChange} required pattern="^[a-z0-9-]+$" title="Only lowercase letters, numbers, and hyphens" />
+            <p className="text-xs text-muted-foreground">Automatically generated from the category name. You can edit it.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Category Image</Label>
+            <ImageUpload name="imageUrl" purpose="category" defaultValue={category?.imageUrl} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <textarea
+            <Textarea
               id="description"
               name="description"
               defaultValue={category?.description || ""}
-              className="flex min-h-[80px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-h-[80px]"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="parentId">Parent Category</Label>
-            <select
+            <Select
               id="parentId"
               name="parentId"
               defaultValue={category?.parentId || ""}
-              className="flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">None (Top Level)</option>
               {validParents.map(parent => (
                 <option key={parent.id} value={parent.id}>{parent.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -113,27 +150,25 @@ export function CategoryForm({ category, flatCategories, onClose, onSuccess }: C
             </div>
 
             <div className="flex items-center space-x-2 pt-8">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="isActive"
                 name="isActive"
                 defaultChecked={category ? category.isActive : true}
-                className="w-4 h-4 rounded-sm border-input"
               />
               <Label htmlFor="isActive">Active</Label>
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-2 border-t mt-4">
+          <DialogFooter className="pt-4 flex justify-end gap-2 border-t mt-4 mb-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Category"}
+            <Button type="submit" isLoading={isSubmitting}>
+              Save Category
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -5,7 +5,10 @@ import { AdminCoupon } from "@/types/admin";
 import { CouponStatusBadge } from "./CouponStatusBadge";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, ArrowRight, Ticket } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface CouponTableProps {
   initialCoupons: AdminCoupon[];
@@ -21,96 +24,109 @@ export function CouponTable({ initialCoupons }: CouponTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="relative max-w-sm w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black sm:text-sm"
+      {/* Controls */}
+      <div className="bg-card border rounded-sm p-4 flex flex-col sm:flex-row gap-4 justify-between items-center shadow-sm">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9 h-10 w-full"
             placeholder="Search by code or name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
-        <Link
-          href="/admin/coupons/new"
-          className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Coupon
-        </Link>
+        <Button asChild className="w-full sm:w-auto h-10">
+          <Link href="/admin/coupons/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Coupon
+          </Link>
+        </Button>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Code
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Discount
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Usage
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCoupons.map((coupon) => (
-                <tr key={coupon.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{coupon.code}</div>
-                    <div className="text-sm text-gray-500">{coupon.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {coupon.type === 'PERCENTAGE'
-                      ? `${coupon.value}%`
-                      : formatPrice(coupon.value)
-                    }
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {coupon._count?.redemptions || 0}
-                    {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ''}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <CouponStatusBadge
-                      isActive={coupon.isActive}
-                      startsAt={coupon.startsAt}
-                      endsAt={coupon.endsAt}
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/admin/coupons/${coupon.id}`} className="text-blue-600 hover:text-blue-900">
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+      {/* Empty State */}
+      {filteredCoupons.length === 0 ? (
+        <Card className="shadow-sm">
+          <CardContent className="p-12 flex flex-col items-center justify-center text-center">
+            <Ticket className="w-12 h-12 text-muted-foreground opacity-50 mb-4" />
+            <p className="text-lg font-medium text-foreground">No coupons found</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              {initialCoupons.length === 0
+                ? "You haven't created any coupons yet."
+                : "No coupons match your search criteria."}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="shadow-sm overflow-hidden border">
+          <div className="divide-y divide-border">
+            {filteredCoupons.map((coupon) => (
+              <div key={coupon.id} className="p-4 sm:p-5 hover:bg-muted/5 transition-colors">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
-              {filteredCoupons.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
-                    {initialCoupons.length === 0
-                      ? "No coupons have been created yet."
-                      : "No coupons match your search."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  {/* Left Column: Context (Code/Name) */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-2">
+                    <div className="flex items-center justify-between md:justify-start gap-4">
+                      <p className="font-semibold text-foreground truncate max-w-[250px] sm:max-w-md" title={coupon.code}>
+                        {coupon.code}
+                      </p>
+                      <div className="md:hidden">
+                        <CouponStatusBadge
+                          isActive={coupon.isActive}
+                          startsAt={coupon.startsAt}
+                          endsAt={coupon.endsAt}
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground truncate max-w-[250px] sm:max-w-md" title={coupon.name}>
+                      {coupon.name}
+                    </p>
+                  </div>
+
+                  {/* Right Column: Discount, Usage, Status, Action */}
+                  <div className="flex flex-row items-center justify-between md:justify-end gap-6 md:w-auto shrink-0">
+
+                    {/* Metrics Stack */}
+                    <div className="flex flex-col items-start md:items-end gap-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Discount:</span>
+                        <span className="font-bold text-foreground">
+                          {coupon.type === 'PERCENTAGE'
+                            ? `${coupon.value}%`
+                            : formatPrice(coupon.value)
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Usage:</span>
+                        <span className="font-medium">
+                          {coupon._count?.redemptions || 0}
+                          {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="hidden md:block">
+                      <CouponStatusBadge
+                        isActive={coupon.isActive}
+                        startsAt={coupon.startsAt}
+                        endsAt={coupon.endsAt}
+                      />
+                    </div>
+
+                    <Button asChild variant="outline" size="sm" className="shrink-0 h-9">
+                      <Link href={`/admin/coupons/${coupon.id}`}>
+                        Edit <ArrowRight className="ml-2 w-3 h-3" />
+                      </Link>
+                    </Button>
+
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

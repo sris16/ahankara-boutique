@@ -126,7 +126,7 @@ export function ProductLightbox({
             fill
             className="object-contain"
             sizes="(max-width: 1024px) 100vw, 1200px"
-            priority
+            preload
           />
         </div>
 

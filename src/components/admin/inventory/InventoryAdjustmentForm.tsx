@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api/admin';
 import type { AdminInventory } from '@/types/admin';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, Loader2, Plus, Minus } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, Minus } from 'lucide-react';
 
 interface Props {
   productId: string;
@@ -57,19 +58,20 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
       router.refresh();
 
       setTimeout(() => setSuccess(false), 3000);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || 'Failed to adjust inventory');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to adjust inventory');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Adjust Stock</h3>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle>Adjust Stock</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
             <AlertCircle className="w-5 h-5 shrink-0" />
@@ -166,13 +168,14 @@ export function InventoryAdjustmentForm({ productId, variantId, inventory }: Pro
 
         <Button
           type="submit"
-          disabled={!isValidDelta || loading || wouldFailReserve}
+          disabled={!isValidDelta || wouldFailReserve}
+          isLoading={loading}
           className="w-full"
         >
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {loading ? 'Adjusting...' : 'Confirm Adjustment'}
         </Button>
       </form>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

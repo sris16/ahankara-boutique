@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AuthService } from "@/server/services/auth.service";
 import { UserRole, UserStatus } from "@prisma/client";
 import { z } from "zod";
+import { handleError } from "@/utils/error-handler";
 
 const updateStatusSchema = z.object({
   status: z.nativeEnum(UserStatus),
@@ -59,10 +60,6 @@ export async function PATCH(
 
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error("Failed to update customer status:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
