@@ -6,21 +6,42 @@ import { CollectionService } from "@/server/services/collection.service";
 import { ProductService } from "@/server/services/product.service";
 import { ProductSummary } from "@/types/catalog";
 import { ProductCard } from "@/components/catalog/ProductCard";
+import { BreadcrumbJsonLd } from "@/components/product/BreadcrumbJsonLd";
 import { ArrowLeft, Clock } from "lucide-react";
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 60; // Revalidate every minute to keep inventory badges fresh
 
 interface CollectionPageProps {
   params: Promise<{ slug: string }>;
 }
 
+import { env } from "@/utils/env";
+
 export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
   const resolvedParams = await params;
   try {
     const collection = await CollectionService.getCollectionBySlug(resolvedParams.slug, true);
+    
+    let baseUrl = env.BETTER_AUTH_URL;
+    if (env.NODE_ENV === "production" && baseUrl.includes("localhost")) {
+      baseUrl = "https://ahankarastudios.com";
+    }
+    const canonicalUrl = `${baseUrl}/collections/${collection.slug}`;
+    const title = collection.metaTitle || `${collection.name} | AHANKARA STUDIOS`;
+    const description = collection.metaDescription || collection.description || `Explore our ${collection.name} collection at AHANKARA STUDIOS.`;
+
     return {
-      title: collection.metaTitle || `${collection.name} | AHANKARA STUDIOS`,
-      description: collection.metaDescription || collection.description || `Explore our ${collection.name} collection at AHANKARA STUDIOS.`,
+      title,
+      description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        images: collection.imageUrl ? [{ url: collection.imageUrl }] : [],
+      },
     };
   } catch {
     return {
@@ -56,7 +77,15 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   const products = productsResponse?.data || [];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-24">
+    <>
+      <BreadcrumbJsonLd 
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Catalog", url: "/products" },
+          { name: collection.name, url: `/collections/${collection.slug}` }
+        ]} 
+      />
+      <div className="flex flex-col min-h-screen bg-background pb-24">
       {/* Editorial Hero */}
       <section className="relative w-full h-[65vh] md:h-[80vh] bg-foreground flex items-end justify-center overflow-hidden">
         {collection.imageUrl ? (
@@ -128,6 +157,13 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
               The {collection.name} collection will be available starting {new Date(collection.startsAt!).toLocaleDateString("en-US", { month: "long", day: "numeric" })}.
             </p>
           </div>
+        ) : !productsResponse ? (
+          <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
+            <h3 className="font-serif text-2xl mb-4 text-foreground">Unable to Load Pieces</h3>
+            <p className="text-muted-foreground font-light max-w-md mb-8">
+              We encountered an issue connecting to our catalog services. Please try refreshing the page.
+            </p>
+          </div>
         ) : products.length === 0 ? (
           <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
             <h3 className="font-serif text-2xl mb-4 text-foreground">No pieces currently available</h3>
@@ -161,5 +197,6 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         )}
       </section>
     </div>
+    </>
   );
 }

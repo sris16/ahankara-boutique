@@ -17,7 +17,7 @@ export function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center scale-[1.02] transition-transform duration-[2000ms] ease-out"
+          className="object-cover object-center scale-[1.02] transition-transform duration-[2000ms] ease-out motion-reduce:transform-none motion-reduce:transition-none"
         />
         {/* Multilayered Warm Scrim for Maximum Legibility & Atmospheric Depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/40 to-background/90" />
@@ -28,7 +28,7 @@ export function Hero() {
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-20 md:py-28 flex flex-col items-center text-center max-w-4xl">
         {/* Eyebrow Label */}
         <div className="inline-flex items-center gap-2 mb-6 px-3.5 py-1 rounded-full bg-surface/80 backdrop-blur-md border border-border/60 shadow-xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent motion-safe:animate-pulse" />
           <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-foreground/90 font-sans">
             AHANKARA STUDIOS &mdash; Atelier Edition
           </span>

@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Search, Heart, ShoppingBag, User, Menu, ChevronDown } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { authClient } from "@/lib/auth-client"
@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils"
 
 export function Navbar() {
   const { user, loading, refresh } = useAuth()
-  const { cart, openCart } = useCart()
+  const { cart, openCart, isCartOpen } = useCart()
   const { wishlist } = useWishlist()
   const router = useRouter()
+  const pathname = usePathname()
 
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
@@ -68,6 +69,8 @@ export function Navbar() {
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Open navigation menu"
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
               className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 text-foreground hover:text-accent transition-colors cursor-pointer"
             >
               <Menu className="h-5 w-5 stroke-[1.5]" />
@@ -82,8 +85,13 @@ export function Navbar() {
             >
               <button
                 type="button"
+                id="mega-menu-trigger"
+                aria-controls="mega-menu"
                 onClick={() => setIsMegaMenuOpen((prev) => !prev)}
-                className="text-xs uppercase tracking-[0.2em] font-medium text-foreground hover:text-accent transition-colors flex items-center gap-1 py-4 cursor-pointer select-none"
+                className={cn(
+                  "text-xs uppercase tracking-[0.2em] font-medium transition-colors flex items-center gap-1 py-4 cursor-pointer select-none",
+                  isMegaMenuOpen ? "text-accent" : "text-foreground hover:text-accent"
+                )}
                 aria-expanded={isMegaMenuOpen}
               >
                 <span>Shop</span>
@@ -98,14 +106,20 @@ export function Navbar() {
 
             <Link
               href="/products?sortBy=newest"
-              className="text-xs uppercase tracking-[0.2em] font-medium text-foreground hover:text-accent transition-colors py-4"
+              className={cn(
+                "text-xs uppercase tracking-[0.2em] font-medium transition-colors py-4",
+                pathname === "/products" ? "text-accent" : "text-foreground hover:text-accent"
+              )}
             >
               New Arrivals
             </Link>
 
             <Link
               href="/about"
-              className="text-xs uppercase tracking-[0.2em] font-medium text-foreground hover:text-accent transition-colors py-4"
+              className={cn(
+                "text-xs uppercase tracking-[0.2em] font-medium transition-colors py-4",
+                pathname === "/about" ? "text-accent" : "text-foreground hover:text-accent"
+              )}
             >
               About
             </Link>
@@ -141,6 +155,8 @@ export function Navbar() {
               type="button"
               onClick={() => setIsSearchOpen(true)}
               aria-label="Search catalog"
+              aria-expanded={isSearchOpen}
+              aria-controls="search-dialog"
               className="min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-accent transition-colors cursor-pointer"
             >
               <Search className="h-4.5 w-4.5 stroke-[1.5]" />
@@ -174,6 +190,8 @@ export function Navbar() {
               type="button"
               onClick={openCart}
               aria-label={`Shopping Bag (${cartCount} items)`}
+              aria-expanded={isCartOpen}
+              aria-controls="cart-drawer"
               className="min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-accent transition-colors relative cursor-pointer"
             >
               <ShoppingBag className="h-4.5 w-4.5 stroke-[1.5]" />
@@ -201,7 +219,7 @@ export function Navbar() {
 
       {/* Mobile Navigation Sheet */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-[85vw] sm:max-w-md p-0 flex flex-col bg-surface">
+        <SheetContent id="mobile-menu" side="left" className="w-[85vw] sm:max-w-md p-0 flex flex-col bg-surface">
           {/* Mobile Sheet Header */}
           <div className="flex items-center gap-3 p-6 border-b border-border/60">
             <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border shrink-0">
@@ -238,7 +256,10 @@ export function Navbar() {
             <Link
               href="/products?sortBy=newest"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors flex items-center justify-between"
+              className={cn(
+                "text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors flex items-center justify-between",
+                pathname === "/products" && "text-accent"
+              )}
             >
               <span>New Arrivals</span>
               <span className="text-[10px] uppercase tracking-widest text-accent font-sans">New</span>
@@ -247,7 +268,10 @@ export function Navbar() {
             <Link
               href="/products"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors"
+              className={cn(
+                "text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors",
+                pathname === "/products" && "text-accent"
+              )}
             >
               All Products
             </Link>
@@ -255,7 +279,10 @@ export function Navbar() {
             <Link
               href="/about"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors"
+              className={cn(
+                "text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors",
+                pathname === "/about" && "text-accent"
+              )}
             >
               About Us
             </Link>
@@ -263,7 +290,10 @@ export function Navbar() {
             <Link
               href="/contact"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors"
+              className={cn(
+                "text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors",
+                pathname === "/contact" && "text-accent"
+              )}
             >
               Client Services
             </Link>

@@ -59,7 +59,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             alt={primaryImage.altText || product.name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:scale-105"
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full p-4 bg-gradient-to-b from-surface-muted to-brand-50/60 select-none">

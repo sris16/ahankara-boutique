@@ -11,12 +11,27 @@ import { CollectionSpotlight } from "@/components/home/CollectionSpotlight";
 import { BrandPillars } from "@/components/home/BrandPillars";
 import { HomeClosingCta } from "@/components/home/HomeClosingCta";
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 60; // Revalidate every minute to keep inventory badges fresh
 
 export const metadata: Metadata = {
-  title: "AHANKARA STUDIOS | Premium Fashion",
+  title: "AHANKARA STUDIOS | Premium Editorial Fashion",
   description:
-    "Discover our curated collection of premium fashion pieces designed for the modern wardrobe. Ahankara Studios.",
+    "Discover our curated collection of premium fashion pieces designed for the modern wardrobe. Architectural silhouettes and quiet luxury by Ahankara Studios.",
+  alternates: {
+    canonical: "https://ahankarastudios.com",
+  },
+  openGraph: {
+    type: "website",
+    url: "https://ahankarastudios.com",
+    title: "AHANKARA STUDIOS | Premium Editorial Fashion",
+    description: "Architectural silhouettes and quiet luxury by Ahankara Studios.",
+    siteName: "AHANKARA STUDIOS",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AHANKARA STUDIOS | Premium Editorial Fashion",
+    description: "Architectural silhouettes and quiet luxury by Ahankara Studios.",
+  },
 };
 
 async function getFeaturedCollections() {

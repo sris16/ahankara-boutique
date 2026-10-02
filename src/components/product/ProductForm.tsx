@@ -319,7 +319,7 @@ export function ProductForm({
             )}
             {selectedVariant.stockStatus === "LOW_STOCK" && (
               <span className="inline-flex items-center gap-1.5 text-warning font-medium">
-                <span className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-warning motion-safe:animate-pulse" />
                 Only a few handcrafted pieces remaining
               </span>
             )}

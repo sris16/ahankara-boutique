@@ -52,7 +52,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-xl p-0 overflow-hidden rounded-sm border-border bg-surface shadow-elevated">
+      <DialogContent id="search-dialog" className="sm:max-w-xl p-0 overflow-hidden rounded-sm border-border bg-surface shadow-elevated">
         <DialogHeader className="p-6 pb-2 border-b border-border/40">
           <DialogTitle className="font-serif text-lg md:text-xl font-normal tracking-wide text-foreground">
             Search AHANKARA STUDIOS

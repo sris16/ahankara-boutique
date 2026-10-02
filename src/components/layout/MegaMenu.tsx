@@ -72,6 +72,9 @@ export function MegaMenu({ isOpen, onClose }: MegaMenuProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose()
+        // Restore focus to trigger
+        const trigger = document.getElementById("mega-menu-trigger")
+        if (trigger) trigger.focus()
       }
     }
     window.addEventListener("keydown", handleKeyDown)
@@ -82,6 +85,9 @@ export function MegaMenu({ isOpen, onClose }: MegaMenuProps) {
 
   return (
     <div
+      id="mega-menu"
+      role="region"
+      aria-label="Mega Menu"
       onMouseLeave={onClose}
       className={cn(
         "absolute top-full left-0 right-0 z-40 w-full bg-surface/98 backdrop-blur-md border-b border-border shadow-elevated transition-all duration-standard ease-standard",

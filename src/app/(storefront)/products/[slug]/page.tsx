@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { NotFoundError } from "@/utils/errors"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { env } from "@/utils/env"
@@ -9,6 +10,7 @@ import { ProductDetail } from "@/types/catalog"
 import { ProductGallery } from "@/components/product/ProductGallery"
 import { ProductForm } from "@/components/product/ProductForm"
 import { ProductJsonLd } from "@/components/product/ProductJsonLd"
+import { BreadcrumbJsonLd } from "@/components/product/BreadcrumbJsonLd"
 import { ProductShareButton } from "@/components/product/ProductShareButton"
 import { ProductDetailsTabs } from "@/components/product/ProductDetailsTabs"
 import { RelatedProducts } from "@/components/product/RelatedProducts"
@@ -25,8 +27,11 @@ interface ProductPageProps {
 async function getProduct(slug: string): Promise<ProductDetail | null> {
   try {
     return (await ProductService.getProductBySlug(slug, true)) as unknown as ProductDetail
-  } catch {
-    return null
+  } catch (error) {
+    if (error instanceof NotFoundError || (error as Error).name === "NotFoundError") {
+      return null
+    }
+    throw error // triggers error.tsx
   }
 }
 
@@ -80,6 +85,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <>
       <ProductJsonLd product={product} />
+      <BreadcrumbJsonLd 
+        items={[
+          { name: "Home", url: "/" },
+          { name: product.category.name, url: `/categories/${product.category.slug}` },
+          { name: product.name, url: `/products/${product.slug}` }
+        ]} 
+      />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 max-w-7xl">
         {/* Minimalist Atelier Breadcrumbs */}

@@ -7,6 +7,7 @@ import { AdminHeader } from "@/components/admin/layout/AdminHeader";
 export const metadata = {
   title: "Admin Portal | AHANKARA STUDIOS",
   description: "Secure operational dashboard",
+  robots: "noindex, nofollow",
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

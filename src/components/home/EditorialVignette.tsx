@@ -18,7 +18,7 @@ export function EditorialVignette() {
                 alt="AHANKARA STUDIOS atelier fabric and silhouette craftsmanship"
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
             </div>

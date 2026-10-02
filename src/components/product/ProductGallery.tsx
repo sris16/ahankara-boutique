@@ -94,7 +94,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         >
           {/* Zoomable Image Container */}
           <div
-            className="w-full h-full relative transition-transform duration-fast ease-out"
+            className="w-full h-full relative transition-transform duration-fast ease-out motion-reduce:!transform-none"
             style={{
               transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
               transform: isHovering ? "scale(1.35)" : "scale(1)",

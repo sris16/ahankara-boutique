@@ -94,6 +94,7 @@ export function CartDrawer() {
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeCart()}>
       <SheetContent
+        id="cart-drawer"
         side="right"
         className="w-full sm:max-w-md p-0 flex flex-col bg-surface border-l border-border/80"
       >

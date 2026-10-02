@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Authentication | AHANKARA STUDIOS",
+  robots: "noindex, nofollow",
+};
 
 export default function AuthLayout({
   children,
@@ -15,14 +21,14 @@ export default function AuthLayout({
         aria-hidden="true"
       />
 
-      {/* Top Navigation Bar with Return to Boutique */}
+      {/* Top Navigation Bar with Return to Studio */}
       <header className="w-full max-w-5xl mx-auto flex items-center justify-between z-10">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors group py-2"
         >
           <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
-          <span>Return to Boutique</span>
+          <span>Return to Studio</span>
         </Link>
 
         <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60 hidden sm:inline-block font-mono">

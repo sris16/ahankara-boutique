@@ -20,8 +20,15 @@ import { CartProvider } from "@/hooks/use-cart";
 import { WishlistProvider } from "@/hooks/use-wishlist";
 import { AddressProvider } from "@/hooks/use-address";
 import { ToastProvider } from "@/components/ui/toast";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { WebVitals } from "@/components/analytics/WebVitals";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NODE_ENV === "production" 
+      ? "https://ahankarastudios.com" 
+      : (process.env.BETTER_AUTH_URL || "http://localhost:3000")
+  ),
   title: {
     default: "AHANKARA STUDIOS",
     template: "%s | AHANKARA STUDIOS",
@@ -29,6 +36,27 @@ export const metadata: Metadata = {
   description: "AHANKARA STUDIOS — Contemporary Luxury & Fashion Studio",
   icons: {
     icon: "/images/brand/ahankara-studios-logo.jpg",
+  },
+  openGraph: {
+    title: "AHANKARA STUDIOS",
+    description: "Contemporary Luxury & Fashion Studio",
+    url: "/",
+    siteName: "AHANKARA STUDIOS",
+    images: [
+      {
+        url: "/images/brand/ahankara-studios-logo.jpg",
+        width: 800,
+        height: 800,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AHANKARA STUDIOS",
+    description: "Contemporary Luxury & Fashion Studio",
+    images: ["/images/brand/ahankara-studios-logo.jpg"],
   },
 };
 
@@ -53,6 +81,8 @@ export default function RootLayout({
               <AddressProvider>
                 <ToastProvider>
                   <div className="flex min-h-screen flex-col selection:bg-primary selection:text-primary-foreground">
+                    <AnalyticsProvider />
+                    <WebVitals />
                     <main className="flex-1 min-h-screen">
                       {children}
                     </main>

@@ -25,13 +25,24 @@ interface ProductsPageProps {
   searchParams: Promise<SearchParamsObject>;
 }
 
+import { env } from "@/utils/env";
+
 export async function generateMetadata({ searchParams }: ProductsPageProps): Promise<Metadata> {
   const params = await searchParams;
 
+  let baseUrl = env.BETTER_AUTH_URL;
+  if (env.NODE_ENV === "production" && baseUrl.includes("localhost")) {
+    baseUrl = "https://ahankarastudios.com";
+  }
+  const canonicalUrl = `${baseUrl}/products`;
+
+  // Search pages should generally not be indexed to prevent infinite crawl spaces
   if (params.q) {
     return {
       title: `Search: "${params.q}" | AHANKARA STUDIOS`,
       description: `Explore search results for "${params.q}" across our luxury atelier collections.`,
+      robots: { index: false, follow: true },
+      alternates: { canonical: canonicalUrl },
     };
   }
 
@@ -39,19 +50,22 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
     return {
       title: `Collection | AHANKARA STUDIOS`,
       description: "Discover curated seasonal edits and atelier collection releases.",
+      alternates: { canonical: canonicalUrl },
     };
   }
 
   if (params.category) {
     return {
-      title: `Collection | AHANKARA STUDIOS`,
+      title: `Category | AHANKARA STUDIOS`,
       description: "Discover our bespoke Indian luxury fashion silhouettes.",
+      alternates: { canonical: canonicalUrl },
     };
   }
 
   return {
     title: "Atelier Catalog | AHANKARA STUDIOS",
     description: "Discover our premium collection of contemporary luxury fashion pieces.",
+    alternates: { canonical: canonicalUrl },
   };
 }
 
@@ -198,6 +212,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 <CatalogEmptyState
                   searchQuery={params.q}
                   hasActiveFilters={hasActiveFilters}
+                  isError={!productsResponse}
                 />
               ) : (
                 <div className="space-y-12">

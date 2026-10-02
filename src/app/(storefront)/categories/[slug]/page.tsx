@@ -6,21 +6,42 @@ import { CategoryService } from "@/server/services/category.service";
 import { ProductService } from "@/server/services/product.service";
 import { ProductSummary } from "@/types/catalog";
 import { ProductCard } from "@/components/catalog/ProductCard";
+import { BreadcrumbJsonLd } from "@/components/product/BreadcrumbJsonLd";
 import { ArrowLeft } from "lucide-react";
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 60; // Revalidate every minute to keep inventory badges fresh
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 
+import { env } from "@/utils/env";
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const resolvedParams = await params;
   try {
     const category = await CategoryService.getCategoryBySlug(resolvedParams.slug, true);
+    
+    let baseUrl = env.BETTER_AUTH_URL;
+    if (env.NODE_ENV === "production" && baseUrl.includes("localhost")) {
+      baseUrl = "https://ahankarastudios.com";
+    }
+    const canonicalUrl = `${baseUrl}/categories/${category.slug}`;
+    const title = category.metaTitle || `${category.name} | AHANKARA STUDIOS`;
+    const description = category.metaDescription || category.description || `Explore our ${category.name} collection at AHANKARA STUDIOS.`;
+
     return {
-      title: category.metaTitle || `${category.name} | AHANKARA STUDIOS`,
-      description: category.metaDescription || category.description || `Explore our ${category.name} collection at AHANKARA STUDIOS.`,
+      title,
+      description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        images: category.imageUrl ? [{ url: category.imageUrl }] : [],
+      },
     };
   } catch {
     return {
@@ -50,7 +71,15 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const products = productsResponse?.data || [];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-24">
+    <>
+      <BreadcrumbJsonLd 
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Catalog", url: "/products" },
+          { name: category.name, url: `/categories/${category.slug}` }
+        ]} 
+      />
+      <div className="flex flex-col min-h-screen bg-background pb-24">
       {/* Editorial Hero */}
       <section className="relative w-full h-[60vh] md:h-[70vh] bg-muted/20 flex items-center justify-center overflow-hidden">
         {category.imageUrl ? (
@@ -94,7 +123,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
       {/* Product Discovery */}
       <section className="container mx-auto px-4">
-        {products.length === 0 ? (
+        {!productsResponse ? (
+          <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
+            <h3 className="font-serif text-2xl mb-4 text-foreground">Unable to Load Pieces</h3>
+            <p className="text-muted-foreground font-light max-w-md mb-8">
+              We encountered an issue connecting to our catalog services. Please try refreshing the page.
+            </p>
+          </div>
+        ) : products.length === 0 ? (
           <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
             <h3 className="font-serif text-2xl mb-4 text-foreground">No pieces currently available</h3>
             <p className="text-muted-foreground font-light max-w-md mb-8">
@@ -127,5 +163,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         )}
       </section>
     </div>
+    </>
   );
 }

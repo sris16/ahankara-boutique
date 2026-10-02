@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 interface CatalogEmptyStateProps {
   searchQuery?: string;
   hasActiveFilters?: boolean;
+  isError?: boolean;
 }
 
-export function CatalogEmptyState({ searchQuery, hasActiveFilters }: CatalogEmptyStateProps) {
+export function CatalogEmptyState({ searchQuery, hasActiveFilters, isError }: CatalogEmptyStateProps) {
   const router = useRouter();
 
   const handleReset = () => {
@@ -34,16 +35,30 @@ export function CatalogEmptyState({ searchQuery, hasActiveFilters }: CatalogEmpt
       </span>
 
       <h3 className="font-serif text-2xl md:text-3xl text-foreground font-normal tracking-tight mb-3">
-        {searchQuery ? `No Pieces Found for "${searchQuery}"` : "No Pieces Found"}
+        {isError
+          ? "Unable to Load Catalog"
+          : searchQuery
+          ? `No Pieces Found for "${searchQuery}"`
+          : "No Pieces Found"}
       </h3>
 
       <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed mb-8 font-light">
-        {hasActiveFilters || searchQuery
+        {isError
+          ? "We encountered an issue connecting to our catalog services. Please try refreshing the page."
+          : hasActiveFilters || searchQuery
           ? "We could not find any creations matching your current selection. Try resetting filters to explore the complete atelier collection."
           : "Our artisans are currently curating this collection. Please explore our other categories or check back soon."}
       </p>
 
-      {(hasActiveFilters || searchQuery) && (
+      {isError ? (
+        <Button
+          onClick={() => window.location.reload()}
+          variant="outline"
+          className="uppercase tracking-widest text-xs min-h-[44px] px-8 border-border hover:bg-foreground hover:text-background transition-colors duration-300"
+        >
+          Refresh Page
+        </Button>
+      ) : (hasActiveFilters || searchQuery) && (
         <Button
           onClick={handleReset}
           variant="outline"

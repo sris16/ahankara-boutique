@@ -7,6 +7,7 @@ import { ShieldCheck, Sparkles } from "lucide-react";
 export const metadata = {
   title: "Client Portal | AHANKARA STUDIOS",
   description: "Manage your AHANKARA STUDIOS personal wardrobe, orders, and addresses.",
+  robots: "noindex, nofollow",
 };
 
 export default async function AccountLayout({

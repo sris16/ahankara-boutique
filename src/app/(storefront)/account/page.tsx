@@ -161,7 +161,7 @@ export default async function AccountRootPage() {
               Explore the latest AHANKARA STUDIOS runway and ready-to-wear collections.
             </p>
             <Button asChild className="rounded-xs text-xs uppercase tracking-widest px-6 h-10">
-              <Link href="/products">Explore Boutique</Link>
+              <Link href="/products">Explore Collections</Link>
             </Button>
           </div>
         ) : (
