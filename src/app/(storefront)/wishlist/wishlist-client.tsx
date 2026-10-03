@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { formatPrice } from "@/lib/utils";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart, Sparkles, Loader2 } from "lucide-react";
 import { WishlistItemResponse } from "@/types/wishlist";
 import { WishlistRemoveButton, WishlistMoveToCartButton } from "./wishlist-controls";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Badge } from "@/components/ui/badge";
 
 export function WishlistClient({
@@ -15,10 +16,33 @@ export function WishlistClient({
 }: {
   initialWishlist: WishlistItemResponse[];
 }) {
-  const { wishlist: contextWishlist, isInitialized } = useWishlist();
+  const { wishlist: contextWishlist, isInitialized, error, refreshWishlist } = useWishlist();
 
   // Use server-rendered data initially, then client context takes over
   const displayList = isInitialized ? contextWishlist : initialWishlist;
+
+  if (!isInitialized && initialWishlist.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-32 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+        <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-mono">
+          Loading Curated Collection...
+        </span>
+      </div>
+    );
+  }
+
+  if (error && displayList.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-24 min-h-[60vh] flex items-center justify-center">
+        <ErrorState
+          title="Wishlist Unavailable"
+          message="We couldn't load your saved pieces at this time. Please try again."
+          onRetry={refreshWishlist}
+        />
+      </div>
+    );
+  }
 
   if (displayList.length === 0) {
     return (

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { OrderService } from "@/server/services/order.service";
 import { AuthService } from "@/server/services/auth.service";
+import { UnauthorizedError, NotFoundError } from "@/utils/errors";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { TrackingModule } from "@/components/orders/TrackingModule";
 import { ChevronLeft, ShieldCheck, AlertTriangle, PackageOpen, RotateCcw, RefreshCw, IndianRupee } from "lucide-react";
@@ -46,8 +47,11 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
   let user;
   try {
     user = await AuthService.requireAuth(reqHeaders);
-  } catch {
-    redirect("/login");
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login");
+    }
+    throw error;
   }
 
   let orderData;
@@ -56,8 +60,11 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
   try {
     orderData = await OrderService.getCustomerOrderById(user.id, orderId);
     trackingData = await OrderService.getCustomerOrderTracking(user.id, orderId);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      notFound();
+    }
+    throw error;
   }
 
   if (!orderData) notFound();
@@ -72,12 +79,8 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
   const itemEligibilities = new Map<string, number>();
   if (orderData.items) {
     await Promise.all(orderData.items.map(async (item) => {
-      try {
-        const eligibility = await PostPurchaseService.getItemEligibility(item.id);
-        itemEligibilities.set(item.id, eligibility.remainingEligibleQuantity);
-      } catch {
-        itemEligibilities.set(item.id, 0);
-      }
+      const eligibility = await PostPurchaseService.getItemEligibility(item.id);
+      itemEligibilities.set(item.id, eligibility.remainingEligibleQuantity);
     }));
   }
 

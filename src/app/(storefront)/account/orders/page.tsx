@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OrderService } from "@/server/services/order.service";
 import { AuthService } from "@/server/services/auth.service";
+import { UnauthorizedError } from "@/utils/errors";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +32,11 @@ export default async function OrdersPage() {
   let user;
   try {
     user = await AuthService.requireAuth(reqHeaders);
-  } catch {
-    redirect("/login");
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login");
+    }
+    throw error;
   }
 
   let data;

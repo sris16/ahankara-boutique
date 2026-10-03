@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { AuthService } from '@/server/services/auth.service';
 import { CategoryService } from '@/server/services/category.service';
 import { createCategorySchema } from '@/server/validators/category.validator';

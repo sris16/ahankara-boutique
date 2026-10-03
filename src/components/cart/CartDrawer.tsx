@@ -9,11 +9,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { CartItemRow } from "./CartItemRow";
 import { useToast } from "@/components/ui/toast";
 
 export function CartDrawer() {
-  const { isCartOpen, closeCart, cart, isInitialized, updateItemQuantity, removeItem } = useCart();
+  const { isCartOpen, closeCart, cart, isInitialized, updateItemQuantity, removeItem, error, refreshCart } = useCart();
   const { addItem: addToWishlist } = useWishlist();
   const { toast } = useToast();
   const router = useRouter();
@@ -90,6 +91,12 @@ export function CartDrawer() {
 
   const items = cart?.items || [];
   const hasItems = items.length > 0;
+  
+  const hasIssues = items.some(
+    (item) =>
+      item.availability.stockStatus !== "IN_STOCK" &&
+      item.availability.stockStatus !== "LOW_STOCK"
+  );
 
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -114,7 +121,15 @@ export function CartDrawer() {
 
         {/* Drawer Content */}
         <div className="flex-1 overflow-y-auto px-6 py-2">
-          {!hasItems ? (
+          {error && !hasItems ? (
+            <div className="h-full flex items-center justify-center py-12">
+              <ErrorState
+                title="Bag Unavailable"
+                message="We couldn't load your shopping bag at this time. Please try again."
+                onRetry={refreshCart}
+              />
+            </div>
+          ) : !hasItems ? (
             <div className="h-full flex items-center justify-center py-12">
               <EmptyState
                 icon={ShoppingBag}
@@ -167,7 +182,8 @@ export function CartDrawer() {
             <div className="flex flex-col gap-2.5">
               <Button
                 onClick={handleCheckout}
-                className="w-full h-12 uppercase tracking-[0.25em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xs flex items-center justify-center gap-2 cursor-pointer shadow-subtle"
+                disabled={hasIssues || updatingId !== null}
+                className="w-full h-12 uppercase tracking-[0.25em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xs flex items-center justify-center gap-2 cursor-pointer shadow-subtle disabled:opacity-50 disabled:cursor-not-allowed"
                 size="lg"
               >
                 <span>Proceed to Checkout</span>

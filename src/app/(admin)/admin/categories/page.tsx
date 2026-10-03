@@ -17,21 +17,15 @@ export default async function CategoriesPage() {
 
   let treeData: AdminCategoryTree[] = [];
   let flatListData: AdminCategory[] = [];
+  // Fetch tree and flat list for parent selection (pass false to get both active and inactive categories for Admin)
+  const [rawTree, rawFlatList] = await Promise.all([
+    CategoryService.getCategoryTree(false),
+    CategoryService.getCategories(false)
+  ]);
 
-  try {
-    // Fetch tree and flat list for parent selection (pass false to get both active and inactive categories for Admin)
-    const [rawTree, rawFlatList] = await Promise.all([
-      CategoryService.getCategoryTree(false),
-      CategoryService.getCategories(false)
-    ]);
-
-    // Serialize data (convert Date objects to strings for Client Component boundary)
-    treeData = JSON.parse(JSON.stringify(rawTree));
-    flatListData = JSON.parse(JSON.stringify(rawFlatList));
-  } catch (err) {
-    console.error("Failed to load categories:", err);
-  }
-
+  // Serialize data (convert Date objects to strings for Client Component boundary)
+  treeData = JSON.parse(JSON.stringify(rawTree));
+  flatListData = JSON.parse(JSON.stringify(rawFlatList));
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>

@@ -17,6 +17,7 @@ import { RelatedProducts } from "@/components/product/RelatedProducts"
 import { RecentlyViewed } from "@/components/product/RecentlyViewed"
 import { Suspense } from "react"
 import { ProductCardSkeleton } from "@/components/catalog/ProductCard"
+import { LocalErrorBoundary } from "@/components/ui/local-error-boundary"
 
 interface ProductPageProps {
   params: Promise<{
@@ -171,21 +172,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* History & Complementary Recommendations */}
         <RecentlyViewed currentProductSlug={product.slug} />
 
-        <Suspense
-          fallback={
-            <div className="py-16 border-t border-border/60 mt-16 animate-pulse">
-              <div className="h-6 bg-surface-muted w-48 mb-8 rounded-xs mx-auto" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                <ProductCardSkeleton />
-                <ProductCardSkeleton />
-                <ProductCardSkeleton />
-                <ProductCardSkeleton />
+        <LocalErrorBoundary title="Unable to load recommendations">
+          <Suspense
+            fallback={
+              <div className="py-16 border-t border-border/60 mt-16 animate-pulse">
+                <div className="h-6 bg-surface-muted w-48 mb-8 rounded-xs mx-auto" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                </div>
               </div>
-            </div>
-          }
-        >
-          <RelatedProducts categoryId={product.categoryId} currentProductId={product.id} />
-        </Suspense>
+            }
+          >
+            <RelatedProducts categoryId={product.categoryId} currentProductId={product.id} />
+          </Suspense>
+        </LocalErrorBoundary>
       </div>
     </>
   )

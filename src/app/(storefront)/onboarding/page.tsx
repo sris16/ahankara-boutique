@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { AuthService } from '@/server/services/auth.service';
+import { UnauthorizedError } from '@/utils/errors';
 import OnboardingClient from '@/components/account/OnboardingClient';
 
 export const metadata = {
@@ -14,7 +15,15 @@ export default async function OnboardingPage(props: {
   const searchParams = await props.searchParams;
   
   // Enforce authentication
-  const user = await AuthService.requireAuth(reqHeaders);
+  let user;
+  try {
+    user = await AuthService.requireAuth(reqHeaders);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login");
+    }
+    throw error;
+  }
   
   const rawTarget = searchParams.redirect || '/account';
   const target = rawTarget.startsWith('/') && !rawTarget.startsWith('//') ? rawTarget : '/account';

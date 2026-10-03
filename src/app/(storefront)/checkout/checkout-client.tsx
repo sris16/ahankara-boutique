@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
+import { useCallback } from "react";
 import {
   Loader2,
   ShieldCheck,
@@ -27,6 +28,8 @@ import {
   AlertTriangle,
   ArrowLeft,
   X,
+  RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { Order, PaymentAttemptResponse, CouponValidationResponse } from "@/types/checkout";
 import { CreateAddressInput, Address } from "@/types/address";
@@ -74,6 +77,9 @@ export default function CheckoutClient({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Stable idempotency key for the lifetime of this checkout session
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   // Payment Phase State
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
@@ -158,8 +164,6 @@ export default function CheckoutClient({
     setIsSubmitting(true);
     setCheckoutError(null);
 
-    const idempotencyKey = crypto.randomUUID();
-
     try {
       // 1. Create the Order securely via the backend
       const order = await checkoutApi.createOrder(
@@ -170,7 +174,7 @@ export default function CheckoutClient({
             : selectedBillingId || selectedShippingId,
           couponCode: appliedCoupon || undefined,
         },
-        idempotencyKey
+        idempotencyKeyRef.current
       );
 
       setPendingOrder(order);
@@ -199,6 +203,15 @@ export default function CheckoutClient({
     });
     router.replace(`/order-confirmation/${orderId}`);
   };
+
+  const handleVerificationUnknown = useCallback((orderId: string) => {
+    toast({
+      variant: "default",
+      title: "Payment Processing",
+      description: "Your payment is being confirmed. Please check your order status.",
+    });
+    router.replace(`/order-confirmation/${orderId}`);
+  }, [toast, router]);
 
   const handlePaymentError = (errorMsg: string) => {
     const fullMsg = `Payment failed: ${errorMsg}`;
@@ -588,6 +601,29 @@ export default function CheckoutClient({
               </div>
             </div>
 
+            {/* Pricing Error Retry */}
+            {pricingError && (
+              <div className="mb-6 p-4 border border-destructive/20 bg-destructive/5 rounded-xs flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-destructive">Pricing Unavailable</p>
+                    <p className="text-xs text-muted-foreground mt-1">We couldn&apos;t update the pricing for your selected address. Please retry.</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs uppercase tracking-widest h-9"
+                  onClick={() => selectedShippingId && updatePricing(selectedShippingId, appliedCoupon || undefined).catch(console.error)}
+                  disabled={pricingProcessing || !selectedShippingId}
+                >
+                  {pricingProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <RotateCcw className="w-3.5 h-3.5 mr-2" />}
+                  Retry Pricing
+                </Button>
+              </div>
+            )}
+
             {/* Desktop Place Order CTA */}
             <Button
               className="w-full h-14 uppercase tracking-[0.25em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-subtle rounded-xs"
@@ -635,20 +671,38 @@ export default function CheckoutClient({
             </span>
           </div>
 
-          <Button
-            onClick={handleCheckoutSubmit}
-            disabled={isCheckoutDisabled}
-            className="flex-1 h-12 uppercase tracking-[0.2em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xs flex items-center justify-center gap-2 cursor-pointer shadow-subtle"
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <ShieldCheck className="w-4 h-4" />
-                <span>Place Order</span>
-              </>
-            )}
-          </Button>
+          {pricingError ? (
+            <Button
+              onClick={() => selectedShippingId && updatePricing(selectedShippingId, appliedCoupon || undefined).catch(console.error)}
+              disabled={pricingProcessing || !selectedShippingId}
+              variant="outline"
+              className="flex-1 h-12 uppercase tracking-[0.2em] text-xs font-medium border-destructive/50 text-destructive hover:bg-destructive/10 rounded-xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {pricingProcessing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Retry Pricing</span>
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleCheckoutSubmit}
+              disabled={isCheckoutDisabled}
+              className="flex-1 h-12 uppercase tracking-[0.2em] text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xs flex items-center justify-center gap-2 cursor-pointer shadow-subtle"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Place Order</span>
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -659,6 +713,7 @@ export default function CheckoutClient({
           paymentAttempt={paymentAttempt}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
+          onVerificationUnknown={handleVerificationUnknown}
           onClose={handlePaymentClose}
         />
       )}

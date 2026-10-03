@@ -68,6 +68,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchSession(true);
   }, []);
 
+  // Global 401 interception for session expiration recovery
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?callbackUrl=${callbackUrl}`;
+      }
+    };
+    
+    window.addEventListener("ahankara:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("ahankara:unauthorized", handleUnauthorized);
+  }, []);
+
   return (
     <AuthContext.Provider value={{ user, loading, error, isSuspended, refresh: fetchSession }}>
       {children}

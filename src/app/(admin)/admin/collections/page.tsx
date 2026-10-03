@@ -15,12 +15,8 @@ export default async function CollectionsPage() {
   await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
 
   let collectionsData: AdminCollection[] = [];
-  try {
-    const rawCollections = await CollectionService.getCollections(false);
-    collectionsData = JSON.parse(JSON.stringify(rawCollections));
-  } catch (err) {
-    console.error("Failed to load collections:", err);
-  }
+  const rawCollections = await CollectionService.getCollections(false);
+  collectionsData = JSON.parse(JSON.stringify(rawCollections));
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

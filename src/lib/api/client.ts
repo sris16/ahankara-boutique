@@ -4,10 +4,16 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+  timeoutMs?: number;
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, headers, ...customConfig } = options;
+  const { params, headers, timeoutMs = 15000, ...customConfig } = options;
+
+  // 1. Fast-fail if explicitly offline in browser
+  if (typeof window !== "undefined" && !navigator.onLine) {
+    throw new ApiError("You are currently offline", 0, "NETWORK_ERROR");
+  }
 
   let url = endpoint;
   if (!url.startsWith("http")) {
@@ -44,14 +50,41 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   let response: Response;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  
+  let finalSignal = controller.signal;
+  const callerSignal = customConfig.signal as AbortSignal | undefined;
+
+  if (callerSignal) {
+    const combined = new AbortController();
+    finalSignal = combined.signal;
+    const onCallerAbort = () => combined.abort(callerSignal.reason);
+    const onTimeoutAbort = () => combined.abort(controller.signal.reason);
+
+    if (callerSignal.aborted) onCallerAbort();
+    else callerSignal.addEventListener("abort", onCallerAbort, { once: true });
+
+    if (controller.signal.aborted) onTimeoutAbort();
+    else controller.signal.addEventListener("abort", onTimeoutAbort, { once: true });
+  }
+
   try {
-    response = await fetch(url, config);
+    response = await fetch(url, { ...config, signal: finalSignal });
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      if (callerSignal && callerSignal.aborted) {
+        throw new ApiError("Request cancelled by caller", 0, "CALLER_ABORT");
+      }
+      throw new ApiError("Request timed out", 0, "TIMEOUT_ERROR");
+    }
     throw new ApiError(
       err instanceof Error ? err.message : "Network error",
       0,
       "NETWORK_ERROR"
     );
+  } finally {
+    clearTimeout(id);
   }
 
   let data: ApiResponse<T>;
@@ -64,6 +97,13 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   if (!response.ok || !data.success) {
     const errorMessage = data.message || data.error?.code || "An unexpected API error occurred";
+    
+    // Globally handle 401 Unauthorized for session expiration, 
+    // but ignore the passive /api/me check so we don't redirect public visitors
+    if (response.status === 401 && typeof window !== "undefined" && endpoint !== "/api/me") {
+      window.dispatchEvent(new CustomEvent("ahankara:unauthorized"));
+    }
+
     throw new ApiError(errorMessage, response.status, data.error?.code, data.error?.details);
   }
 

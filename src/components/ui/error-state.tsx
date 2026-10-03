@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "./button"
 
 export interface ErrorStateProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "inline"
   title?: string
   message?: string
   onRetry?: () => void
@@ -19,6 +20,7 @@ export function ErrorState({
   retryLabel = "Try Again",
   homeHref = "/",
   homeLabel = "Return Home",
+  variant = "default",
   className,
   ...props
 }: ErrorStateProps) {
@@ -26,7 +28,8 @@ export function ErrorState({
     <div
       role="alert"
       className={cn(
-        "flex flex-col items-center justify-center text-center p-8 md:p-12 rounded-sm border border-destructive/20 bg-destructive/5 max-w-md mx-auto my-8",
+        "flex flex-col items-center justify-center text-center rounded-sm border border-destructive/20 bg-destructive/5",
+        variant === "default" ? "p-8 md:p-12 max-w-md mx-auto my-8" : "p-6 w-full",
         className
       )}
       {...props}

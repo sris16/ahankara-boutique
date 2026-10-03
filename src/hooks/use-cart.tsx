@@ -13,7 +13,7 @@ interface CartContextType {
   error: Error | null;
   openCart: () => void;
   closeCart: () => void;
-  refreshCart: () => Promise<void>;
+  refreshCart: (silent?: boolean) => Promise<void>;
   addItem: (variantId: string, quantity: number) => Promise<void>;
   updateItemQuantity: (cartItemId: string, quantity: number) => Promise<void>;
   removeItem: (cartItemId: string) => Promise<void>;
@@ -29,17 +29,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const openCart = useCallback(() => setIsCartOpen(true), []);
-  const closeCart = useCallback(() => setIsCartOpen(false), []);
-
-  const refreshCart = useCallback(async () => {
+  const refreshCart = useCallback(async (silent = false) => {
     if (!user) {
       setCart(null);
       setIsInitialized(true);
       return;
     }
 
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
       const data = await cartApi.getCart();
       setCart(data);
@@ -47,10 +44,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to load cart"));
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
       setIsInitialized(true);
     }
   }, [user]);
+
+  const openCart = useCallback(() => {
+    setIsCartOpen(true);
+    refreshCart(true); // Silently sync authoritative cart when opened
+  }, [refreshCart]);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   useEffect(() => {
     if (!loading) {
@@ -68,8 +71,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCart(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to add item"));
-      throw err; // Re-throw to let component show toast/error
+      // Re-fetch authoritative state on rejection
+      await refreshCart(true);
+      throw err; // Let component show toast
     } finally {
       setIsLoading(false);
     }
@@ -98,9 +102,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCart(data);
       setError(null);
     } catch (err) {
-      // Revert on failure
+      // Revert on failure, but fetch authoritative state
       setCart(prevCart);
-      setError(err instanceof Error ? err : new Error("Failed to update item quantity"));
+      await refreshCart(true);
       throw err;
     } finally {
       setIsLoading(false);
@@ -131,7 +135,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       // Revert on failure
       setCart(prevCart);
-      setError(err instanceof Error ? err : new Error("Failed to remove item"));
+      await refreshCart(true);
       throw err;
     } finally {
       setIsLoading(false);

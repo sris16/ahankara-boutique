@@ -5,7 +5,7 @@ import { UserRole } from '@prisma/client';
 import { OrderListTable } from '@/components/admin/orders/OrderListTable';
 import { headers } from 'next/headers';
 import { AlertTriangle } from 'lucide-react';
-import Link from 'next/link';
+
 
 export const metadata = {
   title: 'Orders | AHANKARA STUDIOS',
@@ -28,9 +28,9 @@ export default async function AdminOrdersPage({
   let response;
   let hasError = false;
 
-  try {
-    await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
+  await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
 
+  try {
     const rawResponse = await OrderService.getAllOrders(page, 20, {
       search,
       status,
@@ -40,7 +40,8 @@ export default async function AdminOrdersPage({
 
     // Safely serialize dates/Decimal
     response = JSON.parse(JSON.stringify(rawResponse));
-  } catch {
+  } catch (err) {
+    console.error("Failed to load orders:", err);
     hasError = true;
   }
 

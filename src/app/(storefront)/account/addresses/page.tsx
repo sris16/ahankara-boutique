@@ -3,6 +3,7 @@ import { AuthService } from "@/server/services/auth.service";
 import { AddressService } from "@/server/services/address.service";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { UnauthorizedError } from "@/utils/errors";
 import type { Address } from "@/types/address";
 
 export const metadata = {
@@ -16,8 +17,11 @@ export default async function AddressesPage() {
   let user;
   try {
     user = await AuthService.requireAuth(reqHeaders);
-  } catch {
-    redirect("/login?callbackUrl=/account/addresses");
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login?callbackUrl=/account/addresses");
+    }
+    throw error;
   }
 
   // Fetch addresses securely on the server

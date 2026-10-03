@@ -16,7 +16,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
   const { user, loading: authLoading } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; is404: boolean } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -30,7 +30,9 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
         const data = await checkoutApi.getOrderById(resolvedParams.orderId);
         setOrder(data);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to load order details");
+        const is404 = (err as { statusCode?: number })?.statusCode === 404;
+        const msg = err instanceof Error ? err.message : "Failed to load order details";
+        setError({ message: msg, is404 });
       } finally {
         setIsLoading(false);
       }
@@ -48,10 +50,31 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
   }
 
   if (error || !order) {
+    if (error && !error.is404) {
+      return (
+        <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center text-center min-h-[50vh]">
+          <h1 className="font-serif text-3xl mb-4">Unable to Load Order</h1>
+          <p className="text-muted-foreground mb-8">
+            {error.message || "We encountered a temporary network or server issue."}
+          </p>
+          <div className="flex gap-4">
+            <Button onClick={() => window.location.reload()} size="lg" variant="default">
+              Try Again
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/account/orders">My Orders</Link>
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center text-center min-h-[50vh]">
         <h1 className="font-serif text-3xl mb-4">Order Not Found</h1>
-        <p className="text-muted-foreground mb-8">{error || "We couldn't find the order you're looking for."}</p>
+        <p className="text-muted-foreground mb-8">
+          {error?.message || "We couldn't find the order you're looking for."}
+        </p>
         <Button asChild size="lg">
           <Link href="/">Return Home</Link>
         </Button>

@@ -38,9 +38,9 @@ export default async function AdminOrderDetailPage({
   let refunds: any;
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
-  try {
-    await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
+  await AuthService.requireRole(requestHeaders, UserRole.ADMIN);
 
+  try {
     const [rawOrder, rawShipments, rawReturnRequests, rawExchangeRequests, rawCancellation, rawRefunds] = await Promise.all([
       OrderService.getAdminOrderById(orderId),
       prisma.shipment.findMany({
@@ -82,7 +82,7 @@ export default async function AdminOrderDetailPage({
         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-4" />
         <h2 className="text-lg font-semibold text-red-800">Failed to load order details</h2>
         <p className="text-sm text-red-600 mt-2">
-          The order could not be retrieved. It may not exist or you may lack permissions.
+          The order could not be retrieved. It may not exist or there was a system error.
         </p>
         <Link href="/admin/orders" className="mt-4 inline-block text-red-700 underline">
           Return to Orders

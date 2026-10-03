@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CategoryService } from "@/server/services/category.service";
 import { ProductService } from "@/server/services/product.service";
+import { NotFoundError } from "@/utils/errors";
 import { ProductSummary } from "@/types/catalog";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { BreadcrumbJsonLd } from "@/components/product/BreadcrumbJsonLd";
@@ -43,10 +44,13 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         images: category.imageUrl ? [{ url: category.imageUrl }] : [],
       },
     };
-  } catch {
-    return {
-      title: "Category Not Found | AHANKARA STUDIOS",
-    };
+  } catch (error) {
+    if (error instanceof NotFoundError || (error as Error).name === "NotFoundError") {
+      return {
+        title: "Category Not Found | AHANKARA STUDIOS",
+      };
+    }
+    throw error;
   }
 }
 
@@ -56,8 +60,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   try {
     category = await CategoryService.getCategoryBySlug(resolvedParams.slug, true);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof NotFoundError || (error as Error).name === "NotFoundError") {
+      notFound();
+    }
+    throw error;
   }
 
   // Fetch associated products

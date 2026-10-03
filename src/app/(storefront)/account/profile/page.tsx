@@ -1,6 +1,7 @@
 import { ProfileFormClient } from "@/components/account/ProfileFormClient";
 import { ChangePasswordFormClient } from "@/components/account/ChangePasswordFormClient";
 import { AuthService } from "@/server/services/auth.service";
+import { UnauthorizedError } from "@/utils/errors";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@/hooks/use-auth";
@@ -16,8 +17,11 @@ export default async function ProfilePage() {
   let user;
   try {
     user = await AuthService.requireAuth(reqHeaders);
-  } catch {
-    redirect("/login?callbackUrl=/account/profile");
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login?callbackUrl=/account/profile");
+    }
+    throw error;
   }
 
   // Map AuthenticatedUser to the expected Client User type (matching hooks/use-auth)

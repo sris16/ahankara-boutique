@@ -25,8 +25,9 @@ export default async function EditCouponPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let coupon: any = null;
 
+  await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
+
   try {
-    await AuthService.requireRole(reqHeaders, UserRole.ADMIN);
 
     const rawCoupon = await prisma.coupon.findUnique({
       where: { id: resolvedParams.couponId },
@@ -47,8 +48,11 @@ export default async function EditCouponPage({
 
     coupon = JSON.parse(JSON.stringify(rawCoupon));
   } catch (error) {
+    if (error instanceof Error && error.message === "NEXT_NOT_FOUND") {
+      throw error;
+    }
     console.error("Failed to load coupon:", error);
-    notFound();
+    throw error;
   }
 
   return (

@@ -1,5 +1,5 @@
 import { ShippingProvider, ShipmentStatus } from '@prisma/client';
-import { AssignAWBRequest, AssignAWBResponse, CreateProviderShipmentRequest, CreateProviderShipmentResponse, NormalizedTrackingEvent, ShippingProviderAdapter, GetShippingRatesRequest, ShippingRateQuote } from './shipping-provider.interface';
+import { AssignAWBResponse, CreateProviderShipmentRequest, CreateProviderShipmentResponse, NormalizedTrackingEvent, ShippingProviderAdapter, GetShippingRatesRequest, ShippingRateQuote } from './shipping-provider.interface';
 
 export class MockShippingProvider implements ShippingProviderAdapter {
   get providerType(): ShippingProvider {
@@ -20,7 +20,7 @@ export class MockShippingProvider implements ShippingProviderAdapter {
     return Promise.resolve();
   }
 
-  async assignAWB(providerShipmentId: string, options?: AssignAWBRequest): Promise<AssignAWBResponse> {
+  async assignAWB(providerShipmentId: string): Promise<AssignAWBResponse> {
     console.log(`[MockProvider] Assigning AWB for ${providerShipmentId}`);
     return {
       awb: `MOCK_AWB_${Date.now()}`,
@@ -29,7 +29,7 @@ export class MockShippingProvider implements ShippingProviderAdapter {
     };
   }
 
-  async getTracking(providerShipmentId: string, _awb: string | null = null): Promise<NormalizedTrackingEvent[]> {
+  async getTracking(providerShipmentId: string): Promise<NormalizedTrackingEvent[]> {
     // In a real provider, we would fetch from the provider API.
     // For MOCK, we just return a simulated history based on time.
     const now = new Date();

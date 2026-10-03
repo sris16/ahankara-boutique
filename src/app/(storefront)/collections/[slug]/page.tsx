@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CollectionService } from "@/server/services/collection.service";
 import { ProductService } from "@/server/services/product.service";
+import { NotFoundError } from "@/utils/errors";
 import { ProductSummary } from "@/types/catalog";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { BreadcrumbJsonLd } from "@/components/product/BreadcrumbJsonLd";
@@ -43,10 +44,13 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
         images: collection.imageUrl ? [{ url: collection.imageUrl }] : [],
       },
     };
-  } catch {
-    return {
-      title: "Collection Not Found | AHANKARA STUDIOS",
-    };
+  } catch (error) {
+    if (error instanceof NotFoundError || (error as Error).name === "NotFoundError") {
+      return {
+        title: "Collection Not Found | AHANKARA STUDIOS",
+      };
+    }
+    throw error;
   }
 }
 
@@ -56,8 +60,11 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
 
   try {
     collection = await CollectionService.getCollectionBySlug(resolvedParams.slug, true);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof NotFoundError || (error as Error).name === "NotFoundError") {
+      notFound();
+    }
+    throw error;
   }
 
   // Check if collection has date constraints

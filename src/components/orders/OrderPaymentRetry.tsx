@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 interface OrderPaymentRetryProps {
   orderId: string;
@@ -18,6 +19,7 @@ declare global {
 
 export function OrderPaymentRetry({ orderId }: OrderPaymentRetryProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,9 +86,15 @@ export function OrderPaymentRetry({ orderId }: OrderPaymentRetryProps) {
             // Success! Refresh the page to show new status
             router.refresh();
           } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : "Payment verification failed. Please contact support.";
-            setError(msg);
-            setIsProcessing(false);
+            console.error("Verification transport error:", err);
+            toast({
+              variant: "default",
+              title: "Payment Processing",
+              description: "Your payment is being confirmed. Please check your order status.",
+            });
+            // Intentionally DO NOT reset isProcessing to prevent duplicate clicks.
+            // Delegate final resolution to the Razorpay Webhook.
+            router.refresh();
           }
         },
         theme: {

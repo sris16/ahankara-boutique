@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import { AdminCategory, AdminCollection } from "@/types/admin";
+import { NotFoundError } from "@/utils/errors";
 
 export const metadata = {
   title: "Edit Product | Admin | AHANKARA STUDIOS",
@@ -27,8 +28,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ pr
   try {
     const rawProduct = await ProductService.getProductById(productId);
     productData = JSON.parse(JSON.stringify(rawProduct));
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof NotFoundError || (error as Error).name === "NotFoundError") {
+      notFound();
+    }
+    throw error;
   }
 
   let categoriesData: AdminCategory[] = [];

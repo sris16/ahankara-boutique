@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { AuthService } from "@/server/services/auth.service";
+import { UnauthorizedError } from "@/utils/errors";
 import { AccountNav } from "@/components/account/AccountNav";
 import { ShieldCheck, Sparkles } from "lucide-react";
 
@@ -15,15 +16,16 @@ export default async function AccountLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/login?callbackUrl=/account");
+  let user;
+  try {
+    user = await AuthService.requireAuth(await headers());
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login?callbackUrl=/account");
+    }
+    throw error;
   }
 
-  const user = session.user;
   const userName = user.name || "Client";
   const userInitials = (user.name || user.email || "A")
     .split(" ")

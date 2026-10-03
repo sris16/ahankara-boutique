@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { AuthService } from "@/server/services/auth.service";
 import { OrderService } from "@/server/services/order.service";
 import { AddressService } from "@/server/services/address.service";
+import { UnauthorizedError } from "@/utils/errors";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ErrorState } from "@/components/ui/error-state";
 import {
   Package,
   MapPin,
@@ -38,31 +40,30 @@ export default async function AccountRootPage() {
   let user;
   try {
     user = await AuthService.requireAuth(reqHeaders);
-  } catch {
-    redirect("/login?callbackUrl=/account");
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      redirect("/login?callbackUrl=/account");
+    }
+    throw error;
   }
 
   // Safely fetch dashboard highlights
-  type OrderSummary = Awaited<ReturnType<typeof OrderService.getCustomerOrders>>["orders"][number];
-  let recentOrders: OrderSummary[] = [];
-  let totalOrdersCount = 0;
+  let ordersData: Awaited<ReturnType<typeof OrderService.getCustomerOrders>> | null = null;
   try {
-    const ordersData = await OrderService.getCustomerOrders(user.id, 1, 2);
-    recentOrders = ordersData.orders;
-    totalOrdersCount = ordersData.pagination.total;
+    ordersData = await OrderService.getCustomerOrders(user.id, 1, 2);
   } catch (err) {
     console.error("Dashboard failed to load recent orders", err);
   }
 
   type UserAddress = Awaited<ReturnType<typeof AddressService.getUserAddresses>>[number];
-  let addresses: UserAddress[] = [];
+  let addresses: UserAddress[] | null = null;
   try {
     addresses = await AddressService.getUserAddresses(user.id);
   } catch (err) {
     console.error("Dashboard failed to load addresses", err);
   }
 
-  const defaultShipping = addresses.find((a) => a.isDefaultShipping) || addresses[0];
+  const defaultShipping = addresses?.find((a) => a.isDefaultShipping) || addresses?.[0];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -90,7 +91,7 @@ export default async function AccountRootPage() {
           </div>
           <div className="flex items-baseline justify-between">
             <span className="font-serif text-2xl sm:text-3xl text-foreground font-medium">
-              {totalOrdersCount}
+              {ordersData ? ordersData.pagination.total : "—"}
             </span>
             <span className="text-[11px] text-muted-foreground group-hover:text-foreground flex items-center gap-1">
               View History <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
@@ -110,7 +111,7 @@ export default async function AccountRootPage() {
           </div>
           <div className="flex items-baseline justify-between">
             <span className="font-serif text-2xl sm:text-3xl text-foreground font-medium">
-              {addresses.length}
+              {addresses ? addresses.length : "—"}
             </span>
             <span className="text-[11px] text-muted-foreground group-hover:text-foreground flex items-center gap-1">
               Manage <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
@@ -151,7 +152,11 @@ export default async function AccountRootPage() {
           </Button>
         </div>
 
-        {recentOrders.length === 0 ? (
+        {!ordersData ? (
+          <div className="py-6">
+            <ErrorState variant="inline" title="Orders Unavailable" message="We couldn't retrieve your recent orders at this time." />
+          </div>
+        ) : ordersData.orders.length === 0 ? (
           <div className="py-10 text-center flex flex-col items-center justify-center">
             <div className="w-12 h-12 rounded-full bg-surface-muted/60 flex items-center justify-center mb-3">
               <Package className="w-5 h-5 text-muted-foreground/60" />
@@ -166,7 +171,7 @@ export default async function AccountRootPage() {
           </div>
         ) : (
           <div className="divide-y divide-border/60">
-            {recentOrders.map((order) => (
+            {ordersData.orders.map((order) => (
               <div key={order.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
@@ -208,7 +213,9 @@ export default async function AccountRootPage() {
               <MapPin className="w-4 h-4 text-muted-foreground" />
             </div>
 
-            {defaultShipping ? (
+            {!addresses ? (
+              <ErrorState variant="inline" title="Address Unavailable" message="We couldn't load your shipping details." />
+            ) : defaultShipping ? (
               <div className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
                 <p className="font-medium text-foreground text-sm">{defaultShipping.fullName}</p>
                 <p>{defaultShipping.addressLine1}</p>

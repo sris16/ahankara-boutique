@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { ProductSummary } from "@/types/catalog";
 import { formatPrice, cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
@@ -53,33 +53,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
         href={`/products/${product.slug}`}
         className="block relative aspect-[3/4] overflow-hidden bg-surface-muted mb-3.5 rounded-xs border border-border/40 transition-colors"
       >
-        {primaryImage ? (
-          <Image
-            src={primaryImage.secureUrl}
-            alt={primaryImage.altText || product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center w-full h-full p-4 bg-gradient-to-b from-surface-muted to-brand-50/60 select-none">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden border border-border/60 mb-2 opacity-50">
-              <Image
-                src="/images/brand/ahankara-studios-logo.jpg"
-                alt="AHANKARA STUDIOS"
-                fill
-                sizes="48px"
-                className="object-cover"
-              />
-            </div>
-            <span className="font-serif text-[11px] uppercase tracking-[0.25em] text-muted-foreground/80 font-medium text-center">
-              AHANKARA
-            </span>
-            <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60 mt-0.5">
-              Atelier Piece
-            </span>
-          </div>
-        )}
+        <ImageWithFallback
+          src={primaryImage?.secureUrl || ""}
+          alt={primaryImage?.altText || product.name}
+          fill
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:group-hover:scale-105"
+        />
 
         {/* Status Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">

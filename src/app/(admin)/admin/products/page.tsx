@@ -31,27 +31,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let collectionsData: any[] = [];
 
-  try {
-    const rawProducts = await ProductService.getAdminProducts(query);
-    productsData = JSON.parse(JSON.stringify(rawProducts));
-  } catch (err) {
-    console.error("Failed to fetch products:", err);
-  }
+  const rawProducts = await ProductService.getAdminProducts(query);
+  productsData = JSON.parse(JSON.stringify(rawProducts));
 
-  try {
-    const rawCategories = await CategoryService.getCategories();
-    categoriesData = JSON.parse(JSON.stringify(rawCategories));
-  } catch (err) {
-    console.error("Failed to fetch categories:", err);
-  }
+  const rawCategories = await CategoryService.getCategories();
+  categoriesData = JSON.parse(JSON.stringify(rawCategories));
 
-  try {
-    const { CollectionService } = await import("@/server/services/collection.service");
-    const rawCollections = await CollectionService.getCollections();
-    collectionsData = JSON.parse(JSON.stringify(rawCollections));
-  } catch (err) {
-    console.error("Failed to fetch collections:", err);
-  }
+  const { CollectionService } = await import("@/server/services/collection.service");
+  const rawCollections = await CollectionService.getCollections();
+  collectionsData = JSON.parse(JSON.stringify(rawCollections));
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

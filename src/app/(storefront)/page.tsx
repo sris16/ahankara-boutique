@@ -10,6 +10,8 @@ import { EditorialVignette } from "@/components/home/EditorialVignette";
 import { CollectionSpotlight } from "@/components/home/CollectionSpotlight";
 import { BrandPillars } from "@/components/home/BrandPillars";
 import { HomeClosingCta } from "@/components/home/HomeClosingCta";
+import { Suspense } from "react";
+import { LocalErrorBoundary } from "@/components/ui/local-error-boundary";
 
 export const revalidate = 60; // Revalidate every minute to keep inventory badges fresh
 
@@ -34,59 +36,52 @@ export const metadata: Metadata = {
   },
 };
 
-async function getFeaturedCollections() {
-  try {
-    return await CollectionService.getCollections(true, true);
-  } catch (error) {
-    console.error("Failed to fetch featured collections", error);
-    return [];
-  }
+async function AsyncCategoryShowcase() {
+  const tree = await CategoryService.getCategoryTree(true);
+  const topCategories = tree.slice(0, 4);
+  return <CategoryShowcase categories={topCategories} />;
 }
 
-async function getTopCategories() {
-  try {
-    const tree = await CategoryService.getCategoryTree(true);
-    return tree.slice(0, 4); // Limit to top 4 for the homepage discovery
-  } catch (error) {
-    console.error("Failed to fetch categories", error);
-    return [];
-  }
-}
-
-async function getNewArrivals() {
-  try {
-    return await ProductService.getPublicProducts({ sortBy: "newest", limit: 4, page: 1 });
-  } catch (error) {
-    console.error("Failed to fetch new arrivals", error);
-    return null;
-  }
-}
-
-export default async function StorefrontHomepage() {
-  const [featuredCollections, topCategories, newArrivalsData] = await Promise.all([
-    getFeaturedCollections(),
-    getTopCategories(),
-    getNewArrivals(),
-  ]);
-
+async function AsyncNewArrivals() {
+  const newArrivalsData = await ProductService.getPublicProducts({ sortBy: "newest", limit: 4, page: 1 });
   const newArrivals = (newArrivalsData?.data || []) as unknown as ProductSummary[];
+  return <NewArrivalsSection products={newArrivals} />;
+}
 
+async function AsyncCollectionSpotlight() {
+  const featuredCollections = await CollectionService.getCollections(true, true);
+  return <CollectionSpotlight collections={featuredCollections} />;
+}
+
+export default function StorefrontHomepage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* 1. Cinematic Hero Experience */}
       <Hero />
 
       {/* 2. Curated Categories Showcase */}
-      <CategoryShowcase categories={topCategories} />
+      <LocalErrorBoundary title="Categories unavailable">
+        <Suspense fallback={<div className="h-64 sm:h-96 w-full animate-pulse bg-muted/10" />}>
+          <AsyncCategoryShowcase />
+        </Suspense>
+      </LocalErrorBoundary>
 
       {/* 3. Latest Atelier Additions */}
-      <NewArrivalsSection products={newArrivals} />
+      <LocalErrorBoundary title="New arrivals unavailable">
+        <Suspense fallback={<div className="h-64 sm:h-96 w-full animate-pulse bg-muted/10" />}>
+          <AsyncNewArrivals />
+        </Suspense>
+      </LocalErrorBoundary>
 
       {/* 4. Asymmetric Craftsmanship Story */}
       <EditorialVignette />
 
       {/* 5. Thematic Collections / Studio Catalog Gateway */}
-      <CollectionSpotlight collections={featuredCollections} />
+      <LocalErrorBoundary title="Collections unavailable">
+        <Suspense fallback={<div className="h-64 sm:h-96 w-full animate-pulse bg-muted/10" />}>
+          <AsyncCollectionSpotlight />
+        </Suspense>
+      </LocalErrorBoundary>
 
       {/* 6. Authentic Studio Pillars */}
       <BrandPillars />

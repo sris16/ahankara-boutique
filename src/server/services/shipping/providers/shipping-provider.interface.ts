@@ -1,4 +1,4 @@
-import { Order, OrderAddress, OrderItem, Shipment, ShipmentItem, ShippingProvider } from '@prisma/client';
+import { Order, OrderAddress, OrderItem, ShipmentItem, ShippingProvider } from '@prisma/client';
 
 export interface CreateProviderShipmentRequest {
   shipmentId: string;

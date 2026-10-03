@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { AuthService } from '@/server/services/auth.service';
 import { CollectionService } from '@/server/services/collection.service';
 import { createCollectionSchema } from '@/server/validators/collection.validator';

@@ -10,6 +10,7 @@ interface PaymentHandlerProps {
   paymentAttempt: PaymentAttemptResponse;
   onSuccess: (orderId: string) => void;
   onError: (error: string) => void;
+  onVerificationUnknown: (orderId: string) => void;
   onClose: () => void;
 }
 
@@ -25,6 +26,7 @@ export function PaymentHandler({
   paymentAttempt,
   onSuccess,
   onError,
+  onVerificationUnknown,
   onClose,
 }: PaymentHandlerProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
@@ -79,11 +81,8 @@ export function PaymentHandler({
           });
           onSuccess(order.id);
         } catch (err: unknown) {
-          const msg =
-            err instanceof Error
-              ? err.message
-              : "Payment verification failed. Your payment is under review.";
-          onError(msg);
+          console.error("Verification transport error:", err);
+          onVerificationUnknown(order.id);
         } finally {
           setIsVerifying(false);
         }
@@ -114,7 +113,7 @@ export function PaymentHandler({
       initializedOrderIdRef.current = null;
       onError("Payment initialization failed");
     }
-  }, [isScriptLoaded, paymentAttempt, order, onSuccess, onError, onClose]);
+  }, [isScriptLoaded, paymentAttempt, order, onSuccess, onError, onVerificationUnknown, onClose]);
 
   return (
     <div

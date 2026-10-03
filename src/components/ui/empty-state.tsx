@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "./button"
 
 export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "inline"
   icon?: LucideIcon
   title: string
   description?: string
@@ -25,13 +26,15 @@ export function EmptyState({
   description,
   action,
   secondaryAction,
+  variant = "default",
   className,
   ...props
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center p-8 md:p-12 rounded-sm border border-border/60 bg-surface/50 max-w-md mx-auto my-8",
+        "flex flex-col items-center justify-center text-center rounded-sm border border-border/60 bg-surface/50",
+        variant === "default" ? "p-8 md:p-12 max-w-md mx-auto my-8" : "p-6 w-full",
         className
       )}
       {...props}

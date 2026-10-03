@@ -18,7 +18,7 @@ async function run() {
   const page = await context.newPage();
 
   console.log('Navigating to Admin Dashboard to verify auth...');
-  const res = await page.goto('http://localhost:3001/admin/dashboard');
+  await page.goto('http://localhost:3001/admin/dashboard');
 
   console.log('Current URL:', page.url());
   if (page.url().includes('/login')) {

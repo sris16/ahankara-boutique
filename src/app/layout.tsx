@@ -22,6 +22,7 @@ import { AddressProvider } from "@/hooks/use-address";
 import { ToastProvider } from "@/components/ui/toast";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { WebVitals } from "@/components/analytics/WebVitals";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -81,6 +82,7 @@ export default function RootLayout({
               <AddressProvider>
                 <ToastProvider>
                   <div className="flex min-h-screen flex-col selection:bg-primary selection:text-primary-foreground">
+                    <OfflineBanner />
                     <AnalyticsProvider />
                     <WebVitals />
                     <main className="flex-1 min-h-screen">
