@@ -12,11 +12,11 @@ export function LookbookAsymmetricGallery({ images, caption }: LookbookAsymmetri
   if (!images || images.length < 2) return null;
 
   return (
-    <section className="py-24 md:py-32 container mx-auto px-6">
+    <section className="py-16 md:py-24 container mx-auto px-6">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-center">
 
         {/* Left Image: Smaller, offset, floating */}
-        <div className="md:col-span-5 md:col-start-1 md:mt-24">
+        <div className="md:col-span-5 md:col-start-1 md:mt-16">
           <div className="relative aspect-[3/4] overflow-hidden bg-surface-muted shadow-subtle group">
             <Image
               src={images[0].src}

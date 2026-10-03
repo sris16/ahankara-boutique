@@ -13,7 +13,7 @@ interface LookbookNarrativeProps {
 export function LookbookNarrative({ headline, body, image, align = "left" }: LookbookNarrativeProps) {
   if (align === "center" || !image) {
     return (
-      <section className="py-24 md:py-32 container mx-auto px-6 flex justify-center text-center">
+      <section className="py-16 md:py-24 container mx-auto px-6 flex justify-center text-center">
         <div className="max-w-3xl">
           <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl tracking-tight text-foreground mb-8">
             {headline}
@@ -27,8 +27,8 @@ export function LookbookNarrative({ headline, body, image, align = "left" }: Loo
   }
 
   return (
-    <section className="py-24 md:py-32 container mx-auto px-6">
-      <div className={`grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-center ${align === "right" ? "lg:flex-row-reverse" : ""}`}>
+    <section className="py-16 md:py-24 container mx-auto px-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center ${align === "right" ? "lg:flex-row-reverse" : ""}`}>
 
         {/* Text Area */}
         <div className={`lg:col-span-5 flex flex-col justify-center ${align === "right" ? "lg:col-start-8" : "lg:col-start-1"}`}>

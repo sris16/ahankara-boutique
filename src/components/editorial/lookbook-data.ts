@@ -29,8 +29,8 @@ export const lookbookData = {
     headline: "Form Follows Intention",
     body: "In a landscape saturated by noise, true luxury is found in subtraction. The Autumn/Winter campaign strips away the superfluous, leaving only what is essential: the precision of the cut, the integrity of the drape, and the weight of the fabric against the body.",
     image: {
-      src: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1470&auto=format&fit=crop",
-      alt: "Detail shot of heavy cotton drape",
+      src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1470&auto=format&fit=crop",
+      alt: "Full body minimalist fashion editorial shot in neutral environment",
     },
   },
   gallery1: {
@@ -40,7 +40,7 @@ export const lookbookData = {
         alt: "Studio shot highlighting structured shoulders",
       },
       {
-        src: "https://images.unsplash.com/photo-1550614000-4b95d4ebf071?q=80&w=2070&auto=format&fit=crop",
+        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop",
         alt: "Model in motion showcasing fabric fluidity",
       },
     ],

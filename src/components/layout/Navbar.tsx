@@ -115,6 +115,16 @@ export function Navbar() {
             </Link>
 
             <Link
+              href="/lookbook"
+              className={cn(
+                "text-xs uppercase tracking-[0.2em] font-medium transition-colors py-4",
+                pathname === "/lookbook" ? "text-accent" : "text-foreground hover:text-accent"
+              )}
+            >
+              Lookbook
+            </Link>
+
+            <Link
               href="/about"
               className={cn(
                 "text-xs uppercase tracking-[0.2em] font-medium transition-colors py-4",
@@ -274,6 +284,17 @@ export function Navbar() {
               )}
             >
               All Products
+            </Link>
+
+            <Link
+              href="/lookbook"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={cn(
+                "text-base font-serif tracking-wide py-3 border-b border-border/30 hover:text-accent transition-colors",
+                pathname === "/lookbook" && "text-accent"
+              )}
+            >
+              Lookbook
             </Link>
 
             <Link

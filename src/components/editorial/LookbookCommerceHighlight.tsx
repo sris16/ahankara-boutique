@@ -22,9 +22,9 @@ export function LookbookCommerceHighlight({
   ctaLink
 }: LookbookCommerceHighlightProps) {
   return (
-    <section className="py-24 md:py-36 bg-surface-muted/50 border-y border-border/40">
+    <section className="py-16 md:py-24 bg-surface-muted/50 border-y border-border/40">
       <div className="container mx-auto px-6 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
           {/* Large Heroic Edge-to-Edge feel for the highlight */}
           <div className="relative aspect-[4/5] lg:aspect-[3/4] overflow-hidden shadow-subtle">
