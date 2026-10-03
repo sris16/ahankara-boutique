@@ -16,6 +16,8 @@ const envSchema = z.object({
   // Auth
   BETTER_AUTH_SECRET: prodRequired('ahankara_boutique_v3_super_secret_key_32bytes'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 
   // Resend
   RESEND_API_KEY: prodOptional(),

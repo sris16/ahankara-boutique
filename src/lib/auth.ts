@@ -49,6 +49,18 @@ export const auth = betterAuth({
       },
     },
   },
+  socialProviders: {
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID || "",
+      clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+    },
+  },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
+    },
+  },
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {

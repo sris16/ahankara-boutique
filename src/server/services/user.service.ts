@@ -51,10 +51,11 @@ export class UserService {
   static async updateProfile(userId: string, data: unknown) {
     const validData = updateProfileSchema.parse(data);
     
-    // Ensure we don't save empty strings if they are meant to be null/undefined for optional fields
     const updateData: Record<string, string | null> = {};
     if (validData.name !== undefined) updateData.name = validData.name || null;
-    if (validData.phone !== undefined) updateData.phone = validData.phone || null;
+    if (validData.phone !== undefined) {
+      updateData.phone = validData.phone === "" ? "" : (validData.phone || null);
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },
