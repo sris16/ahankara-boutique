@@ -106,7 +106,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 650px"
-              preload
+              priority
             />
           </div>
 
