@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
+import { INDIAN_STATES_AND_UTS, INDIAN_CITIES_BY_STATE } from "@/data/indiaLocations";
 
 interface AddressFormProps {
   initialData?: Address | null;
@@ -152,30 +154,50 @@ export function AddressForm({ initialData, onSubmit, onCancel, isLoading }: Addr
           <Label htmlFor="city" className="text-xs uppercase tracking-wider font-medium text-foreground">
             City <span className="text-destructive">*</span>
           </Label>
-          <Input
+          <Combobox
             id="city"
             name="city"
             placeholder="City or district"
             value={formData.city}
-            onChange={handleChange}
+            onValueChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
+            options={(() => {
+              if (!formData.state) return [];
+              const stateKey = Object.keys(INDIAN_CITIES_BY_STATE).find(k => k.toLowerCase() === formData.state.toLowerCase());
+              return stateKey ? INDIAN_CITIES_BY_STATE[stateKey] : [];
+            })()}
+            emptyMessage={!formData.state ? "Select a state first" : "No city suggestions available — you can type your city manually."}
             required
             disabled={disabled}
-            className="h-11 rounded-xs text-sm"
+            className="font-sans"
           />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="state" className="text-xs uppercase tracking-wider font-medium text-foreground">
             State / Province <span className="text-destructive">*</span>
           </Label>
-          <Input
+          <Combobox
             id="state"
             name="state"
             placeholder="State"
             value={formData.state}
-            onChange={handleChange}
+            onValueChange={(val) => {
+              // Clear city if state changes to a completely different valid state and current city is not in new state
+              setFormData(prev => {
+                if (val !== prev.state) {
+                  const stateKey = Object.keys(INDIAN_CITIES_BY_STATE).find(k => k.toLowerCase() === val.toLowerCase());
+                  const newCities = stateKey ? INDIAN_CITIES_BY_STATE[stateKey] : [];
+                  
+                  if (prev.city && newCities.length > 0 && !newCities.includes(prev.city)) {
+                    return { ...prev, state: val, city: "" };
+                  }
+                }
+                return { ...prev, state: val };
+              });
+            }}
+            options={INDIAN_STATES_AND_UTS}
             required
             disabled={disabled}
-            className="h-11 rounded-xs text-sm"
+            className="font-sans"
           />
         </div>
       </div>
@@ -194,6 +216,8 @@ export function AddressForm({ initialData, onSubmit, onCancel, isLoading }: Addr
             required
             disabled={disabled}
             maxLength={6}
+            pattern="\d{6}"
+            title="PIN code must be exactly 6 digits"
             className="h-11 rounded-xs text-sm font-mono tracking-wider"
           />
         </div>
