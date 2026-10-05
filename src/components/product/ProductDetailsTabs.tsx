@@ -18,19 +18,19 @@ export function ProductDetailsTabs({
   productId,
 }: ProductDetailsTabsProps) {
   return (
-    <div className="w-full pt-8 mt-6 border-t border-border/60">
+    <div className="w-full pt-8 mt-6 border-t border-border/40">
       <Tabs defaultValue="story" className="w-full">
-        <TabsList className="w-full border-b border-border/60 justify-start gap-4 sm:gap-8 pb-px">
-          <TabsTrigger value="story" className="text-xs sm:text-sm tracking-wider uppercase font-medium">
+        <TabsList className="w-full border-b border-border/40 justify-start gap-4 sm:gap-8 pb-px overflow-x-auto hide-scrollbar whitespace-nowrap">
+          <TabsTrigger value="story" className="text-xs font-mono tracking-[0.2em] uppercase py-2.5">
             Story & Craft
           </TabsTrigger>
-          <TabsTrigger value="details" className="text-xs sm:text-sm tracking-wider uppercase font-medium">
+          <TabsTrigger value="details" className="text-xs font-mono tracking-[0.2em] uppercase py-2.5">
             Details
           </TabsTrigger>
-          <TabsTrigger value="care" className="text-xs sm:text-sm tracking-wider uppercase font-medium">
+          <TabsTrigger value="care" className="text-xs font-mono tracking-[0.2em] uppercase py-2.5">
             Care
           </TabsTrigger>
-          <TabsTrigger value="shipping" className="text-xs sm:text-sm tracking-wider uppercase font-medium">
+          <TabsTrigger value="shipping" className="text-xs font-mono tracking-[0.2em] uppercase py-2.5">
             Shipping & Returns
           </TabsTrigger>
         </TabsList>

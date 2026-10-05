@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     title: "Client Care & Contact | AHANKARA STUDIOS",
     description: "Connect with AHANKARA STUDIOS client care for order inquiries, bespoke consultations, and sizing guidance.",
   },
+  
 };
 
 export default function ContactPage() {

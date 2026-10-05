@@ -85,7 +85,7 @@ export function ProductLightbox({
           <span className="font-serif text-sm md:text-base text-white/90 tracking-wide font-normal truncate max-w-[200px] sm:max-w-md">
             {productName}
           </span>
-          <span className="text-xs uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-white/10 text-white/70 border border-white/15">
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 rounded-xs bg-white/10 text-white/80 border border-white/15">
             {activeIndex + 1} / {images.length}
           </span>
         </div>
@@ -94,9 +94,9 @@ export function ProductLightbox({
           type="button"
           onClick={onClose}
           aria-label="Close enlarged gallery"
-          className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xs bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer border border-white/15 flex items-center justify-center focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-white"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </button>
       </div>
 
@@ -113,9 +113,9 @@ export function ProductLightbox({
             onClick={() => onSelectIndex(Math.max(0, activeIndex - 1))}
             disabled={activeIndex === 0}
             aria-label="Previous image"
-            className="absolute left-2 sm:left-4 z-20 p-3 rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/20 disabled:opacity-20 disabled:pointer-events-none transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute left-2 sm:left-4 z-20 w-11 h-11 rounded-xs bg-black/50 hover:bg-black/80 text-white border border-white/20 disabled:opacity-20 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-white"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
         )}
 
@@ -136,9 +136,9 @@ export function ProductLightbox({
             onClick={() => onSelectIndex(Math.min(images.length - 1, activeIndex + 1))}
             disabled={activeIndex === images.length - 1}
             aria-label="Next image"
-            className="absolute right-2 sm:right-4 z-20 p-3 rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/20 disabled:opacity-20 disabled:pointer-events-none transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute right-2 sm:right-4 z-20 w-11 h-11 rounded-xs bg-black/50 hover:bg-black/80 text-white border border-white/20 disabled:opacity-20 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-white"
           >
-            <ChevronRight className="h-6 w-6" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         )}
       </div>

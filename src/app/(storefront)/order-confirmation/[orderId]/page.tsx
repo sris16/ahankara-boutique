@@ -83,39 +83,58 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 md:py-16 max-w-4xl">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 max-w-4xl">
       <div className="flex flex-col items-center text-center mb-12">
-        <div className="w-16 h-16 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full flex items-center justify-center mb-6">
-          <CheckCircle className="w-8 h-8" />
+        <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mb-6 border border-success/20">
+          <CheckCircle className="w-8 h-8 stroke-[1.5]" />
         </div>
-        <h1 className="font-serif text-3xl md:text-4xl mb-4">Thank you for your order!</h1>
-        <p className="text-muted-foreground text-lg">
-          Your order <strong className="text-foreground">{order.orderNumber}</strong> has been confirmed.
+        <span className="text-xs uppercase tracking-[0.25em] text-accent font-mono font-medium block mb-2">
+          Atelier Acquisition Confirmed
+        </span>
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-foreground mb-3">
+          Thank you for your order
+        </h1>
+        <p className="text-muted-foreground text-base sm:text-lg">
+          Creation Reference: <strong className="text-foreground font-mono">{order.orderNumber}</strong>
         </p>
-        <p className="text-muted-foreground mt-2">
-          We&apos;ll send you an email with shipping information when your order ships.
+        <p className="text-muted-foreground text-xs sm:text-sm mt-2 max-w-md mx-auto">
+          We have reserved your pieces. A detailed dispatch itinerary and tracking dossier will be sent to your registered email.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 flex flex-col gap-8">
-          <div className="border rounded-sm p-6">
-            <h2 className="text-lg font-medium uppercase tracking-wide mb-6 border-b pb-4">Order Details</h2>
+          <div className="bg-surface border border-border/70 rounded-xs p-6 sm:p-7 shadow-subtle">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] mb-6 border-b border-border/40 pb-4 text-foreground">
+              Curated Selections
+            </h2>
 
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col divide-y divide-border/40">
               {order.items.map((item) => (
-                <div key={item.id} className="flex gap-4">
-                  <div className="relative w-20 aspect-[3/4] bg-muted/20 rounded-sm overflow-hidden shrink-0 flex items-center justify-center">
-                    <Package className="w-6 h-6 text-muted-foreground/30" />
+                <div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+                  <div className="relative w-16 sm:w-20 aspect-[3/4] bg-surface-muted rounded-xs overflow-hidden shrink-0 flex items-center justify-center border border-border/40">
+                    <Package className="w-6 h-6 text-muted-foreground/40 stroke-[1.5]" />
                   </div>
-                  <div className="flex flex-col flex-1">
-                    <p className="font-medium text-lg">{item.productName}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.color && <span>Color: {item.color}</span>}
-                      {item.size && <span> | Size: {item.size}</span>}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">Qty: {item.quantity}</p>
-                    <p className="text-sm font-medium mt-auto">{formatPrice(item.lineTotal)}</p>
+                  <div className="flex flex-col flex-1 justify-between">
+                    <div>
+                      <p className="font-serif text-sm sm:text-base font-medium text-foreground">{item.productName}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                        {item.color && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-xs bg-surface-muted text-[11px] font-mono tracking-wide uppercase">
+                            {item.color}
+                          </span>
+                        )}
+                        {item.size && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-xs bg-surface-muted text-[11px] font-mono tracking-wide uppercase font-medium">
+                            {item.size}
+                          </span>
+                        )}
+                        <span className="text-[11px] font-mono text-muted-foreground/70">
+                          Qty: {item.quantity}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm font-mono tabular-nums font-medium text-foreground mt-2">{formatPrice(item.lineTotal)}</p>
                   </div>
                 </div>
               ))}
@@ -123,67 +142,81 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
           </div>
         </div>
 
-        <div className="flex flex-col gap-8">
-          <div className="bg-muted/10 border rounded-sm p-6">
-            <h2 className="text-sm font-medium uppercase tracking-wide mb-4">Summary</h2>
-            <div className="flex flex-col gap-3 text-sm mb-4 border-b pb-4">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatPrice(order.subtotal)}</span>
+        <div className="flex flex-col gap-6">
+          <div className="bg-surface border border-border/70 rounded-xs p-6 shadow-subtle">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground mb-4 pb-2 border-b border-border/40">
+              Summary
+            </h2>
+            <div className="flex flex-col gap-3 text-sm mb-4 border-b border-border/50 pb-4">
+              <div className="flex justify-between items-center text-muted-foreground">
+                <span>Subtotal</span>
+                <span className="font-mono tabular-nums text-foreground">{formatPrice(order.subtotal)}</span>
               </div>
               {order.discountAmount > 0 && (
-                <div className="flex justify-between text-green-600 dark:text-green-400">
-                  <span>Discount</span>
-                  <span>-{formatPrice(order.discountAmount)}</span>
+                <div className="flex justify-between items-center text-accent">
+                  <span>Privilege</span>
+                  <span className="font-mono tabular-nums font-medium">-{formatPrice(order.discountAmount)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span>{order.shippingAmount === 0 ? "Free" : formatPrice(order.shippingAmount)}</span>
+              <div className="flex justify-between items-center text-muted-foreground">
+                <span>Dispatch</span>
+                <span className="text-xs uppercase tracking-wider text-success font-medium font-mono">
+                  {order.shippingAmount === 0 ? "Complimentary" : formatPrice(order.shippingAmount)}
+                </span>
               </div>
               {order.taxAmount > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax</span>
-                  <span>{formatPrice(order.taxAmount)}</span>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>GST</span>
+                  <span className="font-mono tabular-nums text-foreground text-xs">{formatPrice(order.taxAmount)}</span>
                 </div>
               )}
             </div>
-            <div className="flex justify-between items-end">
-              <span className="font-medium">Total</span>
-              <span className="font-medium text-xl">{formatPrice(order.totalAmount)}</span>
+            <div className="flex justify-between items-baseline pt-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground">Total</span>
+              <span className="font-mono tabular-nums font-medium text-xl text-foreground">{formatPrice(order.totalAmount)}</span>
             </div>
           </div>
 
-          <div className="border rounded-sm p-6">
-            <h2 className="text-sm font-medium uppercase tracking-wide mb-4">Shipping Address</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">{order.shippingAddress.name}</strong><br />
-              {order.shippingAddress.line1}<br />
-              {order.shippingAddress.line2 && <>{order.shippingAddress.line2}<br /></>}
-              {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}<br />
-              {order.shippingAddress.country}<br />
-              <span className="mt-2 block">{order.shippingAddress.phone}</span>
-            </p>
+          <div className="bg-surface border border-border/70 rounded-xs p-6 shadow-subtle">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground mb-3 pb-2 border-b border-border/40">
+              Destination Address
+            </h2>
+            <address className="text-xs text-muted-foreground leading-relaxed not-italic space-y-0.5">
+              <strong className="text-foreground block font-medium text-sm mb-1">{order.shippingAddress.name}</strong>
+              <p>{order.shippingAddress.line1}</p>
+              {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
+              <p>{order.shippingAddress.city}, {order.shippingAddress.state} <span className="font-mono">{order.shippingAddress.postalCode}</span></p>
+              <p className="uppercase tracking-wider text-[10px] text-muted-foreground/80">{order.shippingAddress.country}</p>
+              <p className="mt-2 font-mono text-foreground pt-1 border-t border-border/30">{order.shippingAddress.phone}</p>
+            </address>
           </div>
 
-          <div className="border rounded-sm p-6">
-            <h2 className="text-sm font-medium uppercase tracking-wide mb-4">Payment Status</h2>
-            <p className="text-sm font-medium">
+          <div className="bg-surface border border-border/70 rounded-xs p-6 shadow-subtle">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground mb-3 pb-2 border-b border-border/40">
+              Payment Status
+            </h2>
+            <p className="text-xs font-medium font-mono uppercase tracking-wider">
               {order.paymentStatus === 'PAID' ? (
-                <span className="text-green-600 dark:text-green-400">Paid successfully</span>
+                <span className="inline-flex items-center gap-1.5 text-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  Paid successfully
+                </span>
               ) : order.paymentStatus === 'PENDING' ? (
-                <span className="text-amber-600 dark:text-amber-500">Payment pending</span>
+                <span className="inline-flex items-center gap-1.5 text-accent">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                  Verification in progress
+                </span>
               ) : (
-                <span>{order.paymentStatus}</span>
+                <span className="text-muted-foreground">{order.paymentStatus}</span>
               )}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mt-12 text-center border-t pt-8">
-        <Button asChild variant="outline" size="lg">
-          <Link href="/products">Continue Shopping</Link>
+      <div className="mt-12 text-center border-t border-border/50 pt-8">
+        <Button asChild variant="outline" size="lg" className="uppercase tracking-[0.2em] text-xs h-12 px-8 rounded-xs">
+          <Link href="/products">Continue Exploring</Link>
         </Button>
       </div>
     </div>

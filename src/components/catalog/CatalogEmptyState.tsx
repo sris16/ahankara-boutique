@@ -30,7 +30,7 @@ export function CatalogEmptyState({ searchQuery, hasActiveFilters, isError }: Ca
         />
       </div>
 
-      <span className="text-[10px] uppercase tracking-[0.3em] text-accent font-medium mb-2">
+      <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-accent font-medium mb-2">
         Atelier Catalog
       </span>
 

@@ -17,7 +17,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   let url = endpoint;
   if (!url.startsWith("http")) {
-    const baseUrl = BASE_URL || (typeof window === "undefined" ? "http://localhost:3000" : "");
+    const baseUrl = typeof window === "undefined" ? (BASE_URL || "http://localhost:3000") : "";
     url = `${baseUrl}${endpoint}`;
   }
   if (params) {

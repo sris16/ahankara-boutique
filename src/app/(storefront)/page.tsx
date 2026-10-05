@@ -56,25 +56,25 @@ async function AsyncCollectionSpotlight() {
 export default function StorefrontHomepage() {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* 1. Cinematic Hero Experience */}
+      {/* 1. Architectural Hero Experience */}
       <Hero />
 
-      {/* 2. Curated Categories Showcase */}
-      <LocalErrorBoundary title="Categories unavailable">
-        <Suspense fallback={<div className="h-64 sm:h-96 w-full animate-pulse bg-muted/10" />}>
-          <AsyncCategoryShowcase />
-        </Suspense>
-      </LocalErrorBoundary>
-
-      {/* 3. Latest Atelier Additions */}
+      {/* 2. Latest Atelier Additions (Quiet Product Discovery) */}
       <LocalErrorBoundary title="New arrivals unavailable">
         <Suspense fallback={<div className="h-64 sm:h-96 w-full animate-pulse bg-muted/10" />}>
           <AsyncNewArrivals />
         </Suspense>
       </LocalErrorBoundary>
 
-      {/* 4. Asymmetric Craftsmanship Story */}
+      {/* 3. Asymmetric Craftsmanship Story & Atelier Bridge */}
       <EditorialVignette />
+
+      {/* 4. Curated Categories Showcase */}
+      <LocalErrorBoundary title="Categories unavailable">
+        <Suspense fallback={<div className="h-64 sm:h-96 w-full animate-pulse bg-muted/10" />}>
+          <AsyncCategoryShowcase />
+        </Suspense>
+      </LocalErrorBoundary>
 
       {/* 5. Thematic Collections / Studio Catalog Gateway */}
       <LocalErrorBoundary title="Collections unavailable">

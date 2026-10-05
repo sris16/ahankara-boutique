@@ -1,92 +1,128 @@
 @import "tailwindcss";
 
 @theme {
-  /* AHANKARA STUDIOS Official Brand Palette Tokens */
+  /* ==========================================================================
+     AHANKARA STUDIOS — Core Raw Material & Pigment Tokens (Phase 1A.1)
+     Inspired by raw silk, mineral pigments, weathered stone, and obsidian ink.
+     ========================================================================== */
+  --color-raw-alabaster: #FBFBFA;
+  --color-raw-silk: #FFFFFF;
+  --color-raw-bone: #F4F3EF;
+  --color-raw-parchment: #EDEBE5;
+  --color-raw-obsidian: #121314;
+  --color-raw-charcoal: #27292C;
+  --color-raw-pewter: #4D5054;
+  --color-raw-slate: #707378;
+  --color-raw-linen: #E8E6E1;
+  --color-raw-weathered-slate: #C7C4BC;
+  --color-raw-umber: #8C765C;
+  --color-raw-umber-deep: #6E5A44;
+  --color-raw-verdigris: #2B593F;
+  --color-raw-amber: #8C5E1E;
+  --color-raw-crimson: #A33B32;
+  --color-raw-indigo: #344C64;
+
+  /* Backward-compatible brand alias bridges */
   --color-brand-sand: #EEE1D8;
   --color-brand-porcelain: #FAF7F4;
-  --color-brand-linen: #E8E0D8;
-  --color-brand-linen-muted: #F2ECE6;
-  --color-brand-linen-dark: #C4B7AA;
-
+  --color-brand-linen: var(--color-raw-linen);
+  --color-brand-linen-muted: var(--color-raw-bone);
+  --color-brand-linen-dark: var(--color-raw-weathered-slate);
   --color-brand-espresso: #2C1810;
-  --color-brand-umber: #613010;
-  --color-brand-obsidian: #17120F;
+  --color-brand-umber: var(--color-raw-umber);
+  --color-brand-obsidian: var(--color-raw-obsidian);
+  --color-brand-terracotta: var(--color-raw-umber);
+  --color-brand-terracotta-muted: var(--color-raw-parchment);
+  --color-brand-terracotta-dark: var(--color-raw-umber-deep);
 
-  --color-brand-terracotta: #C84A00;
-  --color-brand-terracotta-muted: #F8EDE6;
-  --color-brand-terracotta-dark: #A33C00;
+  /* Elevation Shadows (Restrained diffuse ambient light, no harsh black drop-shadows) */
+  --shadow-subtle: 0 1px 3px 0 rgba(18, 19, 20, 0.04), 0 1px 2px -1px rgba(18, 19, 20, 0.04);
+  --shadow-medium: 0 4px 12px -2px rgba(18, 19, 20, 0.06), 0 2px 6px -2px rgba(18, 19, 20, 0.04);
+  --shadow-elevated: 0 12px 32px -4px rgba(18, 19, 20, 0.08), 0 4px 12px -2px rgba(18, 19, 20, 0.04);
+  --shadow-modal: 0 24px 64px -12px rgba(18, 19, 20, 0.14);
 
-  /* Neutral scale for fine grayscale adjustment */
-  --color-neutral-50: #fafafa;
-  --color-neutral-100: #f5f5f5;
-  --color-neutral-200: #e5e5e5;
-  --color-neutral-300: #d4d4d4;
-  --color-neutral-400: #a3a3a3;
-  --color-neutral-500: #737373;
-  --color-neutral-600: #525252;
-  --color-neutral-700: #404040;
-  --color-neutral-800: #262626;
-  --color-neutral-900: #171717;
-  --color-neutral-950: #0a0a0a;
-
-  /* Elevation Shadows */
-  --shadow-subtle: 0 1px 3px 0 rgba(23, 18, 15, 0.04), 0 1px 2px -1px rgba(23, 18, 15, 0.04);
-  --shadow-medium: 0 4px 12px -2px rgba(23, 18, 15, 0.06), 0 2px 6px -2px rgba(23, 18, 15, 0.04);
-  --shadow-elevated: 0 12px 32px -4px rgba(23, 18, 15, 0.09), 0 4px 12px -2px rgba(23, 18, 15, 0.04);
+  /* Container Boundaries */
+  --container-max-prose: 68ch;
+  --container-max-narrow: 56rem;   /* 896px: Narrative / forms */
+  --container-max-content: 74rem;  /* 1184px: Standard reading / catalog */
+  --container-max-wide: 88rem;     /* 1408px: Editorial spreads */
+  --container-max-cinematic: 100rem; /* 1600px: Max viewport boundary */
 }
 
 :root {
-  /* Surface & Base Canvas */
-  --background: var(--color-brand-porcelain);
-  --foreground: var(--color-brand-obsidian);
+  /* ==========================================================================
+     Semantic Surface & Base Canvas Architecture
+     ========================================================================== */
+  --background: var(--color-raw-alabaster);
+  --foreground: var(--color-raw-obsidian);
 
-  --surface: #FFFFFF;
-  --surface-muted: #F4EFEB;
-  --surface-elevated: #FFFFFF;
+  --surface: var(--color-raw-silk);
+  --surface-muted: var(--color-raw-bone);
+  --surface-elevated: var(--color-raw-parchment);
 
-  /* Muted Text & Backdrops */
-  --muted: #EFE8E1;
-  --muted-foreground: #6B5E57;
+  /* Muted Text & Backdrops (Solid certified contrast tokens, no low-contrast opacities) */
+  --muted: var(--color-raw-bone);
+  --muted-foreground: var(--color-raw-slate);
+  --foreground-secondary: var(--color-raw-pewter);
 
-  /* Primary Interactive: Deep Obsidian Espresso (Classic Luxury, High-Contrast) */
-  --primary: var(--color-brand-obsidian);
-  --primary-foreground: var(--color-brand-porcelain);
+  /* Primary Interactive: Deep Obsidian Ink */
+  --primary: var(--color-raw-obsidian);
+  --primary-foreground: var(--color-raw-alabaster);
 
-  /* Secondary: Soft Warm Linen */
-  --secondary: #EFE8E1;
-  --secondary-foreground: var(--color-brand-obsidian);
+  /* Secondary Surface & Text */
+  --secondary: var(--color-raw-bone);
+  --secondary-foreground: var(--color-raw-obsidian);
 
-  /* Accent: Official Logo Terracotta Dot (Reserved for Accents, Badges & Highlights) */
-  --accent: var(--color-brand-terracotta);
-  --accent-foreground: #FFFFFF;
-  --accent-muted: var(--color-brand-terracotta-muted);
+  /* Accent: Raw Umber Bronze */
+  --accent: var(--color-raw-umber);
+  --accent-foreground: var(--color-raw-silk);
+  --accent-muted: var(--color-raw-parchment);
 
   /* Borders & Dividers */
-  --border: var(--color-brand-linen);
-  --border-subtle: var(--color-brand-linen-muted);
-  --border-strong: var(--color-brand-linen-dark);
-  --input: var(--color-brand-linen);
-  --ring: var(--color-brand-obsidian);
+  --border: var(--color-raw-linen);
+  --border-subtle: var(--color-raw-linen);
+  --border-strong: var(--color-raw-weathered-slate);
+  --input: var(--color-raw-weathered-slate);
+  --ring: var(--color-raw-obsidian);
 
   /* Semantic Feedback States */
-  --destructive: #B83227;
-  --destructive-foreground: #FAF7F4;
-  --success: #2A5A3B;
-  --success-foreground: #FAF7F4;
-  --warning: #996300;
-  --warning-foreground: #FAF7F4;
+  --destructive: var(--color-raw-crimson);
+  --destructive-foreground: var(--color-raw-alabaster);
+  --success: var(--color-raw-verdigris);
+  --success-foreground: var(--color-raw-alabaster);
+  --warning: var(--color-raw-amber);
+  --warning-foreground: var(--color-raw-alabaster);
+  --info: var(--color-raw-indigo);
+  --info-foreground: var(--color-raw-alabaster);
 
-  /* Fluid Spacing Scale */
-  --space-page-x: clamp(1rem, 4vw, 3.5rem);
+  /* Architectural Fluid Spacing Scale */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1.0rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.0rem;
+  --space-2xl: 3.0rem;
+  --space-3xl: 4.0rem;
+  --space-4xl: 6.0rem;
+  --space-5xl: 8.0rem;
+  --space-6xl: 10.0rem;
+
+  --space-page-x: clamp(1rem, 3.5vw, 3.5rem);
   --space-section: clamp(3rem, 7vw, 6.5rem);
   --space-card-gap: clamp(1rem, 2.5vw, 2rem);
 
+  /* Motion Timing & Architectural Curves */
   --duration-instant: 100ms;
-  --duration-fast: 200ms;
+  --duration-fast: 180ms;
+  --duration-base: 250ms;
   --duration-standard: 350ms;
-  --duration-slow: 500ms;
+  --duration-slow: 380ms;
   --duration-cinematic: 800ms;
-  --ease-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+
+  --ease-instant: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-standard: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1.0);
   --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1.0);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
@@ -97,6 +133,7 @@
   /* Semantic Color Utilities */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-surface-elevated: var(--surface-elevated);
@@ -120,18 +157,21 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 
   /* Fonts */
   --font-sans: var(--font-inter);
   --font-serif: var(--font-playfair);
 
-  /* Refined, Minimal Radius Scale */
-  --radius-xs: 0.125rem;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-full: 9999px;
+  /* Restrained Architectural Corner Radii (Phase 1A.1 Standard) */
+  --radius-none: 0px;
+  --radius-xs: 0.125rem;  /* 2px: Micro badges, subtle swatch softening */
+  --radius-sm: 0.25rem;   /* 4px: Form inputs, search dialog, functional menus */
+  --radius-md: 0.375rem;  /* 6px: Floating sheets, modals, toasts */
+  --radius-lg: 0.5rem;    /* 8px: Standard system containment */
+  --radius-xl: 0.75rem;   /* 12px: Permitted for specific contextual wrappers */
+  --radius-full: 9999px;  /* Strictly for circular swatches & round icon triggers */
 }
 
 @layer base {
@@ -140,21 +180,29 @@
     outline-color: var(--ring);
   }
 
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans), sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    min-width: 320px;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-serif), serif;
     font-weight: 400;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
 
-  /* Accessible Focus Ring */
+  /* Accessible Focus Ring (Phase 1A.1 High-Contrast Standard) */
   *:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
@@ -174,17 +222,65 @@
 }
 
 @layer utilities {
+  /* Container Foundations */
+  .container-prose {
+    max-width: var(--container-max-prose);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .container-narrow {
+    max-width: var(--container-max-narrow);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .container-content {
+    max-width: var(--container-max-content);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .container-wide {
+    max-width: var(--container-max-wide);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .container-cinematic {
+    max-width: var(--container-max-cinematic);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Surface Language Foundations */
+  .surface-canvas {
+    background-color: var(--background);
+  }
+  .surface-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border-subtle);
+  }
+  .surface-elevated {
+    background-color: var(--surface);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-elevated);
+  }
+  .seam-b {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .seam-t {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* Tactile Micro-Interactions */
   .hover-lift {
-    transition: transform 0.4s var(--ease-spring), box-shadow 0.4s var(--ease-spring);
+    transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard);
   }
   .hover-lift:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
   }
   .active-tactile {
-    transition: transform 0.15s var(--ease-spring);
+    transition: transform var(--duration-fast) var(--ease-instant);
   }
   .active-tactile:active {
-    transform: scale(0.98);
+    transform: scale(0.985);
   }
   .tap-target-44 {
     min-width: 44px;
@@ -195,5 +291,51 @@
   }
   .pb-safe {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ==========================================================================
+     PHASE 4: ATMOSPHERIC & BACKGROUND DECORATION SYSTEM
+     ========================================================================== */
+
+  /* Atmospheric Radial Gradients (100% Static, 0 JS, Zero GPU Overhead) */
+  .bg-radial-subtle {
+    background-image: radial-gradient(ellipse 90% 45% at 50% -10%, hsl(38 25% 94% / 0.5) 0%, transparent 65%);
+  }
+
+  .bg-radial-editorial {
+    background-image: radial-gradient(circle 750px at 50% 12%, hsl(31 33% 43% / 0.035) 0%, transparent 70%);
+  }
+
+  .bg-radial-parchment {
+    background-image: radial-gradient(ellipse 80% 50% at 50% 50%, hsl(38 18% 95% / 0.7) 0%, hsl(40 20% 98%) 100%);
+  }
+
+  /* Fine Architectural Grain (SVG Noise, Pure CSS, 2% Opacity, WCAG AAA Safe) */
+  .fine-grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  }
+
+  /* Architectural Hairline Seams & Dividers */
+  .hairline-h {
+    height: 1px;
+    background-color: var(--border-subtle);
+    width: 100%;
+  }
+
+  .hairline-fade {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%);
+    width: 100%;
+  }
+
+  .hairline-v {
+    width: 1px;
+    background-color: var(--border-subtle);
+    height: 100%;
+  }
+
+  /* Editorial Section Vignette */
+  .vignette-editorial {
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.015);
   }
 }

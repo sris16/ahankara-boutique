@@ -8,12 +8,15 @@ import { NotFoundError } from "@/utils/errors";
 import { ProductSummary } from "@/types/catalog";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { BreadcrumbJsonLd } from "@/components/product/BreadcrumbJsonLd";
-import { ArrowLeft, Clock } from "lucide-react";
+import { CatalogSortSelect } from "@/components/catalog/CatalogSortSelect";
+import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
+import { ChevronRight, Clock } from "lucide-react";
 
 export const revalidate = 60; // Revalidate every minute to keep inventory badges fresh
 
 interface CollectionPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ sort?: string; page?: string }>;
 }
 
 import { env } from "@/utils/env";
@@ -54,8 +57,9 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
   }
 }
 
-export default async function CollectionPage({ params }: CollectionPageProps) {
+export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
   const resolvedParams = await params;
+  const resolvedQuery = await searchParams;
   let collection;
 
   try {
@@ -72,16 +76,17 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   const hasStarted = !collection.startsAt || new Date(collection.startsAt) <= now;
   const hasEnded = collection.endsAt && new Date(collection.endsAt) < now;
 
-  // We still fetch products even if not started/ended, but the public query will naturally filter them if the DB logic requires it.
-  // Actually, ProductService.getPublicProducts checks if the collection is active natively.
+  const sortBy = (resolvedQuery.sort as "newest" | "price-low-high" | "price-high-low" | "name" | undefined) || "newest";
+
   const productsResponse = await ProductService.getPublicProducts({
     collectionSlug: collection.slug,
     limit: 100, // Fetch up to 100 products for the landing page grid
     page: 1,
-    sortBy: "newest"
+    sortBy,
   }).catch(() => null);
 
   const products = productsResponse?.data || [];
+  const totalCount = productsResponse?.meta?.total ?? products.length;
 
   return (
     <>
@@ -93,117 +98,184 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         ]} 
       />
       <div className="flex flex-col min-h-screen bg-background pb-24">
-      {/* Editorial Hero */}
-      <section className="relative w-full h-[65vh] md:h-[80vh] bg-foreground flex items-end justify-center overflow-hidden">
-        {collection.imageUrl ? (
-          <>
-            <Image
-              src={collection.imageUrl}
-              alt={collection.name}
-              fill
-              priority
-              className="object-cover object-center opacity-80"
-              sizes="100vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-secondary/20" />
-        )}
+        {/* Semantic Breadcrumbs Bar */}
+        <div className="border-b border-border/40 bg-surface/20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <nav
+              className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground overflow-x-auto whitespace-nowrap hide-scrollbar"
+              aria-label="Breadcrumb"
+            >
+              <Link href="/" className="hover:text-foreground transition-colors shrink-0">
+                Home
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+              <Link href="/products" className="hover:text-foreground transition-colors shrink-0">
+                Catalog
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+              <span className="text-foreground font-medium shrink-0">{collection.name}</span>
+            </nav>
+          </div>
+        </div>
 
-        <div className="relative z-10 w-full container mx-auto px-4 pb-16 md:pb-24 flex flex-col items-center text-center md:items-start md:text-left">
-          {collection.startsAt && !hasStarted && (
-            <div className="mb-6 inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md text-white text-[10px] uppercase tracking-widest border border-white/20">
-              <Clock className="w-3 h-3" />
-              <span>Available {new Date(collection.startsAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+        {/* Refined Collection Editorial Header */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10">
+          {collection.imageUrl ? (
+            /* Restrained Editorial Chapter Banner */
+            <div className="relative w-full aspect-[21/9] sm:aspect-[24/8] max-h-[340px] rounded-xs overflow-hidden border border-border/60 bg-foreground mb-8 shadow-xs flex items-end">
+              <Image
+                src={collection.imageUrl}
+                alt={collection.name}
+                fill
+                priority
+                className="object-cover object-center opacity-85"
+                sizes="(max-width: 1280px) 100vw, 1200px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
+
+              <div className="relative z-10 p-6 sm:p-10 max-w-3xl text-white">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/70">
+                    Atelier Chapter
+                  </span>
+                  {collection.startsAt && !hasStarted && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xs bg-white/20 backdrop-blur-xs text-white text-[10px] font-mono tracking-wider uppercase border border-white/20">
+                      <Clock className="w-3 h-3" />
+                      Available {new Date(collection.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight leading-tight mb-2">
+                  {collection.name}
+                </h1>
+                {collection.description && (
+                  <p className="text-xs sm:text-sm text-white/80 font-light leading-relaxed line-clamp-2">
+                    {collection.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Architectural Obsidian Chapter Masthead (Zero fake imagery) */
+            <div className="bg-foreground text-background p-8 sm:p-12 rounded-xs border border-border/60 mb-8 relative overflow-hidden shadow-xs">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,255,255,0.03)_0%,transparent_70%)] pointer-events-none" />
+              <div className="relative z-10 max-w-3xl">
+                <div className="flex flex-wrap items-center gap-3 mb-3">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-background/60">
+                    AHANKARA STUDIOS &mdash; Atelier Chapter
+                  </span>
+                  {collection.startsAt && !hasStarted && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xs bg-background/10 text-background text-[10px] font-mono tracking-wider uppercase border border-background/20">
+                      <Clock className="w-3 h-3" />
+                      Available {new Date(collection.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-background leading-[1.08] mb-3">
+                  {collection.name}
+                </h1>
+
+                {collection.description && (
+                  <p className="text-background/70 text-sm sm:text-base font-light leading-relaxed max-w-2xl">
+                    {collection.description}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl tracking-tight mb-6 text-white max-w-4xl">
-            {collection.name}
-          </h1>
+          {/* Controls & Sorting Toolbar */}
+          <div className="flex items-center justify-between gap-4 pt-4 pb-6 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-light select-none">
+                Showing <span className="font-medium text-foreground">{products.length}</span> of{" "}
+                <span className="font-medium text-foreground">{totalCount}</span> pieces
+              </p>
+            </div>
 
-          {collection.description && (
-            <p className="text-base md:text-lg max-w-2xl font-light leading-relaxed text-white/90">
-              {collection.description}
-            </p>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline-block text-xs uppercase tracking-widest text-muted-foreground font-light select-none">
+                Sort:
+              </span>
+              <CatalogSortSelect currentSort={sortBy} />
+            </div>
+          </div>
+        </section>
+
+        {/* Product Discovery Grid */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8" aria-label={`${collection.name} Products`}>
+          {hasEnded ? (
+            <div className="py-20 text-center border border-border/60 bg-surface/30 rounded-xs flex flex-col items-center justify-center p-8 max-w-lg mx-auto my-8">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-accent font-medium mb-2">
+                Atelier Archive
+              </span>
+              <h2 className="font-serif text-2xl md:text-3xl text-foreground font-normal tracking-tight mb-3">
+                Collection Concluded
+              </h2>
+              <p className="text-muted-foreground text-sm font-light leading-relaxed mb-6">
+                This edition has completed its atelier presentation. Discover our ongoing permanent silhouettes.
+              </p>
+              <Link
+                href="/products"
+                className="bg-foreground text-background px-8 py-3 text-xs uppercase tracking-[0.2em] rounded-xs hover:bg-foreground/90 transition-colors"
+              >
+                Explore Current Pieces &rarr;
+              </Link>
+            </div>
+          ) : !hasStarted ? (
+            <div className="py-20 text-center border border-border/60 bg-surface/30 rounded-xs flex flex-col items-center justify-center p-8 max-w-lg mx-auto my-8">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-accent font-medium mb-2">
+                Upcoming Release
+              </span>
+              <h2 className="font-serif text-2xl md:text-3xl text-foreground font-normal tracking-tight mb-3">
+                Coming Soon
+              </h2>
+              <p className="text-muted-foreground text-sm font-light leading-relaxed mb-6">
+                The {collection.name} collection will be revealed on{" "}
+                {new Date(collection.startsAt!).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
+              </p>
+              <Link
+                href="/products"
+                className="border border-border bg-surface hover:bg-surface-muted text-foreground px-8 py-3 text-xs uppercase tracking-[0.2em] rounded-xs transition-colors"
+              >
+                Browse Available Creations &rarr;
+              </Link>
+            </div>
+          ) : !productsResponse ? (
+            <div className="py-20">
+              <CatalogEmptyState isError={true} />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="py-20">
+              <CatalogEmptyState />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:gap-x-7 lg:gap-y-14">
+              {products.map((product, idx) => (
+                <ProductCard
+                  key={product.id}
+                  product={product as unknown as ProductSummary}
+                  priority={idx < 2}
+                />
+              ))}
+            </div>
           )}
-        </div>
-      </section>
 
-      {/* Breadcrumb / Nav */}
-      <div className="container mx-auto px-4 py-8">
-        <Link
-          href="/products"
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Catalog
-        </Link>
+          {products.length > 0 && productsResponse?.meta && productsResponse.meta.total > 100 && (
+            <div className="flex justify-center mt-16 pt-8 border-t border-border/40">
+              <Link
+                href={`/products?collection=${collection.slug}`}
+                className="border border-border/80 bg-surface/30 hover:bg-surface text-foreground px-8 py-3.5 text-xs uppercase tracking-[0.2em] rounded-xs hover:border-foreground transition-colors"
+              >
+                View Complete {collection.name} Catalog &rarr;
+              </Link>
+            </div>
+          )}
+        </section>
       </div>
-
-      {/* Product Discovery */}
-      <section className="container mx-auto px-4">
-        {hasEnded ? (
-          <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
-            <h3 className="font-serif text-2xl mb-4 text-foreground">Collection Closed</h3>
-            <p className="text-muted-foreground font-light max-w-md mb-8">
-              This collection is no longer available. Discover our latest arrivals and ongoing collections.
-            </p>
-            <Link
-              href="/products"
-              className="border border-foreground text-foreground px-8 py-3 text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
-            >
-              Explore Catalog
-            </Link>
-          </div>
-        ) : !hasStarted ? (
-          <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
-            <h3 className="font-serif text-2xl mb-4 text-foreground">Coming Soon</h3>
-            <p className="text-muted-foreground font-light max-w-md mb-8">
-              The {collection.name} collection will be available starting {new Date(collection.startsAt!).toLocaleDateString("en-US", { month: "long", day: "numeric" })}.
-            </p>
-          </div>
-        ) : !productsResponse ? (
-          <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
-            <h3 className="font-serif text-2xl mb-4 text-foreground">Unable to Load Pieces</h3>
-            <p className="text-muted-foreground font-light max-w-md mb-8">
-              We encountered an issue connecting to our catalog services. Please try refreshing the page.
-            </p>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="py-24 text-center bg-muted/10 border border-dashed rounded-sm flex flex-col items-center justify-center">
-            <h3 className="font-serif text-2xl mb-4 text-foreground">No pieces currently available</h3>
-            <p className="text-muted-foreground font-light max-w-md mb-8">
-              We are currently preparing the pieces for {collection.name}. Please check back later.
-            </p>
-            <Link
-              href="/products"
-              className="border border-foreground text-foreground px-8 py-3 text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
-            >
-              Explore Catalog
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product as unknown as ProductSummary} />
-            ))}
-          </div>
-        )}
-
-        {products.length > 0 && productsResponse?.meta && productsResponse.meta.total > 100 && (
-          <div className="flex justify-center mt-16">
-            <Link
-              href={`/products?collection=${collection.slug}`}
-              className="border border-border text-foreground px-8 py-4 text-xs uppercase tracking-[0.2em] hover:border-foreground transition-colors"
-            >
-              View All {collection.name} Pieces
-            </Link>
-          </div>
-        )}
-      </section>
-    </div>
     </>
   );
 }
+

@@ -43,7 +43,7 @@ export function CartItemRow({
         compact
           ? "py-4 border-b border-border/40 last:border-b-0"
           : "py-6 border-b border-border/60 last:border-b-0",
-        isUpdating && "opacity-60 pointer-events-none"
+        isUpdating && "opacity-50 pointer-events-none"
       )}
     >
       {/* Product Thumbnail */}
@@ -51,7 +51,7 @@ export function CartItemRow({
         href={`/products/${item.product.slug}`}
         onClick={onItemClick}
         className={cn(
-          "relative shrink-0 overflow-hidden bg-surface-muted rounded-xs border border-border/40 block",
+          "relative shrink-0 overflow-hidden bg-surface-muted rounded-xs border border-border/40 block focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
           compact ? "w-20 aspect-[3/4]" : "w-24 sm:w-28 aspect-[3/4]"
         )}
       >
@@ -61,7 +61,7 @@ export function CartItemRow({
             alt={item.product.name}
             fill
             sizes={compact ? "80px" : "(max-width: 640px) 96px, 112px"}
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full p-2 bg-gradient-to-b from-surface-muted to-brand-50/40 select-none">
@@ -75,19 +75,19 @@ export function CartItemRow({
       {/* Product Details */}
       <div className="flex flex-col flex-1 justify-between min-w-0">
         <div>
-          {/* Category / Atelier Tag & Price */}
+          {/* Atelier Title & Line Pricing */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <Link
                 href={`/products/${item.product.slug}`}
                 onClick={onItemClick}
-                className="font-serif text-sm sm:text-base font-normal tracking-wide text-foreground hover:text-accent transition-colors line-clamp-1 block"
+                className="font-serif text-sm sm:text-base font-normal tracking-wide text-foreground hover:text-accent transition-colors line-clamp-1 block focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs"
               >
                 {item.product.name}
               </Link>
 
               {/* Variant Specification Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
                 {item.variant.color && (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-xs bg-surface-muted text-[11px] font-mono tracking-wide uppercase">
                     {item.variant.color}
@@ -98,16 +98,19 @@ export function CartItemRow({
                     {item.variant.size}
                   </span>
                 )}
+                <span className="text-[11px] font-mono text-muted-foreground/70 hidden sm:inline">
+                  @ {formatPrice(item.pricing.unitPrice)}
+                </span>
               </div>
             </div>
 
             {/* Line Item Pricing */}
             <div className="text-right shrink-0">
-              <span className="font-mono text-sm sm:text-base font-medium tracking-tight text-foreground block">
+              <span className="font-mono tabular-nums text-sm sm:text-base font-medium tracking-tight text-foreground block">
                 {formatPrice(item.pricing.lineTotal)}
               </span>
               {isOnSale && item.pricing.compareAtPrice && (
-                <span className="text-xs font-mono text-muted-foreground line-through block">
+                <span className="text-xs font-mono tabular-nums text-muted-foreground line-through block mt-0.5">
                   {formatPrice(item.pricing.compareAtPrice * item.quantity)}
                 </span>
               )}
@@ -116,10 +119,10 @@ export function CartItemRow({
 
           {/* Stock Urgency / Issues */}
           {stockIssue && (
-            <div className="mt-2">
-              <Badge variant="destructive" className="text-[10px] uppercase tracking-wider py-0.5 px-2">
+            <div className="mt-2.5">
+              <Badge variant="destructive" className="text-[10px] uppercase tracking-wider py-0.5 px-2 font-mono rounded-xs">
                 {item.availability.stockStatus === "INSUFFICIENT_STOCK"
-                  ? `Only limited pieces in stock`
+                  ? `Limited availability in stock`
                   : item.availability.stockStatus === "OUT_OF_STOCK"
                   ? "Sold Out"
                   : "Unavailable"}
@@ -127,9 +130,9 @@ export function CartItemRow({
             </div>
           )}
           {item.availability.stockStatus === "LOW_STOCK" && (
-            <div className="mt-1.5">
-              <span className="text-[11px] text-warning font-medium inline-flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse" />
+            <div className="mt-2">
+              <span className="text-[11px] text-accent font-medium inline-flex items-center gap-1.5 font-mono uppercase tracking-wider">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                 Limited inventory remaining
               </span>
             </div>
@@ -137,7 +140,7 @@ export function CartItemRow({
         </div>
 
         {/* Controls & Actions Row */}
-        <div className="flex items-center justify-between gap-3 pt-3 mt-1 border-t border-border/30">
+        <div className="flex items-center justify-between gap-3 pt-3.5 mt-2 border-t border-border/30">
           {/* Quantity Selector */}
           <QuantitySelector
             value={item.quantity}
@@ -149,13 +152,13 @@ export function CartItemRow({
           />
 
           {/* Actions: Save for later & Remove */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {onSaveToWishlist && (
               <button
                 type="button"
                 onClick={() => onSaveToWishlist(item.product.id, item.cartItemId)}
                 disabled={isUpdating}
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-2 sm:p-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 aria-label={`Save ${item.product.name} to wishlist`}
                 title="Save for later"
               >
@@ -168,7 +171,7 @@ export function CartItemRow({
               type="button"
               onClick={() => onRemove(item.cartItemId)}
               disabled={isUpdating}
-              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-2 sm:p-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               aria-label={`Remove ${item.product.name} from bag`}
               title="Remove item"
             >

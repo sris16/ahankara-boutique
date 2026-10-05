@@ -77,15 +77,15 @@ export function CartSummary({
 
   return (
     <div className="bg-surface rounded-xs p-6 md:p-8 border border-border/70 shadow-subtle">
-      <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-wide text-foreground mb-6">
+      <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-wide text-foreground mb-6 pb-3 border-b border-border/40">
         Order Summary
       </h2>
 
       {/* Itemized Calculation */}
       <div className="flex flex-col gap-3.5 text-sm border-b border-border/50 pb-6 mb-6">
         <div className="flex justify-between items-center text-muted-foreground">
-          <span>Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})</span>
-          <span className="font-mono text-foreground">{formatPrice(subtotal)}</span>
+          <span>Subtotal ({itemCount} {itemCount === 1 ? "piece" : "pieces"})</span>
+          <span className="font-mono tabular-nums text-foreground">{formatPrice(subtotal)}</span>
         </div>
 
         {appliedCoupon && (
@@ -94,40 +94,40 @@ export function CartSummary({
               <Tag className="h-3.5 w-3.5" />
               <span>Privilege ({appliedCoupon.code})</span>
             </span>
-            <span className="font-mono font-medium">-{formatPrice(discountAmount)}</span>
+            <span className="font-mono tabular-nums font-medium">-{formatPrice(discountAmount)}</span>
           </div>
         )}
 
         <div className="flex justify-between items-center text-muted-foreground">
           <span>Shipping & Handling</span>
-          <span className="text-xs uppercase tracking-wider text-success font-medium">
+          <span className="text-xs uppercase tracking-wider text-success font-medium font-mono">
             Complimentary
           </span>
         </div>
 
         <div className="flex justify-between items-center text-muted-foreground">
           <span>Duties & Taxes</span>
-          <span className="text-xs text-muted-foreground/80">Included</span>
+          <span className="text-xs text-muted-foreground/80 font-mono">Included (GST)</span>
         </div>
       </div>
 
       {/* Coupon Application Form */}
       <div className="mb-6 pb-6 border-b border-border/50">
         {appliedCoupon ? (
-          <div className="flex items-center justify-between p-3 rounded-xs bg-brand-50/60 border border-brand-200/80 text-xs">
+          <div className="flex items-center justify-between p-3 rounded-xs bg-surface-muted border border-border/60 text-xs">
             <div className="flex items-center gap-2">
               <Tag className="h-3.5 w-3.5 text-accent" />
               <span className="font-mono font-semibold text-foreground uppercase">
                 {appliedCoupon.code}
               </span>
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground font-mono">
                 (-{formatPrice(discountAmount)})
               </span>
             </div>
             <button
               type="button"
               onClick={handleRemoveCoupon}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               aria-label="Remove coupon"
             >
               <X className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export function CartSummary({
               placeholder="Promo or privilege code"
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value)}
-              className="h-10 text-xs uppercase placeholder:normal-case font-mono"
+              className="h-10 text-xs uppercase placeholder:normal-case font-mono rounded-xs"
               disabled={isValidating || disabled}
               aria-label="Promo or privilege code"
             />
@@ -149,7 +149,7 @@ export function CartSummary({
               variant="outline"
               size="sm"
               disabled={!couponCode.trim() || isValidating || disabled}
-              className="h-10 px-4 shrink-0 uppercase tracking-widest text-[11px]"
+              className="h-10 px-4 shrink-0 uppercase tracking-widest text-[11px] rounded-xs cursor-pointer"
             >
               {isValidating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
             </Button>
@@ -159,14 +159,14 @@ export function CartSummary({
 
       {/* Final Total */}
       <div className="flex justify-between items-baseline mb-7" aria-live="polite">
-        <span className="text-sm font-medium tracking-wide uppercase text-foreground">
+        <span className="text-xs font-semibold tracking-[0.2em] uppercase text-foreground">
           Estimated Total
         </span>
         <div className="text-right">
-          <span className="font-mono text-2xl sm:text-3xl font-medium tracking-tight text-foreground block">
+          <span className="font-mono tabular-nums text-2xl sm:text-3xl font-medium tracking-tight text-foreground block">
             {formatPrice(finalTotal)}
           </span>
-          <span className="text-[11px] text-muted-foreground block mt-0.5">
+          <span className="text-[11px] text-muted-foreground block mt-0.5 font-mono">
             All prices include statutory GST
           </span>
         </div>

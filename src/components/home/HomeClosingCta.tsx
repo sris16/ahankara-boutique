@@ -12,7 +12,7 @@ export function HomeClosingCta() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,255,255,0.04)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10 max-w-4xl text-center">
-        <span className="text-[11px] uppercase tracking-[0.3em] font-sans font-medium text-background/60 block mb-6">
+        <span className="text-[11px] uppercase tracking-[0.3em] font-mono font-medium text-background/60 block mb-6">
           AHANKARA STUDIOS &mdash; Catalog Access
         </span>
 
@@ -30,7 +30,7 @@ export function HomeClosingCta() {
           <Button
             asChild
             size="lg"
-            className="w-full sm:w-auto bg-background text-foreground hover:bg-background/90 uppercase tracking-[0.2em] text-xs px-10 py-6 rounded-xs transition-all shadow-subtle group"
+            className="w-full sm:w-auto bg-background text-foreground hover:bg-background/90 uppercase tracking-[0.2em] text-xs px-10 py-6 rounded-xs transition-all shadow-subtle group min-h-[48px]"
           >
             <Link href="/products" className="inline-flex items-center justify-center gap-3">
               <span>View All Pieces</span>
@@ -42,7 +42,7 @@ export function HomeClosingCta() {
             asChild
             variant="outline"
             size="lg"
-            className="w-full sm:w-auto border-background/30 hover:border-background text-background hover:bg-background/10 uppercase tracking-[0.2em] text-xs px-8 py-6 rounded-xs transition-colors"
+            className="w-full sm:w-auto border-background/30 hover:border-background text-background hover:bg-background/10 uppercase tracking-[0.2em] text-xs px-8 py-6 rounded-xs transition-colors min-h-[48px]"
           >
             <Link href="/contact">Client Inquiries &rarr;</Link>
           </Button>

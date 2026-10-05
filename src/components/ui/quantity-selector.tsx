@@ -70,8 +70,8 @@ export function QuantitySelector({
         disabled={!canDecrement}
         aria-label="Decrease quantity"
         className={cn(
-          "flex items-center justify-center text-foreground hover:bg-muted/60 transition-colors disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-l-xs cursor-pointer",
-          size === "default" ? "w-11 sm:w-10 h-full" : "w-9 sm:w-8 h-full"
+          "flex items-center justify-center text-foreground hover:bg-muted transition-colors disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-l-xs cursor-pointer relative before:absolute before:-inset-1 before:content-['']",
+          size === "default" ? "w-11 sm:w-10 h-full" : "w-10 sm:w-8 h-full"
         )}
       >
         <Minus className="h-3.5 w-3.5 stroke-[2]" aria-hidden="true" />
@@ -103,8 +103,8 @@ export function QuantitySelector({
         disabled={!canIncrement}
         aria-label="Increase quantity"
         className={cn(
-          "flex items-center justify-center text-foreground hover:bg-muted/60 transition-colors disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-r-xs cursor-pointer",
-          size === "default" ? "w-11 sm:w-10 h-full" : "w-9 sm:w-8 h-full"
+          "flex items-center justify-center text-foreground hover:bg-muted transition-colors disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-r-xs cursor-pointer relative before:absolute before:-inset-1 before:content-['']",
+          size === "default" ? "w-11 sm:w-10 h-full" : "w-10 sm:w-8 h-full"
         )}
       >
         <Plus className="h-3.5 w-3.5 stroke-[2]" aria-hidden="true" />

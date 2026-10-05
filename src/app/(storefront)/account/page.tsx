@@ -27,12 +27,12 @@ export const metadata = {
 };
 
 const getStatusBadge = (status: OrderStatus, fulfillment: FulfillmentStatus) => {
-  if (status === "CANCELLED") return <Badge variant="destructive">Cancelled</Badge>;
-  if (fulfillment === "DELIVERED") return <Badge variant="default" className="bg-green-600/90 text-white">Delivered</Badge>;
+  if (status === "CANCELLED") return <Badge variant="destructive" className="font-mono text-[10px] uppercase tracking-wider">Cancelled</Badge>;
+  if (fulfillment === "DELIVERED") return <Badge variant="default" className="bg-success text-success-foreground font-mono text-[10px] uppercase tracking-wider">Delivered</Badge>;
   if (fulfillment === "FULFILLED" || fulfillment === "PARTIALLY_FULFILLED")
-    return <Badge variant="secondary" className="bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-500/20">In Transit</Badge>;
-  if (status === "PENDING_PAYMENT") return <Badge variant="outline" className="text-amber-600 border-amber-500/30">Pending</Badge>;
-  return <Badge variant="outline">Processing</Badge>;
+    return <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-wider bg-surface-muted border-border/80">In Transit</Badge>;
+  if (status === "PENDING_PAYMENT") return <Badge variant="outline" className="text-accent border-accent/30 font-mono text-[10px] uppercase tracking-wider">Pending</Badge>;
+  return <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-wider">Processing</Badge>;
 };
 
 export default async function AccountRootPage() {

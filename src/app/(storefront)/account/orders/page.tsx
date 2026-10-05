@@ -8,6 +8,7 @@ import { formatPrice, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { ChevronRight, PackageX, ExternalLink } from "lucide-react";
 import { OrderStatus, FulfillmentStatus } from "@/types/order";
 
@@ -45,8 +46,14 @@ export default async function OrdersPage() {
   } catch (error) {
     console.error("Failed to load orders", error);
     return (
-      <div className="py-12 text-center text-destructive">
-        <p>Failed to load orders. Please refresh or try again later.</p>
+      <div className="py-8">
+        <ErrorState
+          variant="inline"
+          title="Orders Unavailable"
+          message="We couldn't retrieve your order history at this time. Please check back shortly or reload the page."
+          homeHref="/account"
+          homeLabel="Account Overview"
+        />
       </div>
     );
   }

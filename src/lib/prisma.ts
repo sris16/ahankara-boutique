@@ -13,12 +13,22 @@ if (globalForPrisma.prisma) {
 } else {
   // Parse password from URL to ensure it is a string (pg SCRAM auth fails if password is a number)
   const url = process.env.DATABASE_URL || '';
-  const pwdMatch = url.match(/:([^:@]+)@localhost/);
-  const password = pwdMatch ? String(pwdMatch[1]) : '1234';
+  let parsedPassword: string | undefined = undefined;
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) {
+      parsedPassword = decodeURIComponent(parsed.password);
+    }
+  } catch {
+    const pwdMatch = url.match(/:([^:@]+)@/);
+    if (pwdMatch) {
+      parsedPassword = String(pwdMatch[1]);
+    }
+  }
 
   const pool = new Pool({ 
     connectionString: url,
-    password: password
+    ...(parsedPassword !== undefined ? { password: parsedPassword } : {})
   });
   
   const adapter = new PrismaPg(pool);

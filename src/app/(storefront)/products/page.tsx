@@ -1,4 +1,6 @@
 import { Suspense, cache } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { LocalErrorBoundary } from "@/components/ui/local-error-boundary";
 import { ErrorState } from "@/components/ui/error-state";
 import { Metadata } from "next";
@@ -133,11 +135,12 @@ async function ProductResults({ params, hasActiveFilters }: { params: SearchPara
 
   return (
     <div className="space-y-12">
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-x-3.5 gap-y-8 sm:gap-x-5 sm:gap-y-10 lg:gap-x-6 lg:gap-y-12">
-        {productsResponse.data.map((product) => (
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:gap-x-7 lg:gap-y-14">
+        {productsResponse.data.map((product, idx) => (
           <ProductCard
             key={product.id}
             product={product as unknown as ProductSummary}
+            priority={idx < 2}
           />
         ))}
       </div>
@@ -186,14 +189,38 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Editorial Header Section */}
-      <section className="border-b border-border/40 bg-surface/30 pt-8 pb-10 md:pt-12 md:pb-14">
+      <section className="border-b border-border/50 bg-surface/30 pt-7 pb-9 md:pt-10 md:pb-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Semantic Breadcrumbs */}
+          <nav
+            className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground mb-5 overflow-x-auto whitespace-nowrap hide-scrollbar"
+            aria-label="Breadcrumb"
+          >
+            <Link href="/" className="hover:text-foreground transition-colors shrink-0">
+              Home
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+            <span className="text-foreground font-medium shrink-0">Catalog</span>
+            {activeCategoryObj && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+                <span className="text-foreground font-medium shrink-0">{activeCategoryObj.name}</span>
+              </>
+            )}
+            {activeCollectionObj && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+                <span className="text-foreground font-medium shrink-0">{activeCollectionObj.name}</span>
+              </>
+            )}
+          </nav>
+
           <div className="max-w-3xl">
-            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent font-medium select-none block mb-2.5">
-              AHANKARA STUDIOS / ATELIER DISCOVERY
+            <span className="text-[10px] md:text-xs font-mono uppercase tracking-[0.25em] text-accent font-medium select-none block mb-2">
+              AHANKARA STUDIOS &mdash; Atelier Discovery
             </span>
 
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1] mb-3">
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.08] mb-3">
               {pageTitle}
             </h1>
 
@@ -207,7 +234,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       {/* Main Catalog Section */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
         {/* Sticky / Inline Controls Toolbar */}
-        <div className="flex items-center justify-between gap-4 pb-6 mb-2 border-b border-border/40">
+        <div className="flex items-center justify-between gap-4 pb-5 mb-2 border-b border-border/50">
           {/* Left: Mobile Filter Trigger / Desktop Pieces Count */}
           <div className="flex items-center gap-3">
             <div className="lg:hidden">
@@ -228,7 +255,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
           {/* Right: Luxury Sort Selector */}
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-block text-xs uppercase tracking-widest text-muted-foreground font-light">
+            <span className="hidden sm:inline-block text-xs uppercase tracking-widest text-muted-foreground font-light select-none">
               Sort:
             </span>
             <CatalogSortSelect currentSort={params.sort} />
@@ -236,7 +263,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         </div>
 
         {/* 2-Column Layout: Sidebar + Product Grid */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 pt-4">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 pt-4">
           {/* Desktop Filter Sidebar */}
           <div className="w-64 xl:w-72 shrink-0 hidden lg:block">
             {categoriesTree && collections ? (
@@ -250,8 +277,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             )}
           </div>
 
-          {/* Product Listing Main Column */}
-          <main className="flex-1 min-w-0" id="catalog-products-main">
+          {/* Product Listing Section */}
+          <section className="flex-1 min-w-0" id="catalog-products-main" aria-label="Catalog Products">
             {/* Active Filter Chips */}
             {categoriesTree && collections && (
               <FilterChips categories={categoriesTree as CategoryTree[]} collections={collections as Collection[]} />
@@ -260,7 +287,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <LocalErrorBoundary title="Unable to load catalog" message="We encountered an issue retrieving the latest creations.">
               <Suspense
                 fallback={
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-x-3.5 gap-y-8 sm:gap-x-5 sm:gap-y-10 lg:gap-x-6 lg:gap-y-12">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:gap-x-7 lg:gap-y-14">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <ProductCardSkeleton key={i} />
                     ))}
@@ -270,7 +297,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 <ProductResults params={params} hasActiveFilters={hasActiveFilters} />
               </Suspense>
             </LocalErrorBoundary>
-          </main>
+          </section>
         </div>
       </div>
     </div>

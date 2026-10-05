@@ -2,10 +2,15 @@
 
 import * as React from "react"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { ProductImage } from "@/types/catalog"
 import { cn } from "@/lib/utils"
 import { Maximize2, ChevronLeft, ChevronRight } from "lucide-react"
-import { ProductLightbox } from "./ProductLightbox"
+
+const ProductLightbox = dynamic(
+  () => import("./ProductLightbox").then((mod) => mod.ProductLightbox),
+  { ssr: false }
+)
 
 interface ProductGalleryProps {
   images: ProductImage[]
@@ -94,10 +99,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         >
           {/* Zoomable Image Container */}
           <div
-            className="w-full h-full relative transition-transform duration-fast ease-out motion-reduce:!transform-none"
+            className="w-full h-full relative transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] motion-reduce:!transform-none"
             style={{
               transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
-              transform: isHovering ? "scale(1.35)" : "scale(1)",
+              transform: isHovering ? "scale(1.2)" : "scale(1)",
             }}
           >
             <Image
@@ -118,13 +123,13 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               setLightboxOpen(true)
             }}
             aria-label="Expand image to fullscreen"
-            className="absolute top-3.5 right-3.5 z-10 p-2.5 rounded-full bg-background/80 hover:bg-background text-foreground/80 hover:text-foreground backdrop-blur-md shadow-subtle border border-border/60 transition-all opacity-80 group-hover:opacity-100 cursor-pointer"
+            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xs bg-background/80 hover:bg-background text-foreground/80 hover:text-foreground backdrop-blur-md border border-border/60 hover:border-foreground/40 transition-all flex items-center justify-center cursor-pointer shadow-2xs before:absolute before:-inset-1 before:content-['']"
           >
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-3.5 w-3.5" />
           </button>
 
           {/* Mobile Image Counter Pill */}
-          <div className="absolute bottom-3.5 right-3.5 z-10 px-2.5 py-1 rounded-full bg-background/85 text-foreground/80 text-[11px] font-mono tracking-wider backdrop-blur-md border border-border/60 shadow-subtle md:hidden">
+          <div className="absolute bottom-3 right-3 z-10 px-2 py-0.5 rounded-xs bg-background/90 text-foreground font-mono text-[10px] uppercase tracking-[0.2em] backdrop-blur-md border border-border/60 shadow-2xs md:hidden">
             {activeIndex + 1} / {images.length}
           </div>
 
@@ -139,7 +144,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 }}
                 disabled={activeIndex === 0}
                 aria-label="Previous image"
-                className="md:hidden absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/70 text-foreground border border-border/40 disabled:opacity-0 transition-opacity"
+                className="md:hidden absolute left-2.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-xs bg-background/80 text-foreground border border-border/60 backdrop-blur-md flex items-center justify-center disabled:opacity-0 transition-opacity before:absolute before:-inset-1.5 before:content-['']"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -152,7 +157,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 }}
                 disabled={activeIndex === images.length - 1}
                 aria-label="Next image"
-                className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/70 text-foreground border border-border/40 disabled:opacity-0 transition-opacity"
+                className="md:hidden absolute right-2.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-xs bg-background/80 text-foreground border border-border/60 backdrop-blur-md flex items-center justify-center disabled:opacity-0 transition-opacity before:absolute before:-inset-1.5 before:content-['']"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -163,7 +168,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         {/* Thumbnail Navigation (Desktop Left Sidebar / Mobile Bottom Scroll) */}
         {images.length > 1 && (
           <div
-            className="flex md:flex-col gap-2.5 overflow-x-auto md:overflow-y-auto md:w-20 lg:w-24 shrink-0 hide-scrollbar py-1 md:py-0"
+            className="flex md:flex-col gap-2.5 overflow-x-auto md:overflow-y-auto md:w-20 lg:w-22 shrink-0 hide-scrollbar py-1 md:py-0"
             role="tablist"
             aria-label="Product thumbnails"
           >
@@ -176,10 +181,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   role="tab"
                   onClick={() => setActiveIndex(index)}
                   className={cn(
-                    "relative aspect-[3/4] w-16 md:w-full shrink-0 overflow-hidden rounded-xs border transition-all duration-fast cursor-pointer",
+                    "relative aspect-[3/4] w-16 md:w-full shrink-0 overflow-hidden rounded-xs border transition-all duration-200 cursor-pointer",
                     isSelected
-                      ? "border-primary ring-1 ring-primary shadow-subtle opacity-100 scale-102"
-                      : "border-border/60 opacity-60 hover:opacity-100 hover:border-border-strong"
+                      ? "border-foreground ring-1 ring-foreground/30 opacity-100"
+                      : "border-border/60 opacity-60 hover:opacity-100 hover:border-foreground/30"
                   )}
                   aria-label={`View image ${index + 1} of ${images.length}: ${image.altText || productName}`}
                   aria-selected={isSelected}

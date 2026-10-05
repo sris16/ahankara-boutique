@@ -46,9 +46,9 @@ export function AccountNav() {
   };
 
   return (
-    <nav className="bg-background border border-border/80 rounded-xs p-2 sm:p-3 shadow-xs flex md:flex-col overflow-x-auto hide-scrollbar gap-1.5 w-full">
-      <span className="hidden md:block text-[10px] uppercase font-mono tracking-[0.25em] text-muted-foreground/70 px-3 py-2">
-        PORTAL NAVIGATION
+    <nav className="bg-background border border-border/80 rounded-xs p-2 sm:p-2.5 shadow-subtle flex md:flex-col overflow-x-auto hide-scrollbar gap-1 w-full" aria-label="Account Navigation">
+      <span className="hidden md:block text-[10px] uppercase font-mono tracking-[0.25em] text-muted-foreground/70 px-3 py-2 select-none">
+        PORTAL DIRECTORY
       </span>
 
       {navItems.map((item) => {
@@ -61,13 +61,13 @@ export function AccountNav() {
           <Link
             key={item.label}
             href={item.href}
-            className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] md:min-h-[38px] rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.15em] transition-all duration-150 ${
+            className={`flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] md:min-h-[38px] rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.18em] transition-all duration-150 ${
               isActive
                 ? "bg-foreground text-background shadow-xs font-semibold"
                 : "text-muted-foreground hover:text-foreground hover:bg-surface-muted/60"
             }`}
           >
-            <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-background" : "text-muted-foreground"}`} />
+            <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-background" : "text-muted-foreground"}`} />
             <span>{item.label}</span>
           </Link>
         );
@@ -79,12 +79,12 @@ export function AccountNav() {
         type="button"
         onClick={handleSignOut}
         disabled={signingOut}
-        className="flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] md:min-h-[38px] rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.15em] transition-all duration-150 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-left w-full cursor-pointer disabled:opacity-50"
+        className="flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] md:min-h-[38px] rounded-xs whitespace-nowrap text-xs font-medium uppercase tracking-[0.18em] transition-all duration-150 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-left w-full cursor-pointer disabled:opacity-50"
       >
         {signingOut ? (
-          <Spinner size="sm" className="w-4 h-4" />
+          <Spinner size="sm" className="w-3.5 h-3.5" />
         ) : (
-          <LogOut className="w-4 h-4 shrink-0" />
+          <LogOut className="w-3.5 h-3.5 shrink-0" />
         )}
         <span>{signingOut ? "Signing Out..." : "Sign Out"}</span>
       </button>

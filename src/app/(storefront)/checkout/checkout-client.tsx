@@ -513,7 +513,7 @@ export default function CheckoutClient({
             {/* Coupon Application */}
             <div className="mb-6 pb-6 border-b border-border/50">
               {appliedCoupon ? (
-                <div className="flex items-center justify-between p-3 rounded-xs bg-brand-50/60 border border-brand-200/80 text-xs">
+                <div className="flex items-center justify-between p-3 rounded-xs bg-surface-muted border border-border/60 text-xs">
                   <div className="flex items-center gap-2">
                     <Tag className="h-3.5 w-3.5 text-accent" />
                     <span className="font-mono font-semibold text-foreground uppercase">{appliedCoupon}</span>
@@ -524,7 +524,7 @@ export default function CheckoutClient({
                   <button
                     type="button"
                     onClick={handleRemoveCoupon}
-                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     aria-label={`Remove coupon ${appliedCoupon}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -536,7 +536,7 @@ export default function CheckoutClient({
                     placeholder="Privilege or promo code"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
-                    className="h-10 text-xs uppercase placeholder:normal-case font-mono"
+                    className="h-10 text-xs uppercase placeholder:normal-case font-mono rounded-xs"
                     disabled={pricingProcessing}
                     aria-label="Gift card or discount code"
                   />
@@ -545,20 +545,20 @@ export default function CheckoutClient({
                     variant="outline"
                     size="sm"
                     disabled={!couponCode.trim() || pricingProcessing}
-                    className="h-10 px-4 shrink-0 uppercase tracking-widest text-[11px]"
+                    className="h-10 px-4 shrink-0 uppercase tracking-widest text-[11px] rounded-xs cursor-pointer"
                   >
                     {pricingProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
                   </Button>
                 </form>
               )}
-              {couponError && <p className="text-xs text-destructive mt-2" role="alert">{couponError}</p>}
+              {couponError && <p className="text-xs text-destructive mt-2 font-mono" role="alert">{couponError}</p>}
             </div>
 
             {/* Totals Breakdown */}
             <div className="flex flex-col gap-3 text-sm mb-6 border-b border-border/50 pb-6">
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Subtotal</span>
-                <span className="font-mono text-foreground">{formatPrice(displaySubtotal)}</span>
+                <span className="font-mono tabular-nums text-foreground">{formatPrice(displaySubtotal)}</span>
               </div>
 
               {displayDiscount > 0 && (
@@ -567,20 +567,20 @@ export default function CheckoutClient({
                     <Tag className="h-3.5 w-3.5" />
                     <span>Privilege Discount</span>
                   </span>
-                  <span className="font-mono font-medium">-{formatPrice(displayDiscount)}</span>
+                  <span className="font-mono tabular-nums font-medium">-{formatPrice(displayDiscount)}</span>
                 </div>
               )}
 
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Insured Courier Dispatch</span>
-                <span className="text-xs uppercase tracking-wider text-success font-medium">
+                <span className="text-xs uppercase tracking-wider text-success font-medium font-mono">
                   {displayShipping === 0 ? "Complimentary" : formatPrice(displayShipping)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Statutory GST</span>
-                <span className="text-xs text-muted-foreground/80">
+                <span className="text-xs text-muted-foreground/80 font-mono">
                   {displayTax > 0 ? formatPrice(displayTax) : "Included in retail value"}
                 </span>
               </div>
@@ -588,14 +588,14 @@ export default function CheckoutClient({
 
             {/* Final Payable */}
             <div className="flex justify-between items-baseline mb-7" aria-live="polite">
-              <span className="text-sm font-medium tracking-wide uppercase text-foreground">
+              <span className="text-xs font-semibold tracking-[0.2em] uppercase text-foreground">
                 Payable Total
               </span>
               <div className="text-right">
-                <span className="font-mono text-2xl sm:text-3xl font-medium tracking-tight text-foreground block">
+                <span className="font-mono tabular-nums text-2xl sm:text-3xl font-medium tracking-tight text-foreground block">
                   {formatPrice(displayTotal)}
                 </span>
-                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                <span className="text-[11px] text-muted-foreground block mt-0.5 font-mono">
                   Secure Razorpay Payment
                 </span>
               </div>
@@ -663,10 +663,10 @@ export default function CheckoutClient({
       <div className="fixed bottom-0 inset-x-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border/80 px-4 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] shadow-elevated lg:hidden">
         <div className="flex items-center justify-between gap-4 max-w-md mx-auto">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium font-mono">
               Total Payable
             </span>
-            <span className="font-mono text-lg font-semibold tracking-tight text-foreground">
+            <span className="font-mono tabular-nums text-lg font-semibold tracking-tight text-foreground">
               {formatPrice(displayTotal)}
             </span>
           </div>

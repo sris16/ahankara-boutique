@@ -85,9 +85,9 @@ export default function RootLayout({
                     <OfflineBanner />
                     <AnalyticsProvider />
                     <WebVitals />
-                    <main className="flex-1 min-h-screen">
+                    <div className="flex-1 min-h-screen">
                       {children}
-                    </main>
+                    </div>
                   </div>
                 </ToastProvider>
               </AddressProvider>

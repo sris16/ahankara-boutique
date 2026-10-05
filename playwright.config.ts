@@ -6,6 +6,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
+  globalSetup: path.resolve(__dirname, 'e2e/seed.ts'),
   testDir: './e2e',
   timeout: 30 * 1000,
   expect: {
@@ -31,7 +32,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'PORT=3001 npm run start',
+    command: 'npx next start -p 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

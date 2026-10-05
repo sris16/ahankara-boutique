@@ -9,11 +9,15 @@ import { useWishlist } from "@/hooks/use-wishlist"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
+import dynamic from "next/dynamic"
 import { QuantitySelector } from "@/components/ui/quantity-selector"
-import { Badge } from "@/components/ui/badge"
 import { DeliveryChecker } from "./DeliveryChecker"
-import { ProductSizeGuide } from "./ProductSizeGuide"
 import { ProductStickyBar } from "./ProductStickyBar"
+
+const ProductSizeGuide = dynamic(
+  () => import("./ProductSizeGuide").then((mod) => mod.ProductSizeGuide),
+  { ssr: false }
+)
 
 interface ProductFormProps {
   productId: string
@@ -55,7 +59,7 @@ export function ProductForm({
 
   const { addItem: addCartItem, openCart } = useCart()
   const { addItem: addWishlistItem, removeItem: removeWishlistItem, isWishlisted, getWishlistItemId } = useWishlist()
-  const { user } = useAuth()
+  const { user, loading: isAuthLoading } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
 
@@ -83,9 +87,6 @@ export function ProductForm({
   const hasDiscount = Boolean(
     currentComparePrice !== null && currentComparePrice > currentPrice
   )
-  const discountPercent = hasDiscount && currentComparePrice
-    ? Math.round(((currentComparePrice - currentPrice) / currentComparePrice) * 100)
-    : 0
 
   // Availability helpers
   const isSizeAvailableForColor = (size: string) => {
@@ -115,7 +116,7 @@ export function ProductForm({
 
   const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isAddToCartDisabled() || isSubmittingCart) return
+    if (isAddToCartDisabled() || isSubmittingCart || isAuthLoading) return
 
     if (!user) {
       router.push("/login")
@@ -161,6 +162,8 @@ export function ProductForm({
   }
 
   const handleWishlistToggle = async () => {
+    if (isAuthLoading) return
+
     if (!user) {
       router.push("/login")
       return
@@ -204,21 +207,23 @@ export function ProductForm({
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline gap-3.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-normal font-mono tracking-tight text-foreground">
+              {hasDiscount && <span className="sr-only">Current price: </span>}
               {formatPrice(currentPrice)}
             </span>
             {hasDiscount && currentComparePrice && (
-              <span className="text-muted-foreground line-through text-base sm:text-lg font-mono">
+              <span className="text-muted-foreground line-through text-base sm:text-lg font-mono tabular-nums">
+                <span className="sr-only">Original retail price: </span>
                 {formatPrice(currentComparePrice)}
               </span>
             )}
             {hasDiscount && (
-              <Badge variant="accent" className="text-xs uppercase tracking-wider px-2 py-0.5 font-medium">
-                Save {discountPercent}%
-              </Badge>
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] px-2 py-0.5 border border-accent/40 bg-background/95 text-accent font-medium backdrop-blur-sm rounded-xs">
+                Archive Sale
+              </span>
             )}
           </div>
           <span className="text-xs text-muted-foreground/80 tracking-wide">
-            Inclusive of all duties & taxes. Complimentary insured delivery.
+            Inclusive of all duties & taxes. Complimentary insured atelier delivery.
           </span>
         </div>
 
@@ -361,10 +366,10 @@ export function ProductForm({
           <button
             id="main-add-to-cart-btn"
             type="submit"
-            disabled={isAddToCartDisabled() || isSubmittingCart}
+            disabled={isAddToCartDisabled() || isSubmittingCart || isAuthLoading}
             className={cn(
               "flex-1 h-13 px-8 flex items-center justify-center gap-2.5 rounded-xs text-xs font-medium tracking-[0.25em] uppercase transition-all cursor-pointer shadow-subtle",
-              isAddToCartDisabled()
+              isAddToCartDisabled() || isAuthLoading
                 ? "bg-muted text-muted-foreground cursor-not-allowed opacity-60"
                 : cartSuccess
                 ? "bg-success text-success-foreground"
@@ -386,10 +391,12 @@ export function ProductForm({
           <button
             type="button"
             onClick={handleWishlistToggle}
-            disabled={isSubmittingWishlist}
+            disabled={isSubmittingWishlist || isAuthLoading}
             className={cn(
-              "h-13 w-13 rounded-xs border border-border bg-surface flex items-center justify-center transition-all cursor-pointer hover:border-primary disabled:opacity-50",
-              wishlisted ? "text-accent border-accent/40" : "text-muted-foreground hover:text-foreground"
+              "h-13 w-13 rounded-xs border border-border/70 bg-surface/50 hover:bg-surface hover:border-foreground/40 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring",
+              wishlisted
+                ? "text-accent border-accent/50 bg-accent-muted/20"
+                : "text-muted-foreground hover:text-foreground"
             )}
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
@@ -398,7 +405,7 @@ export function ProductForm({
             ) : (
               <Heart
                 className={cn(
-                  "h-5 w-5 transition-transform duration-fast active:scale-125",
+                  "h-5 w-5 transition-transform duration-200 active:scale-110",
                   wishlisted ? "fill-accent text-accent" : "stroke-[1.5]"
                 )}
               />
@@ -418,7 +425,7 @@ export function ProductForm({
         productName={productName}
         imageUrl={imageUrl}
         price={currentPrice}
-        isAddToCartDisabled={isAddToCartDisabled()}
+        isAddToCartDisabled={isAddToCartDisabled() || isAuthLoading}
         isSubmitting={isSubmittingCart}
         onAddToCart={handleAddToCart}
         targetElementId="main-add-to-cart-btn"

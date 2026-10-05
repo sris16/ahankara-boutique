@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Metadata } from "next";
+import { AmbientGlow } from "@/components/ui/atmosphere";
 
 export const metadata: Metadata = {
   title: "Authentication | AHANKARA STUDIOS",
@@ -16,10 +17,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen flex flex-col justify-between bg-surface-muted/30 px-4 py-8 md:py-12 relative overflow-hidden">
       {/* Subtle atmospheric ambient glow */}
-      <div 
-        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-primary/5 rounded-full blur-3xl opacity-50"
-        aria-hidden="true"
-      />
+      <AmbientGlow position="top" tone="warm" />
 
       {/* Top Navigation Bar with Return to Studio */}
       <header className="w-full max-w-5xl mx-auto flex items-center justify-between z-10">

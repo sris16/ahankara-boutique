@@ -48,6 +48,7 @@ test.describe('AHANKARA STUDIOS - E2E FULL DETERMINISTIC SUITE', () => {
 
     test('PHASE 7: Cart Management', async ({ page }) => {
       await page.goto('/products/e2e-test-product');
+      await expect(page.locator('h1').first()).toBeVisible();
 
       // Select variants if they exist (color and size)
       const colorOption = page.locator('button[role="radio"]').filter({ hasText: /^(black|white|red|blue|ivory|rust|gold|silver)$/i }).first();
@@ -61,7 +62,7 @@ test.describe('AHANKARA STUDIOS - E2E FULL DETERMINISTIC SUITE', () => {
       }
 
       // Wait for Add to Cart
-      const addBtn = page.locator('#main-add-to-cart-btn');
+      const addBtn = page.locator('#main-add-to-cart-btn').first();
       await expect(addBtn).toBeEnabled();
       await addBtn.click();
 

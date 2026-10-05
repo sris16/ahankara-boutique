@@ -226,10 +226,10 @@ export function CartClient({ initialCart }: CartClientProps) {
       <div className="fixed bottom-0 inset-x-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border/80 px-4 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] shadow-elevated lg:hidden">
         <div className="flex items-center justify-between gap-4 max-w-md mx-auto">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium font-mono">
               Subtotal ({cart.itemCount})
             </span>
-            <span className="font-mono text-lg font-semibold tracking-tight text-foreground">
+            <span className="font-mono tabular-nums text-lg font-semibold tracking-tight text-foreground">
               {formatPrice(cart.subtotal)}
             </span>
           </div>

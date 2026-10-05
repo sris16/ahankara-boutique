@@ -108,7 +108,7 @@ export function CartDrawer() {
         {/* Drawer Header */}
         <SheetHeader className="p-6 border-b border-border/60">
           <div className="flex items-baseline justify-between pr-8">
-            <SheetTitle className="font-serif text-xl tracking-tight uppercase text-foreground">
+            <SheetTitle className="font-serif text-xl tracking-wide uppercase text-foreground">
               Shopping Bag
             </SheetTitle>
             {cart && hasItems && (
@@ -166,16 +166,16 @@ export function CartDrawer() {
         {/* Drawer Footer with Subtotal & Actions */}
         {cart && hasItems && (
           <div className="p-6 pb-[max(1.5rem,calc(1.25rem+env(safe-area-inset-bottom,0px)))] border-t border-border/60 bg-surface-muted/30">
-            <div className="flex justify-between items-baseline mb-4">
-              <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="flex justify-between items-baseline mb-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Estimated Subtotal
               </span>
-              <span className="font-mono text-xl font-medium tracking-tight text-foreground">
+              <span className="font-mono tabular-nums text-xl font-medium tracking-tight text-foreground">
                 {formatPrice(cart.subtotal)}
               </span>
             </div>
 
-            <p className="text-[11px] text-muted-foreground tracking-wide mb-5">
+            <p className="text-[11px] text-muted-foreground tracking-wide mb-5 font-mono">
               Complimentary insured shipping applied. Taxes calculated at checkout.
             </p>
 

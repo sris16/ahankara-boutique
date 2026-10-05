@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Compass, Feather, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
+import { AmbientGlow } from "@/components/ui/atmosphere";
 
 export const metadata: Metadata = {
   title: "About The Atelier | AHANKARA STUDIOS",
@@ -24,6 +25,7 @@ export default function AboutPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-24">
       {/* Editorial Hero Header */}
       <section className="relative w-full py-24 md:py-36 border-b border-border/50 bg-surface/30 overflow-hidden">
+        <AmbientGlow position="top" tone="editorial" />
         <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
           <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-muted-foreground mb-4 block">
             The Atelier & Ethos

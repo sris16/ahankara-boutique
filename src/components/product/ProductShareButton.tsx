@@ -47,7 +47,7 @@ export function ProductShareButton({ productName, className }: ProductShareButto
     <button
       onClick={handleShare}
       className={cn(
-        "flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2",
+        "inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors py-1 cursor-pointer select-none",
         className
       )}
       aria-label="Share product"
@@ -55,13 +55,13 @@ export function ProductShareButton({ productName, className }: ProductShareButto
     >
       {copied ? (
         <>
-          <Check className="w-4 h-4 text-green-500" />
+          <Check className="w-3.5 h-3.5 text-accent" />
           <span>Link copied</span>
         </>
       ) : (
         <>
-          <Share2 className="w-4 h-4" />
-          <span>Share</span>
+          <Share2 className="w-3.5 h-3.5" />
+          <span>Share Piece</span>
         </>
       )}
     </button>
