@@ -1,4 +1,5 @@
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { Readable } from 'stream';
 import { env } from '@/utils/env';
 
 // Configure Cloudinary only if credentials are provided
@@ -42,7 +43,7 @@ export class CloudinaryService {
         }
       );
 
-      uploadStream.end(fileBuffer);
+      Readable.from(fileBuffer).pipe(uploadStream);
     });
   }
 
